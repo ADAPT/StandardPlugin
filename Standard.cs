@@ -430,6 +430,13 @@ namespace AgGateway.ADAPT.Standard
         public List<TimeScopeElement> TimeScopes { get; set; }
     }
 
+    internal interface BaseNumericValue
+    {
+        double NumericValue { get; set; }
+        string UnitOfMeasureCode { get; set; }
+
+    }
+
     /// <summary>
     /// Total area of the Crop Zone that is cultivated, excluding areas such as waterways
     ///
@@ -437,7 +444,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Total area of the Field that is cultivated, excluding areas such as waterways
     /// </summary>
-    public partial class ArableArea
+    public partial class ArableArea : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -497,7 +504,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Estimated precision of the GNSS reading(s)
     /// </summary>
-    public partial class EstimatedPrecision
+    public partial class EstimatedPrecision : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -517,7 +524,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Numerical value for the horizontal accuracy.
     /// </summary>
-    public partial class HorizontalAccuracy
+    public partial class HorizontalAccuracy : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -535,7 +542,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The accuracy of the vertical data in the GNSS reading(s)
     /// </summary>
-    public partial class VerticalAccuracy
+    public partial class VerticalAccuracy : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -610,7 +617,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Reference weight for the crop.
     /// </summary>
-    public partial class ReferenceWeight
+    public partial class ReferenceWeight : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -630,7 +637,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// The targeted moisture value at which the commodity is sold
     /// </summary>
-    public partial class StandardPayableMoisture
+    public partial class StandardPayableMoisture : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -1587,7 +1594,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// The radius of a center pivot
     /// </summary>
-    public partial class Radius
+    public partial class Radius : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -1621,7 +1628,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// A defined width of a point or pass on a field, based on the implement's active width.
     /// </summary>
-    public partial class SwathWidth
+    public partial class SwathWidth : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2116,7 +2123,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The density of the product (mass per volume)
     /// </summary>
-    public partial class Density
+    public partial class Density : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2162,7 +2169,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// For products of type mix, the total quantity of the mix recipe.
     /// </summary>
-    public partial class MixTotalQuantity
+    public partial class MixTotalQuantity : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2220,7 +2227,7 @@ namespace AgGateway.ADAPT.Standard
     /// E.g.s, vrProvidedAmountMass, vrProvidedAmountVolume, vrProductContent,
     /// vrSolutionRateLiquid, vrActiveIngredientMassPerMass, etc.
     /// </summary>
-    public partial class Quantity
+    public partial class Quantity : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2395,7 +2402,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Numerical quantity for the Load.
     /// </summary>
-    public partial class LoadQuantity
+    public partial class LoadQuantity : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2542,7 +2549,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Numeric value for Estimated Area.
     /// </summary>
-    public partial class EstimatedArea
+    public partial class EstimatedArea : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2817,7 +2824,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The shift East of a guidance pattern
     /// </summary>
-    public partial class EastShift
+    public partial class EastShift : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2835,7 +2842,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The North shift of a Guidance Pattern
     /// </summary>
-    public partial class NorthShift
+    public partial class NorthShift : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2853,7 +2860,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Perpendicular offset of a guidance pattern by a fixed offset.
     /// </summary>
-    public partial class PropagationOffset
+    public partial class PropagationOffset : BaseNumericValue
     {
         /// <summary>
         /// The actual value of the Measurement
