@@ -47,7 +47,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             ExportCompanies(dataModel.Catalog.Companies, dataModel.Catalog.ContactInfo);
             ExportPersons(dataModel.Catalog.Persons, dataModel.Catalog.ContactInfo);
             ExportBrands(dataModel.Catalog.Brands);
-            ExportDeviceModels(dataModel.Catalog.DeviceModels);
+            ExportDeviceModels(dataModel.Catalog.DeviceModels, dataModel.Catalog.DeviceSeries);
             ExportDevices(dataModel.Catalog.DeviceElements);
             ExportGuidanceGroups(dataModel.Catalog.GuidanceGroups);
             ExportGuidancePatterns(dataModel.Catalog.GuidancePatterns);
@@ -114,7 +114,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     SpecificGravity = frameworkProduct.SpecificGravity,
                     ContextItems = ExportContextItem(frameworkProduct.ContextItems)
                 };
-                product.ProductComponents = ExportProductComponents(frameworkProduct.ProductComponents, product.Id);
+                product.ProductComponents = ExportProductComponents(frameworkProduct.ProductComponents, srcIngredients);
 
                 switch (frameworkProduct)
                 {
@@ -189,7 +189,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         ingredient.IsActiveIngredient = false;
                         break;
                     case CropNutritionIngredient nutritionIngredient:
-                        ingredient.CropNutritionIngredientItemCode = nutritionIngredient.IngredientCode.Value.Value;
+                        ingredient.CropNutritionIngredientItemCode = ExportNutritionIngredientCode(nutritionIngredient.IngredientCode);
                         break;
                 }
 
@@ -199,7 +199,38 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        private List<ProductComponentElement> ExportProductComponents(List<ProductComponent> srcProductComponents, Id productId)
+        private string ExportNutritionIngredientCode(EnumeratedValue ingredientCode)
+        {
+            var code = ingredientCode?.Value?.Value?.ToUpperInvariant();
+            if (string.IsNullOrEmpty(code))
+            {
+                return null;
+            }
+
+            switch (code)
+            {
+                case "NITROGEN":
+                case "PHOSPHORUS":
+                case "POTASSIUM":
+                case "CALCIUM":
+                case "MAGNESIUM":
+                case "SULPHUR":
+                case "BORON":
+                case "CHLORINE":
+                case "COPPER":
+                case "IRON":
+                case "MANGANESE":
+                case "MOLYBDENUM":
+                case "ZINC":
+                case "FULVIC_ACID":
+                case "HUMIC_ACID":
+                    return code;
+            }
+
+            return null;
+        }
+
+        private List<ProductComponentElement> ExportProductComponents(List<ProductComponent> srcProductComponents, List<Ingredient> srcIngredients)
         {
             if (srcProductComponents.IsNullOrEmpty())
             {
@@ -213,7 +244,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     IsCarrier = frameworkProductComponent.IsCarrier,
                     MixOrder = frameworkProductComponent.MixOrder,
-                    ProductId = productId.ReferenceId,
+                    ProductId = CreateProductFromIngredient(frameworkProductComponent, srcIngredients),
                     Quantity = ExportAsNumericValue<Quantity>(frameworkProductComponent.Quantity)
                 };
             }
@@ -221,12 +252,41 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
+        private string CreateProductFromIngredient(ProductComponent srcProductComponent, List<Ingredient> srcIngredients)
+        {
+            if (srcProductComponent.IsProduct)
+            {
+                return srcProductComponent.IngredientId.ToString(CultureInfo.InvariantCulture);
+            }
+
+            var srcIngredient = srcIngredients.FirstOrDefault(x => x.Id.ReferenceId == srcProductComponent.IngredientId);
+            if (srcIngredient == null)
+            {
+                return null;
+            }
+
+            var product = new ProductElement
+            {
+                Id = ExportID(srcIngredient.Id),
+                Description = srcIngredient.Description,
+                ProductStatusCode = ExportProductStatus(srcIngredient is ActiveIngredient ? ProductStatusEnum.Active : ProductStatusEnum.Inactive),
+                ProductFormCode = ExportProductForm(ProductFormEnum.Unknown),
+                ProductTypeCode = ExportProductType(ProductTypeEnum.Generic, CategoryEnum.Unknown),
+                ContextItems = ExportContextItem(srcIngredient.ContextItems)
+            };
+
+            _catalog.Products.Add(product);
+            return product.Id.ReferenceId;
+        }
+
         private string ExportProductType(ProductTypeEnum productType, CategoryEnum category)
         {
             switch (category)
             {
                 case CategoryEnum.Additive:
+                    break;
                 case CategoryEnum.Adjuvant:
+                    return "SPRAY_ADJUVANT";
                 case CategoryEnum.Carrier:
                     break;
                 case CategoryEnum.Defoliant:
@@ -242,7 +302,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case CategoryEnum.Insecticide:
                     return "INSECTICIDE";
                 case CategoryEnum.Manure:
-                    break;
+                    return "FERTILIZER_ORGANIC";
                 case CategoryEnum.NitrogenStabilizer:
                     return "NITROGEN_STABILIZER";
                 case CategoryEnum.Pesticide:
@@ -379,6 +439,13 @@ namespace AgGateway.ADAPT.StandardPlugin
                             StartPoint = GeometryExporter.ExportPoint(pivotGuidance.StartPoint),
                             Radius = ExportAsNumericValue<Radius>(pivotGuidance.Radius)
                         };
+
+                        GeometryExporter.ThreePointsToCenterRadius(pivotGuidance.Point1, pivotGuidance.Point2, pivotGuidance.Point3, out var centerPoint, out var radius);
+                        if (centerPoint != null)
+                        {
+                            guidancePattern.PivotAttributes.CenterPoint = centerPoint;
+                            guidancePattern.PivotAttributes.Radius = radius;
+                        }
                         break;
                     case Spiral spiral:
                         guidancePattern.SpiralAttributes = new SpiralAttributes
@@ -462,7 +529,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.GuidanceGroups = output;
         }
 
-        private void ExportDeviceModels(List<DeviceModel> srcDeviceModels)
+        private void ExportDeviceModels(List<DeviceModel> srcDeviceModels, List<DeviceSeries> srcDeviceSeries)
         {
             if (srcDeviceModels.IsNullOrEmpty())
             {
@@ -472,12 +539,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<DeviceModelElement> output = new List<DeviceModelElement>();
             foreach (var frameworkDeviceModel in srcDeviceModels)
             {
+                var series = srcDeviceSeries.FirstOrDefault(x => x.Id.ReferenceId == frameworkDeviceModel.SeriesId);
                 DeviceModelElement deviceModel = new DeviceModelElement()
                 {
                     Id = ExportID(frameworkDeviceModel.Id),
                     Description = frameworkDeviceModel.Description,
                     BrandId = frameworkDeviceModel.BrandId.ToString(CultureInfo.InvariantCulture),
-                    DeviceSeries = frameworkDeviceModel.SeriesId.ToString(CultureInfo.InvariantCulture),
+                    DeviceSeries = series?.Description,
                     ContextItems = ExportContextItem(frameworkDeviceModel.ContextItems)
                 };
                 output.Add(deviceModel);
@@ -835,6 +903,13 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     headland.Geometry = GeometryExporter.ExportMultiPolygon(drivenHeadland.SpatialData);
                 }
+                else if (frameworkHeadland is ConstantOffsetHeadland)
+                {
+                    _errors.Add(new Error
+                    {
+                        Description = "Discarding ConstantOffsetHeadland",
+                    });
+                }
 
                 output.Add(headland);
             }
@@ -968,7 +1043,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return null;
             }
-            if (level > 1)
+            if (level > 2)
             {
                 _errors.Add(new Error
                 {
@@ -1012,7 +1087,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.CustomDataTypeDefinitions.Add(new CustomDataTypeDefinitionElement
             {
                 DefinitionCode = code,
-                Name = valueUOM,
+                Name = $"{code} ({valueUOM})",
                 DataDefinitionBaseTypeCode = baseTypeCode,
                 DataDefinitionStatusCode = statusCode,
             });
