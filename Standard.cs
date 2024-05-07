@@ -272,13 +272,13 @@ namespace AgGateway.ADAPT.Standard
         public double? Duration { get; set; }
 
         /// <summary>
-        /// The date and time at the end of an event.
+        /// The date and time (UTC) at the end of an event.
         /// </summary>
         [JsonProperty("end", NullValueHandling = NullValueHandling.Ignore)]
         public string End { get; set; }
 
         /// <summary>
-        /// The date and time at the start of an event.
+        /// The date and time (UTC) at the start of an event.
         /// </summary>
         [JsonProperty("start", NullValueHandling = NullValueHandling.Ignore)]
         public string Start { get; set; }
@@ -430,21 +430,12 @@ namespace AgGateway.ADAPT.Standard
         public List<TimeScopeElement> TimeScopes { get; set; }
     }
 
-    internal interface BaseNumericValue
-    {
-        double NumericValue { get; set; }
-        string UnitOfMeasureCode { get; set; }
-
-    }
-
     /// <summary>
     /// Total area of the Crop Zone that is cultivated, excluding areas such as waterways
     ///
-    /// A Numeric Value indicating the area
-    ///
     /// Total area of the Field that is cultivated, excluding areas such as waterways
     /// </summary>
-    public partial class ArableArea : BaseNumericValue
+    public partial class ArableArea
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -504,7 +495,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Estimated precision of the GNSS reading(s)
     /// </summary>
-    public partial class EstimatedPrecision : BaseNumericValue
+    public partial class EstimatedPrecision
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -524,7 +515,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Numerical value for the horizontal accuracy.
     /// </summary>
-    public partial class HorizontalAccuracy : BaseNumericValue
+    public partial class HorizontalAccuracy
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -542,7 +533,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The accuracy of the vertical data in the GNSS reading(s)
     /// </summary>
-    public partial class VerticalAccuracy : BaseNumericValue
+    public partial class VerticalAccuracy
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -617,7 +608,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Reference weight for the crop.
     /// </summary>
-    public partial class ReferenceWeight : BaseNumericValue
+    public partial class ReferenceWeight
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -637,7 +628,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// The targeted moisture value at which the commodity is sold
     /// </summary>
-    public partial class StandardPayableMoisture : BaseNumericValue
+    public partial class StandardPayableMoisture
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -1266,6 +1257,14 @@ namespace AgGateway.ADAPT.Standard
         /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
+
+        /// <summary>
+        /// Time zone identifier from the IANA/tz database, defining the local time zone at a
+        /// location. May be used to interpret ADAPT's required UTC timestamps into a local times for
+        /// that location.  Optional.
+        /// </summary>
+        [JsonProperty("timeZone", NullValueHandling = NullValueHandling.Ignore)]
+        public string TimeZone { get; set; }
     }
 
     /// <summary>
@@ -1558,13 +1557,13 @@ namespace AgGateway.ADAPT.Standard
     public partial class PivotAttributes
     {
         /// <summary>
-        /// Center point of the pivot.  Required.
+        /// WKT for the center point of the pivot.  Required.
         /// </summary>
         [JsonProperty("centerPoint")]
         public string CenterPoint { get; set; }
 
         /// <summary>
-        /// An end point for the pivot.   Required for partial pivots.
+        /// WKT for an end point of the pivot.   Required for partial pivots.
         /// </summary>
         [JsonProperty("endPoint", NullValueHandling = NullValueHandling.Ignore)]
         public string EndPoint { get; set; }
@@ -1583,7 +1582,7 @@ namespace AgGateway.ADAPT.Standard
         public Radius Radius { get; set; }
 
         /// <summary>
-        /// A start point for the pivot.   Required for partial pivots.
+        /// WKT for a start point of the pivot.   Required for partial pivots.
         /// </summary>
         [JsonProperty("startPoint", NullValueHandling = NullValueHandling.Ignore)]
         public string StartPoint { get; set; }
@@ -1594,7 +1593,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// The radius of a center pivot
     /// </summary>
-    public partial class Radius : BaseNumericValue
+    public partial class Radius
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -1628,7 +1627,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// A defined width of a point or pass on a field, based on the implement's active width.
     /// </summary>
-    public partial class SwathWidth : BaseNumericValue
+    public partial class SwathWidth
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -1799,6 +1798,13 @@ namespace AgGateway.ADAPT.Standard
         /// </summary>
         [JsonProperty("countryCode", NullValueHandling = NullValueHandling.Ignore)]
         public string CountryCode { get; set; }
+
+        /// <summary>
+        /// Subdivision or region of a country such as a state or province, including entries in
+        /// ISO-3166.
+        /// </summary>
+        [JsonProperty("countrySubdivision", NullValueHandling = NullValueHandling.Ignore)]
+        public string CountrySubdivision { get; set; }
 
         /// <summary>
         /// The postal code within the Address
@@ -2123,7 +2129,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The density of the product (mass per volume)
     /// </summary>
-    public partial class Density : BaseNumericValue
+    public partial class Density
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2169,7 +2175,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// For products of type mix, the total quantity of the mix recipe.
     /// </summary>
-    public partial class MixTotalQuantity : BaseNumericValue
+    public partial class MixTotalQuantity
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2227,7 +2233,7 @@ namespace AgGateway.ADAPT.Standard
     /// E.g.s, vrProvidedAmountMass, vrProvidedAmountVolume, vrProductContent,
     /// vrSolutionRateLiquid, vrActiveIngredientMassPerMass, etc.
     /// </summary>
-    public partial class Quantity : BaseNumericValue
+    public partial class Quantity
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2250,7 +2256,9 @@ namespace AgGateway.ADAPT.Standard
     /// The span of time for which field operations contribute to a particular growing season.
     /// For many areas, this is approximately a year in length.  E.g., In the northern
     /// hemisphere, Season "2022" may extend from the first operations following harvest in the
-    /// fall of 2021 to the last harvest activities in the fall of 2022.
+    /// fall of 2021 to the last harvest activities in the fall of 2022.  As such, seasons may
+    /// overlap in months where harvest operations in the prior season are ongoing as field prep
+    /// and fertilizer operations are starting for the new season.
     /// </summary>
     public partial class SeasonElement
     {
@@ -2300,12 +2308,6 @@ namespace AgGateway.ADAPT.Standard
     public partial class Documents
     {
         /// <summary>
-        /// All Loads in the data
-        /// </summary>
-        [JsonProperty("loads", NullValueHandling = NullValueHandling.Ignore)]
-        public List<LoadElement> Loads { get; set; }
-
-        /// <summary>
         /// All Plans in the data
         /// </summary>
         [JsonProperty("plans", NullValueHandling = NullValueHandling.Ignore)]
@@ -2334,87 +2336,6 @@ namespace AgGateway.ADAPT.Standard
         /// </summary>
         [JsonProperty("workRecords", NullValueHandling = NullValueHandling.Ignore)]
         public List<WorkRecordElement> WorkRecords { get; set; }
-    }
-
-    /// <summary>
-    /// All Loads in the data
-    ///
-    /// One or more Load documents
-    ///
-    /// Identifier for a collected amount of something for the purpose of managing as a unit
-    /// </summary>
-    public partial class LoadElement
-    {
-        /// <summary>
-        /// List of supplemental information for this data element
-        /// </summary>
-        [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ContextItemElement> ContextItems { get; set; }
-
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
-        [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
-        public string Description { get; set; }
-
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
-        [JsonProperty("id")]
-        public Id Id { get; set; }
-
-        /// <summary>
-        /// The name of the load, often "Load 1", etc.  Required.
-        /// </summary>
-        [JsonProperty("loadNumber")]
-        public string LoadNumber { get; set; }
-
-        /// <summary>
-        /// The amount of the load.  Required.
-        /// </summary>
-        [JsonProperty("loadQuantity")]
-        public LoadQuantity LoadQuantity { get; set; }
-
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Load Type Representation.
-        /// Required.
-        /// </summary>
-        [JsonProperty("loadTypeCode")]
-        public string LoadTypeCode { get; set; }
-
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
-        [JsonProperty("name")]
-        public string Name { get; set; }
-
-        /// <summary>
-        /// Any Time Scopes governing the duration/location of this Load.
-        /// </summary>
-        [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
-        public List<TimeScopeElement> TimeScopes { get; set; }
-    }
-
-    /// <summary>
-    /// The amount of the load.  Required.
-    ///
-    /// Numerical quantity for the Load.
-    /// </summary>
-    public partial class LoadQuantity : BaseNumericValue
-    {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
-        [JsonProperty("numericValue")]
-        public double NumericValue { get; set; }
-
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
-        [JsonProperty("unitOfMeasureCode")]
-        public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
@@ -2549,7 +2470,7 @@ namespace AgGateway.ADAPT.Standard
     ///
     /// Numeric value for Estimated Area.
     /// </summary>
-    public partial class EstimatedArea : BaseNumericValue
+    public partial class EstimatedArea
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2567,9 +2488,11 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Operations that make up the Plan.  Required.
     ///
-    /// Collections of records for individual operations on a field at one time.
+    /// Collections of records for a single OperationType on a single Field at one time.
     ///
-    /// A collection of records for a single operation on a field at one time.
+    /// Records for a single OperationType on a single Field at one time.  If Device
+    /// Configuration is specified (implements are known), data from each separate Device must be
+    /// in a separate Operation.
     /// </summary>
     public partial class OperationElement
     {
@@ -2605,17 +2528,19 @@ namespace AgGateway.ADAPT.Standard
         public List<GuidanceAllocationElement> GuidanceAllocations { get; set; }
 
         /// <summary>
+        /// On Work Record Operations, the textual identifier of a harvest load.  E.g., "Load 1".
+        /// Separate loads must be tracked as separate Operations.  Any load quantities may
+        /// consequently be tracked as Summary Values.
+        /// </summary>
+        [JsonProperty("harvestLoadIdentifier", NullValueHandling = NullValueHandling.Ignore)]
+        public string HarvestLoadIdentifier { get; set; }
+
+        /// <summary>
         /// Identification entity that defines both an integer instance id (as a primary key) and a
         /// collection of persistent identifiers
         /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
-
-        /// <summary>
-        /// Optional mapping to a Load document. Operations must be split by separate Loads.
-        /// </summary>
-        [JsonProperty("loadId", NullValueHandling = NullValueHandling.Ignore)]
-        public string LoadId { get; set; }
 
         /// <summary>
         /// The name of this item.  Required.
@@ -2824,7 +2749,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The shift East of a guidance pattern
     /// </summary>
-    public partial class EastShift : BaseNumericValue
+    public partial class EastShift
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2842,7 +2767,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The North shift of a Guidance Pattern
     /// </summary>
-    public partial class NorthShift : BaseNumericValue
+    public partial class NorthShift
     {
         /// <summary>
         /// The actual value of the Measurement
@@ -2860,7 +2785,7 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Perpendicular offset of a guidance pattern by a fixed offset.
     /// </summary>
-    public partial class PropagationOffset : BaseNumericValue
+    public partial class PropagationOffset
     {
         /// <summary>
         /// The actual value of the Measurement
