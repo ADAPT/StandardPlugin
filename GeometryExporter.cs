@@ -9,7 +9,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal static class GeometryExporter
     {
-        private static LinearRing ConvertToLinerRing(AdaptShapes.LinearRing srcRing)
+        private static LinearRing ConvertToLinearRing(AdaptShapes.LinearRing srcRing)
         {
             if (srcRing == null || srcRing.Points.IsNullOrEmpty())
             {
@@ -43,7 +43,17 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new LineString(coordinates.ToArray());
         }
 
-        internal static string ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon)
+        private static LinearRing ConvertShapeToLinearRing(AdaptShapes.Shape srcShape)
+        {
+            if (srcShape is AdaptShapes.LinearRing srcLinearRing)
+            {
+                return ConvertToLinearRing(srcLinearRing);
+            }
+
+            return null;
+        }
+
+        internal static string ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon, IEnumerable<AdaptShapes.Shape> srcInteriorAttributes = null)
         {
             if (srcMultiPolygon == null || srcMultiPolygon.Polygons.IsNullOrEmpty())
             {
@@ -53,8 +63,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             var polygons = new List<Polygon>(srcMultiPolygon.Polygons.Count);
             foreach (var frameworkPolygon in srcMultiPolygon.Polygons)
             {
-                var outerRing = ConvertToLinerRing(frameworkPolygon.ExteriorRing);
-                var innerRings = frameworkPolygon.InteriorRings.Select(ConvertToLinerRing).ToArray();
+                var outerRing = ConvertToLinearRing(frameworkPolygon.ExteriorRing);
+                var innerRings = frameworkPolygon.InteriorRings.Select(ConvertToLinearRing).ToArray();
+
+                if (polygons.Count == 0 && srcInteriorAttributes != null)
+                {
+                    innerRings = innerRings.Concat(srcInteriorAttributes.Select(ConvertShapeToLinearRing).Where(x => x != null)).ToArray();
+                }
 
                 polygons.Add(new Polygon(outerRing, innerRings));
             }

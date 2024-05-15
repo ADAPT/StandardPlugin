@@ -73,7 +73,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<Standard.DeviceElement> output = new List<Standard.DeviceElement>();
             foreach (var frameworkDeviceElement in srcDeviceElements)
             {
-                if (frameworkDeviceElement.DeviceElementType != DeviceElementTypeEnum.Machine)
+                if (frameworkDeviceElement.ParentDeviceId != 0 && frameworkDeviceElement.DeviceModelId == 0)
                 {
                     continue;
                 }
@@ -81,7 +81,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 Standard.DeviceElement device = new Standard.DeviceElement()
                 {
                     Id = ExportID(frameworkDeviceElement.Id),
-                    Description = frameworkDeviceElement.Description,
+                    Name = frameworkDeviceElement.Description,
                     DeviceModelId = frameworkDeviceElement.DeviceModelId.ToString(CultureInfo.InvariantCulture),
                     SerialNumber = frameworkDeviceElement.SerialNumber,
                     ContextItems = ExportContextItem(frameworkDeviceElement.ContextItems)
@@ -110,7 +110,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     ManufacturerId = frameworkProduct.ManufacturerId?.ToString(CultureInfo.InvariantCulture),
                     ProductFormCode = ExportProductForm(frameworkProduct.Form),
                     ProductStatusCode = ExportProductStatus(frameworkProduct.Status),
-                    ProductTypeCode = ExportProductType(frameworkProduct.ProductType, frameworkProduct.Category),
+                    ProductTypeCode = ExportProductType(frameworkProduct.Category),
                     SpecificGravity = frameworkProduct.SpecificGravity,
                     ContextItems = ExportContextItem(frameworkProduct.ContextItems)
                 };
@@ -190,6 +190,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         break;
                     case CropNutritionIngredient nutritionIngredient:
                         ingredient.CropNutritionIngredientItemCode = ExportNutritionIngredientCode(nutritionIngredient.IngredientCode);
+                        ingredient.IsActiveIngredient = true;
                         break;
                 }
 
@@ -209,22 +210,36 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             switch (code)
             {
-                case "NITROGEN":
-                case "PHOSPHORUS":
-                case "POTASSIUM":
-                case "CALCIUM":
-                case "MAGNESIUM":
-                case "SULPHUR":
-                case "BORON":
-                case "CHLORINE":
-                case "COPPER":
-                case "IRON":
-                case "MANGANESE":
-                case "MOLYBDENUM":
-                case "ZINC":
-                case "FULVIC_ACID":
-                case "HUMIC_ACID":
-                    return code;
+                case "DTIN":
+                    return "NITROGEN";
+                case "DTIP":
+                    return "PHOSPHORUS";
+                case "DTIK":
+                    return "POTASSIUM";
+                case "DTICA":
+                    return "CALCIUM";
+                case "DTIMG":
+                    return "MAGNESIUM";
+                case "DTIS":
+                    return "SULPHUR";
+                case "DTIB":
+                    return "BORON";
+                case "DTICL":
+                    return "CHLORINE";
+                case "DTICU":
+                    return "COPPER";
+                case "DTIFE":
+                    return "IRON";
+                case "DTIMN":
+                    return "MANGANESE";
+                case "DTIMO":
+                    return "MOLYBDENUM";
+                case "DTIZN":
+                    return "ZINC";
+                case "DTIFULVICACID":
+                    return "FULVIC_ACID";
+                case "DTIHUMICACID":
+                    return "HUMIC_ACID";
             }
 
             return null;
@@ -259,32 +274,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                 return srcProductComponent.IngredientId.ToString(CultureInfo.InvariantCulture);
             }
 
-            var srcIngredient = srcIngredients.FirstOrDefault(x => x.Id.ReferenceId == srcProductComponent.IngredientId);
-            if (srcIngredient == null)
-            {
-                return null;
-            }
-
-            var product = new ProductElement
-            {
-                Id = ExportID(srcIngredient.Id),
-                Description = srcIngredient.Description,
-                ProductStatusCode = ExportProductStatus(srcIngredient is ActiveIngredient ? ProductStatusEnum.Active : ProductStatusEnum.Inactive),
-                ProductFormCode = ExportProductForm(ProductFormEnum.Unknown),
-                ProductTypeCode = ExportProductType(ProductTypeEnum.Generic, CategoryEnum.Unknown),
-                ContextItems = ExportContextItem(srcIngredient.ContextItems)
-            };
-
-            _catalog.Products.Add(product);
-            return product.Id.ReferenceId;
+            return null;
         }
 
-        private string ExportProductType(ProductTypeEnum productType, CategoryEnum category)
+        private string ExportProductType(CategoryEnum category)
         {
             switch (category)
             {
                 case CategoryEnum.Additive:
-                    break;
+                    return "NOT_SPECIFIED";
                 case CategoryEnum.Adjuvant:
                     return "SPRAY_ADJUVANT";
                 case CategoryEnum.Carrier:
@@ -306,23 +304,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case CategoryEnum.NitrogenStabilizer:
                     return "NITROGEN_STABILIZER";
                 case CategoryEnum.Pesticide:
+                    return "NOT_SPECIFIED";
                 case CategoryEnum.Unknown:
+                    return "NOT_SPECIFIED";
                 case CategoryEnum.Variety:
                     break;
-            }
-
-            switch (productType)
-            {
-                case ProductTypeEnum.Chemical:
-                    return "FERTILIZER_CHEMICAL";
-                case ProductTypeEnum.Fertilizer:
-                    break;
-                case ProductTypeEnum.Mix:
-                    return "MIX";
-                case ProductTypeEnum.Variety:
-                    return "SEED";
-                default:
-                    return "NOT_SPECIFIED";
             }
             return null;
         }
@@ -693,7 +679,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                         End = timeScope.End,
                     });
                 }
-
             }
             return output;
         }
@@ -807,12 +792,39 @@ namespace AgGateway.ADAPT.StandardPlugin
                     FieldId = frameworkFieldBoundary.FieldId.ToString(CultureInfo.InvariantCulture),
                     GNssSource = ExportGpsSource(frameworkFieldBoundary.GpsSource),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
-                    Geometry = GeometryExporter.ExportMultiPolygon(frameworkFieldBoundary.SpatialData),
-                    ContextItems = ExportContextItem(frameworkFieldBoundary.ContextItems)
+                    Geometry = GeometryExporter.ExportMultiPolygon(frameworkFieldBoundary.SpatialData, frameworkFieldBoundary.InteriorBoundaryAttributes?.Select(x => x.Shape)),
+                    SeasonIds = ExportTimeScopesAsSeasons(frameworkFieldBoundary.TimeScopes)?.Select(x => x.Id.ReferenceId).ToList(),
+                    ContextItems = ExportContextItem(frameworkFieldBoundary.ContextItems),
                 };
                 output.Add(fieldBoundary);
             }
             _catalog.FieldBoundaries = output;
+        }
+
+        private List<SeasonElement> ExportTimeScopesAsSeasons(List<TimeScope> srcTimeScopes)
+        {
+            if (srcTimeScopes.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            List<SeasonElement> output = new List<SeasonElement>();
+            foreach (var frameworkTimeScope in srcTimeScopes)
+            {
+                if (frameworkTimeScope.DateContext != DateContextEnum.CropSeason)
+                {
+                    continue;
+                }
+
+                _catalog.Seasons.Add(new SeasonElement
+                {
+                    Id = ExportID(frameworkTimeScope.Id),
+                    Description = frameworkTimeScope.Description,
+                    Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
+                    End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
+               });
+            }
+            return output;
         }
 
         private void ExportFields(List<Field> srcFields)
@@ -1094,15 +1106,78 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         private static T ExportAsNumericValue<T>(NumericRepresentationValue srcRepresentationValue)
-            where T : BaseNumericValue
+            where T : class
         {
             if (srcRepresentationValue == null)
             {
                 return default(T);
             }
-            BaseNumericValue output = Activator.CreateInstance<T>();
-            output.NumericValue = srcRepresentationValue.Value.Value;
-            output.UnitOfMeasureCode = srcRepresentationValue.UserProvidedUnitOfMeasure?.Code ?? srcRepresentationValue.Representation?.Code;
+
+            var numericValue = srcRepresentationValue.Value.Value;
+            var unitOfMeasureCode = srcRepresentationValue.UserProvidedUnitOfMeasure?.Code ?? srcRepresentationValue.Representation?.Code;
+
+            var output = Activator.CreateInstance(typeof(T));
+
+            switch (output)
+            {
+                case Density density:
+                    density.NumericValue = numericValue;
+                    density.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case MixTotalQuantity mixTotalQuantity:
+                    mixTotalQuantity.NumericValue = numericValue;
+                    mixTotalQuantity.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case Quantity quantity:
+                    quantity.NumericValue = numericValue;
+                    quantity.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case SwathWidth swathWidth:
+                    swathWidth.NumericValue = numericValue;
+                    swathWidth.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case Radius radius:
+                    radius.NumericValue = numericValue;
+                    radius.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case ArableArea arableArea:
+                    arableArea.NumericValue = numericValue;
+                    arableArea.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case ReferenceWeight referenceWeight:
+                    referenceWeight.NumericValue = numericValue;
+                    referenceWeight.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case StandardPayableMoisture standardPayableMoisture:
+                    standardPayableMoisture.NumericValue = numericValue;
+                    standardPayableMoisture.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case EstimatedPrecision estimatedPrecision:
+                    estimatedPrecision.NumericValue = numericValue;
+                    estimatedPrecision.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case HorizontalAccuracy horizontalAccuracy:
+                    horizontalAccuracy.NumericValue = numericValue;
+                    horizontalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case VerticalAccuracy verticalAccuracy:
+                    verticalAccuracy.NumericValue = numericValue;
+                    verticalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                default:
+                    throw new ApplicationException($"Unsupported numeric value - {typeof(T).Name}");
+            }
 
             return (T)output;
         }
