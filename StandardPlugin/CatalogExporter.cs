@@ -19,6 +19,7 @@ namespace AgGateway.ADAPT.StandardPlugin
     {
         private Standard.Catalog _catalog;
         private List<IError> _errors;
+        private readonly CommonExporters _commonExporters;
 
         private CatalogExporter(Root root)
         {
@@ -28,6 +29,8 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.CustomDataTypeDefinitions = new List<CustomDataTypeDefinitionElement>();
             _catalog.Parties = new List<PartyElement>();
             _errors = new List<IError>();
+
+            _commonExporters = new CommonExporters(root);
         }
 
         public static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel, Root exportRoot, Properties properties = null)
@@ -60,6 +63,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 _catalog.Parties = null;
             }
+            _errors.AddRange(_commonExporters.Errors);
             return _errors;
         }
 
@@ -80,11 +84,11 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 Standard.DeviceElement device = new Standard.DeviceElement()
                 {
-                    Id = ExportID(frameworkDeviceElement.Id),
+                    Id = _commonExporters.ExportID(frameworkDeviceElement.Id),
                     Name = frameworkDeviceElement.Description,
                     DeviceModelId = frameworkDeviceElement.DeviceModelId.ToString(CultureInfo.InvariantCulture),
                     SerialNumber = frameworkDeviceElement.SerialNumber,
-                    ContextItems = ExportContextItem(frameworkDeviceElement.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkDeviceElement.ContextItems)
                 };
                 output.Add(device);
             }
@@ -103,7 +107,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 ProductElement product = new ProductElement()
                 {
-                    Id = ExportID(frameworkProduct.Id),
+                    Id = _commonExporters.ExportID(frameworkProduct.Id),
                     Description = frameworkProduct.Description,
                     BrandId = frameworkProduct.BrandId?.ToString(CultureInfo.InvariantCulture),
                     Density = ExportAsNumericValue<Density>(frameworkProduct.Density),
@@ -112,7 +116,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     ProductStatusCode = ExportProductStatus(frameworkProduct.Status),
                     ProductTypeCode = ExportProductType(frameworkProduct.Category),
                     SpecificGravity = frameworkProduct.SpecificGravity,
-                    ContextItems = ExportContextItem(frameworkProduct.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkProduct.ContextItems)
                 };
                 product.ProductComponents = ExportProductComponents(frameworkProduct.ProductComponents, srcIngredients);
 
@@ -175,9 +179,9 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 var ingredient = new IngredientElement
                 {
-                    Id = ExportID(frameworkIngredient.Id),
+                    Id = _commonExporters.ExportID(frameworkIngredient.Id),
                     Description = frameworkIngredient.Description,
-                    ContextItems = ExportContextItem(frameworkIngredient.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkIngredient.ContextItems)
                 };
 
                 switch (frameworkIngredient)
@@ -351,9 +355,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 ManufacturerElement manufacturer = new ManufacturerElement()
                 {
-                    Id = ExportID(frameworkManufacturer.Id),
+                    Id = _commonExporters.ExportID(frameworkManufacturer.Id),
                     Description = frameworkManufacturer.Description,
-                    ContextItems = ExportContextItem(frameworkManufacturer.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkManufacturer.ContextItems)
                 };
                 output.Add(manufacturer);
             }
@@ -372,7 +376,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 GuidancePatternElement guidancePattern = new GuidancePatternElement()
                 {
-                    Id = ExportID(frameworkGuidancePattern.Id),
+                    Id = _commonExporters.ExportID(frameworkGuidancePattern.Id),
                     Description = frameworkGuidancePattern.Description,
                     GNssSource = ExportGpsSource(frameworkGuidancePattern.GpsSource),
                     GuidancePatternTypeCode = ExportGuidancePatternType(frameworkGuidancePattern.GuidancePatternType),
@@ -505,7 +509,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 GuidanceGroupElement guidanceGroup = new GuidanceGroupElement()
                 {
-                    Id = ExportID(frameworkGuidanceGroup.Id),
+                    Id = _commonExporters.ExportID(frameworkGuidanceGroup.Id),
                     Description = frameworkGuidanceGroup.Description,
                     GuidancePatternIds = frameworkGuidanceGroup.GuidancePatternIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
                     BoundaryGeometry = GeometryExporter.ExportMultiPolygon(frameworkGuidanceGroup.BoundingPolygon)
@@ -528,11 +532,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 var series = srcDeviceSeries.FirstOrDefault(x => x.Id.ReferenceId == frameworkDeviceModel.SeriesId);
                 DeviceModelElement deviceModel = new DeviceModelElement()
                 {
-                    Id = ExportID(frameworkDeviceModel.Id),
+                    Id = _commonExporters.ExportID(frameworkDeviceModel.Id),
                     Description = frameworkDeviceModel.Description,
                     BrandId = frameworkDeviceModel.BrandId.ToString(CultureInfo.InvariantCulture),
                     DeviceSeries = series?.Description,
-                    ContextItems = ExportContextItem(frameworkDeviceModel.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkDeviceModel.ContextItems)
                 };
                 output.Add(deviceModel);
             }
@@ -551,10 +555,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 BrandElement brand = new BrandElement()
                 {
-                    Id = ExportID(frameworkBrand.Id),
+                    Id = _commonExporters.ExportID(frameworkBrand.Id),
                     Description = frameworkBrand.Description,
                     ManufacturerId = frameworkBrand.ManufacturerId.ToString(CultureInfo.InvariantCulture),
-                    ContextItems = ExportContextItem(frameworkBrand.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkBrand.ContextItems)
                 };
                 output.Add(brand);
             }
@@ -573,13 +577,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 PartyElement party = new PartyElement()
                 {
-                    Id = ExportID(frameworkPerson.Id),
+                    Id = _commonExporters.ExportID(frameworkPerson.Id),
                     Name = !string.IsNullOrWhiteSpace(frameworkPerson.CombinedName)
                         ? frameworkPerson.CombinedName
                         : string.Join(" ", Extensions.FilterEmptyValues(frameworkPerson.FirstName, frameworkPerson.MiddleName, frameworkPerson.LastName)),
                     PartyTypeCode = "INDIVIDUAL",
                     ContactInfo = ExportContactInfo(srcContactInfos.FirstOrDefault(x => x.Id.ReferenceId == frameworkPerson.ContactInfoId)),
-                    ContextItems = ExportContextItem(frameworkPerson.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkPerson.ContextItems)
                 };
                 output.Add(party);
             }
@@ -599,11 +603,11 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 PartyElement party = new PartyElement()
                 {
-                    Id = ExportID(frameworkCompany.Id),
+                    Id = _commonExporters.ExportID(frameworkCompany.Id),
                     Name = frameworkCompany.Name,
                     PartyTypeCode = "BUSINESS",
                     ContactInfo = ExportContactInfo(srcContactInfos.FirstOrDefault(x => x.Id.ReferenceId == frameworkCompany.ContactInfoId)),
-                    ContextItems = ExportContextItem(frameworkCompany.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkCompany.ContextItems)
                 };
                 output.Add(party);
             }
@@ -623,7 +627,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 CropZoneElement cropZone = new CropZoneElement()
                 {
-                    Id = ExportID(frameworkCropZone.Id),
+                    Id = _commonExporters.ExportID(frameworkCropZone.Id),
                     Name = frameworkCropZone.Description,
                     ArableArea = ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
                     CropId = frameworkCropZone.CropId?.ToString(CultureInfo.InvariantCulture),
@@ -631,108 +635,13 @@ namespace AgGateway.ADAPT.StandardPlugin
                     GNssSource = ExportGpsSource(frameworkCropZone.BoundarySource),
                     GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
                     Notes = ExportNotes(frameworkCropZone.Notes),
-                    TimeScopes = ExportTimeScopes(frameworkCropZone.TimeScopes),
+                    TimeScopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes),
                     BoundaryGeometry = GeometryExporter.ExportMultiPolygon(frameworkCropZone.BoundingRegion),
-                    ContextItems = ExportContextItem(frameworkCropZone.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkCropZone.ContextItems)
                 };
                 output.Add(cropZone);
             }
             _catalog.CropZones = output;
-        }
-
-        private List<TimeScopeElement> ExportTimeScopes(List<TimeScope> srcTimeScopes)
-        {
-            if (srcTimeScopes.IsNullOrEmpty())
-            {
-                return null;
-            }
-
-            List<TimeScopeElement> output = new List<TimeScopeElement>();
-            foreach (var frameworkTimeScope in srcTimeScopes)
-            {
-                if (frameworkTimeScope.DateContext == DateContextEnum.TimingEvent)
-                {
-                    _errors.Add(new Error
-                    {
-                        Description = "Discarding TimingEVent TimeScope",
-                        Id = frameworkTimeScope.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
-                    });
-                    continue;
-                }
-
-                var timeScope = new TimeScopeElement
-                {
-                    DateContextCode = ExportDateContext(frameworkTimeScope.DateContext),
-                    Duration = frameworkTimeScope.Duration?.TotalSeconds,
-                    Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
-                    End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
-                };
-                output.Add(timeScope);
-
-                if (frameworkTimeScope.DateContext == DateContextEnum.CropSeason)
-                {
-                    _catalog.Seasons.Add(new SeasonElement
-                    {
-                        Id = ExportID(frameworkTimeScope.Id),
-                        Description = frameworkTimeScope.Description,
-                        Start = timeScope.Start,
-                        End = timeScope.End,
-                    });
-                }
-            }
-            return output;
-        }
-
-        private string ExportDateContext(DateContextEnum dateContext)
-        {
-            switch (dateContext)
-            {
-                case DateContextEnum.ActualEnd:
-                case DateContextEnum.ActualShipping:
-                case DateContextEnum.ActualStart:
-                    return "ACTUAL";
-                case DateContextEnum.Approval:
-                    return "APPROVAL";
-                case DateContextEnum.Calibration:
-                    return "CALIBRATION";
-                case DateContextEnum.Creation:
-                    return "CREATION";
-                case DateContextEnum.Expiration:
-                    return "EXPIRATION";
-                case DateContextEnum.Installation:
-                    return "INSTALLATION";
-                case DateContextEnum.Load:
-                    return "LOAD";
-                case DateContextEnum.Maintenance:
-                    return "MAINTENANCE";
-                case DateContextEnum.Modification:
-                    return "MODIFICATION";
-                case DateContextEnum.PhenomenonTime:
-                    return "PHENOMENON_TIME";
-                case DateContextEnum.ProposedEnd:
-                case DateContextEnum.ProposedStart:
-                    return "PROPOSED";
-                case DateContextEnum.RequestedEnd:
-                case DateContextEnum.RequestedStart:
-                    return "REQUESTED";
-                case DateContextEnum.RequestedShipping:
-                    return "REQUESTED_SHIPPING";
-                case DateContextEnum.ResultTime:
-                    return "RESULT_TIME";
-                case DateContextEnum.Resume:
-                    return "RESUME";
-                case DateContextEnum.Suspend:
-                    return "SUSPEND";
-                case DateContextEnum.Unload:
-                    return "UNLOAD";
-                case DateContextEnum.Unspecified:
-                    return "UNSPECIFIED";
-                case DateContextEnum.ValidityRange:
-                    return "VALIDITY";
-                default:
-                    return null;
-            }
-
         }
 
         private List<string> ExportNotes(List<Note> srcNotes)
@@ -763,12 +672,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 CropElement crop = new CropElement()
                 {
-                    Id = ExportID(frameworkCrop.Id),
+                    Id = _commonExporters.ExportID(frameworkCrop.Id),
                     Name = frameworkCrop.Name,
                     ParentId = frameworkCrop.ParentId?.ToString(CultureInfo.InvariantCulture),
                     ReferenceWeight = ExportAsNumericValue<ReferenceWeight>(frameworkCrop.ReferenceWeight),
                     StandardPayableMoisture = ExportAsNumericValue<StandardPayableMoisture>(frameworkCrop.StandardPayableMoisture),
-                    ContextItems = ExportContextItem(frameworkCrop.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkCrop.ContextItems)
                 };
                 output.Add(crop);
             }
@@ -787,14 +696,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 FieldBoundaryElement fieldBoundary = new FieldBoundaryElement()
                 {
-                    Id = ExportID(frameworkFieldBoundary.Id),
+                    Id = _commonExporters.ExportID(frameworkFieldBoundary.Id),
                     Name = frameworkFieldBoundary.Description,
                     FieldId = frameworkFieldBoundary.FieldId.ToString(CultureInfo.InvariantCulture),
                     GNssSource = ExportGpsSource(frameworkFieldBoundary.GpsSource),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
                     Geometry = GeometryExporter.ExportMultiPolygon(frameworkFieldBoundary.SpatialData, frameworkFieldBoundary.InteriorBoundaryAttributes?.Select(x => x.Shape)),
                     SeasonIds = ExportTimeScopesAsSeasons(frameworkFieldBoundary.TimeScopes)?.Select(x => x.Id.ReferenceId).ToList(),
-                    ContextItems = ExportContextItem(frameworkFieldBoundary.ContextItems),
+                    ContextItems = _commonExporters.ExportContextItems(frameworkFieldBoundary.ContextItems),
                 };
                 output.Add(fieldBoundary);
             }
@@ -818,7 +727,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 _catalog.Seasons.Add(new SeasonElement
                 {
-                    Id = ExportID(frameworkTimeScope.Id),
+                    Id = _commonExporters.ExportID(frameworkTimeScope.Id),
                     Description = frameworkTimeScope.Description,
                     Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
                     End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
@@ -839,13 +748,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 FieldElement grower = new FieldElement()
                 {
-                    Id = ExportID(frameworkField.Id),
+                    Id = _commonExporters.ExportID(frameworkField.Id),
                     Name = frameworkField.Description,
                     FarmId = frameworkField.FarmId?.ToString(CultureInfo.InvariantCulture),
                     ArableArea = ExportAsNumericValue<ArableArea>(frameworkField.Area),
                     ActiveBoundaryId = frameworkField.ActiveBoundaryId?.ToString(CultureInfo.InvariantCulture),
                     GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                    ContextItems = ExportContextItem(frameworkField.ContextItems)
+                    ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
                 };
                 output.Add(grower);
             }
@@ -864,10 +773,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 FarmElement grower = new FarmElement()
                 {
-                    Id = ExportID(frameworkFarm.Id),
+                    Id = _commonExporters.ExportID(frameworkFarm.Id),
                     Name = frameworkFarm.Description,
                     GrowerId = frameworkFarm.GrowerId?.ToString(CultureInfo.InvariantCulture),
-                    ContextItems = ExportContextItem(frameworkFarm.ContextItems),
+                    ContextItems = _commonExporters.ExportContextItems(frameworkFarm.ContextItems),
                     PartyId = ExportContactInfo(frameworkFarm.ContactInfo, frameworkFarm.Description)
                 };
                 output.Add(grower);
@@ -888,8 +797,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                 GrowerElement grower = new GrowerElement()
                 {
                     Name = frameworkGrower.Name,
-                    Id = ExportID(frameworkGrower.Id),
-                    ContextItems = ExportContextItem(frameworkGrower.ContextItems),
+                    Id = _commonExporters.ExportID(frameworkGrower.Id),
+                    ContextItems = _commonExporters.ExportContextItems(frameworkGrower.ContextItems),
                     PartyId = ExportContactInfo(frameworkGrower.ContactInfo, frameworkGrower.Name)
                 };
                 output.Add(grower);
@@ -945,39 +854,6 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
         }
 
-        public static Id ExportID(CompoundIdentifier srcId)
-        {
-            var id = new Id { ReferenceId = srcId.ReferenceId.ToString(CultureInfo.InvariantCulture) };
-
-            var ids = new List<UniqueIdElement>();
-            foreach (var srcUniqueId in srcId.UniqueIds)
-            {
-                var uniqueId = new UniqueIdElement
-                {
-                    IdText = srcUniqueId.Id,
-                    IdSource = string.IsNullOrEmpty(srcUniqueId.Source) ? srcUniqueId.Source : null,
-                };
-                switch (srcUniqueId.IdType)
-                {
-                    case IdTypeEnum.UUID: uniqueId.IdTypeCode = "UUID"; break;
-                    case IdTypeEnum.LongInt: uniqueId.IdTypeCode = "LONGINT"; break;
-                    case IdTypeEnum.String: uniqueId.IdTypeCode = "STRING"; break;
-                    case IdTypeEnum.URI: uniqueId.IdTypeCode = "URI"; break;
-                }
-                switch (srcUniqueId.SourceType)
-                {
-                    case IdSourceTypeEnum.URI: uniqueId.IdSourceTypeCode = "URI"; break;
-                    case IdSourceTypeEnum.GLN: uniqueId.IdSourceTypeCode = "GLN"; break;
-                }
-                ids.Add(uniqueId);
-            }
-            if (ids.Any())
-            {
-                id.UniqueIds = ids;
-            }
-            return id;
-        }
-
         private string ExportContactInfo(ApplicationDataModel.Logistics.ContactInfo contactInfo, string ownerName)
         {
             if (contactInfo == null)
@@ -987,7 +863,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             var party = new PartyElement
             {
-                Id = ExportID(contactInfo.Id),
+                Id = _commonExporters.ExportID(contactInfo.Id),
                 Name = ownerName,
                 PartyTypeCode = "UNKNOWN",
                 ContactInfo = ExportContactInfo(contactInfo)
@@ -1014,7 +890,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             PostalCode =  srcContactInfo.PostalCode,
                         }
                     },
-                ContextItems = ExportContextItem(srcContactInfo.ContextItems)
+                ContextItems = _commonExporters.ExportContextItems(srcContactInfo.ContextItems)
             };
 
             if (!srcContactInfo.Contacts.IsNullOrEmpty())
@@ -1047,62 +923,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                     return "MOBILE_PHONE";
             }
             return null;
-        }
-
-        private List<ContextItemElement> ExportContextItem(List<ContextItem> srcContextItems, int level = 1)
-        {
-            if (srcContextItems.IsNullOrEmpty())
-            {
-                return null;
-            }
-            if (level > 2)
-            {
-                _errors.Add(new Error
-                {
-                    Description = "Discarding nested context items",
-                });
-                return null;
-            }
-
-            var output = new List<ContextItemElement>();
-            foreach (var frameworkContextItem in srcContextItems)
-            {
-                var contextItem = new ContextItemElement
-                {
-                    ValueText = frameworkContextItem.Value,
-                    ContextItems = ExportContextItem(frameworkContextItem.NestedItems, level + 1)
-                };
-
-                if (frameworkContextItem.Code.EqualsIgnoreCase("US-EPA-N"))
-                {
-                    contextItem.DefinitionCode = "US-EPA-RegistrationNumber";
-                }
-                else
-                {
-                    contextItem.DefinitionCode = frameworkContextItem.Code;
-                    TryAddCustomDataType(frameworkContextItem.Code, frameworkContextItem.ValueUOM, "TEXT", "INVALID");
-                }
-
-                output.Add(contextItem);
-            }
-            return output;
-        }
-
-        private void TryAddCustomDataType(string code, string valueUOM, string baseTypeCode, string statusCode)
-        {
-            var existingCustomDataType = _catalog.CustomDataTypeDefinitions.FirstOrDefault(x => x.DefinitionCode == code);
-            if (existingCustomDataType != null)
-            {
-                return;
-            }
-
-            _catalog.CustomDataTypeDefinitions.Add(new CustomDataTypeDefinitionElement
-            {
-                DefinitionCode = code,
-                Name = $"{code} ({valueUOM})",
-                DataDefinitionBaseTypeCode = baseTypeCode,
-                DataDefinitionStatusCode = statusCode,
-            });
         }
 
         private static T ExportAsNumericValue<T>(NumericRepresentationValue srcRepresentationValue)
