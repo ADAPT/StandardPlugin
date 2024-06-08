@@ -29,7 +29,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog = root.Catalog;
             _errors = new List<IError>();
 
-            _documents.Recommendations = new List<RecommendationElement>();
+            _documents.WorkOrders = new List<WorkOrderElement>();
 
             _commonExporters = new CommonExporters(root);
         }
@@ -62,20 +62,20 @@ namespace AgGateway.ADAPT.StandardPlugin
                     continue;
                 }
 
-
                 var rxPrescription = new OperationElement
                 {
                     Id = _commonExporters.ExportID(frameworkRxPrescription.Id),
                     Name = frameworkRxPrescription.Description,
-                    OperationTypeCode = ExportOperationType(frameworkRxPrescription.OperationType),
+                    OperationTypeCode = _commonExporters.ExportOperationType(frameworkRxPrescription.OperationType),
                     ProductIds = frameworkRxPrescription.ProductIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                    Variables = ExportRxProductLookups(frameworkRxPrescription.RxProductLookups),
                     TimeScopes = _commonExporters.ExportTimeScopes(frameworkRxPrescription.TimeScopes),
-                    PartyRoles = ExportPersonRoles(frameworkRxPrescription.PersonRoles),
+                    PartyRoles = _commonExporters.ExportPersonRoles(frameworkRxPrescription.PersonRoles),
                     SpatialRecordsFile = ExportRates(frameworkRxPrescription),
                     ContextItems = _commonExporters.ExportContextItems(frameworkRxPrescription.ContextItems)
                 };
 
-                _documents.Recommendations.Add(new RecommendationElement
+                _documents.WorkOrders.Add(new WorkOrderElement
                 {
                     Operations = new List<OperationElement> { rxPrescription }
                 });
@@ -83,9 +83,45 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         }
 
+        private List<VariableElement> ExportRxProductLookups(List<RxProductLookup> srcRxProductLookups)
+        {
+            if (srcRxProductLookups.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            List<VariableElement> output = new List<VariableElement>();
+            for (int index = 0; index < srcRxProductLookups.Count; index ++)
+            {
+                var frameworkRxProductLookup = srcRxProductLookups[index];
+                var variable = new VariableElement
+                {
+                    Id = _commonExporters.ExportID(frameworkRxProductLookup.Id),
+                    FileDataIndex = index + 1,
+                    LossOfGnssRate = ExportNumericValue(frameworkRxProductLookup.LossOfGpsRate),
+                    OutOfFieldRate = ExportNumericValue(frameworkRxProductLookup.OutOfFieldRate),
+                    ProductId = frameworkRxProductLookup.ProductId?.ToString(CultureInfo.InvariantCulture),
+                    // TODO: Should map to ADAPT Standard Code
+                    DefinitionCode = frameworkRxProductLookup.Representation?.Code
+                };
+                output.Add(variable);
+            }
+            return output;
+        }
+
+        private double? ExportNumericValue(NumericRepresentationValue srcNumericValue)
+        {
+            return srcNumericValue?.Value?.Value;
+        }
+
         private string ExportRates(RasterGridPrescription srcRxPrescription)
         {
             if (srcRxPrescription.Rates.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            if (!ValidateInputs(srcRxPrescription))
             {
                 return null;
             }
@@ -106,32 +142,48 @@ namespace AgGateway.ADAPT.StandardPlugin
                 tiff.SetField(TiffTag.IMAGELENGTH, rowCount);
                 tiff.SetField(TiffTag.SAMPLESPERPIXEL, productCount);
                 tiff.SetField(TiffTag.SAMPLEFORMAT, SampleFormat.IEEEFP);
-                tiff.SetField(TiffTag.BITSPERSAMPLE, 32);
+                tiff.SetField(TiffTag.BITSPERSAMPLE, 64);
                 tiff.SetField(TiffTag.PLANARCONFIG, PlanarConfig.CONTIG);
                 tiff.SetField(TiffTag.ROWSPERSTRIP, 1);
-                tiff.SetField(TiffTag.PHOTOMETRIC, Photometric.PALETTE);
+                tiff.SetField(TiffTag.PHOTOMETRIC, Photometric.RGB);
 
-                //tiff.SetField(TiffTag.COMPRESSION, Compression.DEFLATE);
+                tiff.SetField(TiffTag.COMPRESSION, Compression.DEFLATE);
 
-                double[] tiePoints = new double[] { 0, 0, 0, srcRxPrescription.Origin.X, srcRxPrescription.Origin.Y, 0 };
+                // Rows are ordered bottom to top in RxPrescription but in GeoTIFF they are stored top to bottom.
+                // Set model tie point to north-west corner which corresponds to the last row in input data
+                // and reverse the order of cells later on.
+
+                // Model tie point specifies location of a point in raster space (first 3 numbers) in vector space (last 3 numbers)
+                var originX = srcRxPrescription.Origin.X;
+                var originY = srcRxPrescription.Origin.Y + srcRxPrescription.CellHeight.Value.Value * rowCount;
+                double[] tiePoints = new double[] { 0, rowCount - 1, 0, originX, originY, 0 };
                 tiff.SetField(TiffTag.GEOTIFF_MODELTIEPOINTTAG, 6, tiePoints);
-                double[] pixelScale = new double[] { srcRxPrescription.CellHeight.Value.Value, srcRxPrescription.CellWidth.Value.Value, 0 };
+
+                double[] pixelScale = new double[] { srcRxPrescription.CellWidth.Value.Value, srcRxPrescription.CellHeight.Value.Value, 0 };
                 tiff.SetField(TiffTag.GEOTIFF_MODELPIXELSCALETAG, 3, pixelScale);
+
+                // First line a header, defining version and how many values follows.
+                // Each next line consist of 4 fields: geo key, value location/type, how many values, actual value
                 short[] geoDir = new short[4 * 4] 
                 {
-                       1,    1,  2,  3 ,
-                     1024,   0,  1,  2 ,
-                     1025,   0,  1,  1 ,
-                     2048,   0,  1,  4326 
+                    // KeyDirectoryVersion (1), KeyRevision (1), MinorRevision (2), NumberOfKeys (3 - how many additional lines)
+                      1,    1,  2,  3 ,
+                    // GTModelTypeGeoKey (1024), TIFFTagLocation (0 - short), Count (1), ModelTypeGeographic (2 - Geographic latitude-longitude System)
+                    1024,   0,  1,  2 ,
+                    // GTRasterTypeGeoKey (1025), TIFFTagLocation (0 - short), Count (1), RasterPixelIsArea (1)
+                    1025,   0,  1,  1 ,
+                    // GeographicTypeGeoKey (2048), TIFFTagLocation (0 - short), Count (1), GCS_WGS_84 (4326)
+                    2048,   0,  1,  4326 
                 };
                 tiff.SetField(TiffTag.GEOTIFF_GEOKEYDIRECTORYTAG, geoDir.Length, geoDir);
 
-                int rowIndex = 0;
-                foreach (var cells in srcRxPrescription.Rates.Batch(columnCount))
+                var rows = srcRxPrescription.Rates.Batch(columnCount).ToList();
+                rows.Reverse();
+                for ( int rowIndex = 0; rowIndex < rows.Count; rowIndex++)
                 {
+                    var cells = rows[rowIndex];
                     var byteData = cells.SelectMany(x => x.RxRates).SelectMany(x => BitConverter.GetBytes(x.Rate)).ToArray();
                     tiff.WriteEncodedStrip(rowIndex, byteData, byteData.Length);
-                    rowIndex++;
                 }
             }
 
@@ -139,95 +191,31 @@ namespace AgGateway.ADAPT.StandardPlugin
             return fileName;
         }
 
-        private List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
+        private bool ValidateInputs(RasterGridPrescription srcRxPrescription)
         {
-            if (srcPersonRoles.IsNullOrEmpty())
-            {
-                return null;
-            }
-
-            List<Roo> output = new List<Roo>();
-            foreach (var frmeworkPersonRole in srcPersonRoles)
-            {
-                var partyRole = new Roo
-                {
-                    PartyId = frmeworkPersonRole.PersonId.ToString(CultureInfo.InvariantCulture),
-                    RoleCode = ExportRole(frmeworkPersonRole.Role),
-                    TimeScopes = _commonExporters.ExportTimeScopes(frmeworkPersonRole.TimeScopes)
-                };
-                output.Add(partyRole);
-            }
-            return output;
-        }
-
-        private string ExportRole(EnumeratedValue role)
-        {
-            if (role.Representation.Code != "dtPersonRole")
+            var uom = srcRxPrescription.CellHeight.Value.UnitOfMeasure?.Code;
+            if (uom != null && !uom.EqualsIgnoreCase("arcdeg"))
             {
                 _errors.Add(new Error
                 {
-                    Description = $"Found unsupported Role - {role.Representation.Code}",
+                    Id = srcRxPrescription.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
+                    Description = "CellHeight unif of measure should either be null or arcdeg.",
                 });
-                return "UNKNOWN";
+                return false;
             }
 
-            switch (role.Value.Value)
+            uom = srcRxPrescription.CellWidth.Value.UnitOfMeasure?.Code;
+            if (uom != null && !uom.EqualsIgnoreCase("arcdeg"))
             {
-                case "dtiPersonRoleAuthorizer":
-                    return "AUTHORIZER";
-                case "dtiPersonRoleCropAdvisor":
-                    return "CROP_ADVISOR";
-                case "dtiPersonRoleCustomer":
-                    return "CUSTOMER";
-                case "dtiPersonRoleCustomServiceProvider":
-                    return "CUSTOM_SERVICE_PROVIDER";
-                case "dtiPersonRoleDataServicesProvider":
-                    return "DATA_SERVICES_PROVIDER";
-                case "dtiPersonRoleEndUser":
-                    return "END_USER";
-                case "dtiPersonRoleFarmManager":
-                    return "FARM_MANAGER";
-                case "dtiPersonRoleFinancier":
-                    return "FINANCIER";
-                default:
-                    return "UNKNOWN";
+                _errors.Add(new Error
+                {
+                    Id = srcRxPrescription.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
+                    Description = "CellWidth unif of measure should either be null or arcdeg.",
+                });
+                return false;
             }
-        }
 
-        private string ExportOperationType(OperationTypeEnum operationType)
-        {
-            switch (operationType)
-            {
-                case OperationTypeEnum.Baling:
-                    return "HARVEST_PRE_HARVEST";
-                case OperationTypeEnum.CropProtection:
-                    return "APPLICATION_CROP_PROTECTION";
-                case OperationTypeEnum.DataCollection:
-                    return "VEHICLE_DATA_COLLECTION_GENERAL";
-                case OperationTypeEnum.Fertilizing:
-                    return "APPLICATION_FERTILIZING";
-                case OperationTypeEnum.ForageHarvesting:
-                    return "HARVEST_PRE_HARVEST";
-                case OperationTypeEnum.Harvesting:
-                    return "HARVEST";
-                case OperationTypeEnum.Irrigation:
-                    return "APPLICATION_IRRIGATION";
-                case OperationTypeEnum.Mowing:
-                    return "HARVEST_PRE_HARVEST";
-                case OperationTypeEnum.SowingAndPlanting:
-                    return "APPLICATION_SOWING_AND_PLANTING";
-                case OperationTypeEnum.Swathing:
-                    return "HARVEST_PRE_HARVEST";
-                case OperationTypeEnum.Tillage:
-                    return "FIELD_PREPARATION_TILLAGE";
-                case OperationTypeEnum.Transport:
-                    return "VEHICLE_DATA_COLLECTION_GENERAL";
-                case OperationTypeEnum.Unknown:
-                    return "UNKNOWN";
-                case OperationTypeEnum.Wrapping:
-                    return "HARVEST_POST_HARVEST";
-            }
-            return null;
+            return true;
         }
 
         private void TagExtender(Tiff tiff)

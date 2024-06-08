@@ -3,6 +3,8 @@ using System.Globalization;
 using System.Linq;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Common;
+using AgGateway.ADAPT.ApplicationDataModel.Logistics;
+using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
 
 namespace AgGateway.ADAPT.StandardPlugin
@@ -136,6 +138,97 @@ namespace AgGateway.ADAPT.StandardPlugin
                 output.Add(contextItem);
             }
             return output;
+        }
+
+        public string ExportRole(EnumeratedValue role)
+        {
+            if (role.Representation.Code != "dtPersonRole")
+            {
+                _errors.Add(new Error
+                {
+                    Description = $"Found unsupported Role - {role.Representation.Code}",
+                });
+                return "UNKNOWN";
+            }
+
+            switch (role.Value.Value)
+            {
+                case "dtiPersonRoleAuthorizer":
+                    return "AUTHORIZER";
+                case "dtiPersonRoleCropAdvisor":
+                    return "CROP_ADVISOR";
+                case "dtiPersonRoleCustomer":
+                    return "CUSTOMER";
+                case "dtiPersonRoleCustomServiceProvider":
+                    return "CUSTOM_SERVICE_PROVIDER";
+                case "dtiPersonRoleDataServicesProvider":
+                    return "DATA_SERVICES_PROVIDER";
+                case "dtiPersonRoleEndUser":
+                    return "END_USER";
+                case "dtiPersonRoleFarmManager":
+                    return "FARM_MANAGER";
+                case "dtiPersonRoleFinancier":
+                    return "FINANCIER";
+                default:
+                    return "UNKNOWN";
+            }
+        }
+
+        public List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
+        {
+            if (srcPersonRoles.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            List<Roo> output = new List<Roo>();
+            foreach (var frmeworkPersonRole in srcPersonRoles)
+            {
+                var partyRole = new Roo
+                {
+                    PartyId = frmeworkPersonRole.PersonId.ToString(CultureInfo.InvariantCulture),
+                    RoleCode = ExportRole(frmeworkPersonRole.Role),
+                    TimeScopes = ExportTimeScopes(frmeworkPersonRole.TimeScopes)
+                };
+                output.Add(partyRole);
+            }
+            return output;
+        }
+
+        public string ExportOperationType(OperationTypeEnum operationType)
+        {
+            switch (operationType)
+            {
+                case OperationTypeEnum.Baling:
+                    return "HARVEST";
+                case OperationTypeEnum.CropProtection:
+                    return "APPLICATION_CROP_PROTECTION";
+                case OperationTypeEnum.DataCollection:
+                    return "VEHICLE_DATA_COLLECTION_GENERAL";
+                case OperationTypeEnum.Fertilizing:
+                    return "APPLICATION_FERTILIZING";
+                case OperationTypeEnum.ForageHarvesting:
+                    return "HARVEST";
+                case OperationTypeEnum.Harvesting:
+                    return "HARVEST";
+                case OperationTypeEnum.Irrigation:
+                    return "APPLICATION_IRRIGATION";
+                case OperationTypeEnum.Mowing:
+                    return "HARVEST_PRE_HARVEST";
+                case OperationTypeEnum.SowingAndPlanting:
+                    return "APPLICATION_SOWING_AND_PLANTING";
+                case OperationTypeEnum.Swathing:
+                    return "HARVEST_PRE_HARVEST";
+                case OperationTypeEnum.Tillage:
+                    return "FIELD_PREPARATION_TILLAGE";
+                case OperationTypeEnum.Transport:
+                    return "VEHICLE_DATA_COLLECTION_GENERAL";
+                case OperationTypeEnum.Unknown:
+                    return "UNKNOWN";
+                case OperationTypeEnum.Wrapping:
+                    return "HARVEST_POST_HARVEST";
+            }
+            return null;
         }
 
         private static string ExportDateContext(DateContextEnum dateContext)

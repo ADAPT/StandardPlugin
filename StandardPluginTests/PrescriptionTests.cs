@@ -25,13 +25,13 @@ namespace StandardPluginTests
             SetupProducts();
 
             var rxPrescription = SetupPrescription();
-            for (int w = 0; w < rxPrescription.ColumnCount; w++)
+            for (int h = 0; h < rxPrescription.RowCount; h++)
             {
-                for (int h = 0; h < rxPrescription.RowCount; h++)
+                for (int w = 0; w < rxPrescription.ColumnCount; w++)
                 {
                     var rates = rxPrescription.RxProductLookups.Select((x, i) => new RxRate
                     {
-                        Rate = w * rxPrescription.RowCount + h + i * 100,
+                        Rate = h * rxPrescription.ColumnCount + w + i * 100,
                         RxProductLookupId = x.Id.ReferenceId
                     }).ToList();
                     rxPrescription.Rates.Add(new RxCellLookup { RxRates = rates });
