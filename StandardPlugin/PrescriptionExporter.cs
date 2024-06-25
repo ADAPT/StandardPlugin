@@ -155,7 +155,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 // Model tie point specifies location of a point in raster space (first 3 numbers) in vector space (last 3 numbers)
                 var originX = srcRxPrescription.Origin.X;
-                var originY = srcRxPrescription.Origin.Y + srcRxPrescription.CellHeight.Value.Value * rowCount;
+                var originY = srcRxPrescription.Origin.Y + srcRxPrescription.CellHeight.Value.Value;
                 double[] tiePoints = new double[] { 0, rowCount - 1, 0, originX, originY, 0 };
                 tiff.SetField(TiffTag.GEOTIFF_MODELTIEPOINTTAG, 6, tiePoints);
 
