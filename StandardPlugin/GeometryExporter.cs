@@ -9,6 +9,8 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal static class GeometryExporter
     {
+        public const double EarthRadiusM = 6378137;
+
         private static LinearRing ConvertToLinearRing(AdaptShapes.LinearRing srcRing)
         {
             if (srcRing == null || srcRing.Points.IsNullOrEmpty())
@@ -167,6 +169,53 @@ namespace AgGateway.ADAPT.StandardPlugin
                 X = x1 + dx12 * t1,
                 Y = y1 + dy12 * t1
             };
+        }
+
+
+         //See https://gis.stackexchange.com/questions/312831/get-lat-long-given-current-point-distance-and-bearing
+        public static Point Destination(Point startPoint, double distanceM, double bearingDeg)
+        {
+            double latRad = DegreesToRads(startPoint.Y);
+            double lonRad = DegreesToRads(startPoint.X);
+            double bearingRad = DegreesToRads(bearingDeg);
+            double length = distanceM / EarthRadiusM;
+            double otherLat = Math.Asin(Math.Sin(latRad) *
+                                        Math.Cos(length) +
+                                        Math.Cos(latRad) *
+                                        Math.Sin(length) *
+                                        Math.Cos(bearingRad));
+            double otherLon = lonRad +
+                              Math.Atan2(
+                                   Math.Sin(bearingRad) *
+                                   Math.Sin(length) *
+                                   Math.Cos(latRad),
+                                   Math.Cos(length) -
+                                   Math.Sin(latRad) *
+                                   Math.Sin(otherLat)
+                                  );
+            return new Point(RadsToDegrees(otherLat), RadsToDegrees(otherLon));
+        }
+
+        public static double DegreesToRads(double d)
+        {
+            return d * (Math.PI / 180d);
+        }
+
+        public static double RadsToDegrees(double r)
+        {
+            return r * (180d / Math.PI);
+        }
+
+        //See https://community.esri.com/t5/coordinate-reference-systems-blog/distance-on-a-sphere-the-haversine-formula/ba-p/902128#:~:text=For%20example%2C%20haversine(%CE%B8),longitude%20of%20the%20two%20points
+        public static double Distance(Point point1, Point point2)
+        {
+            double latRad1 = DegreesToRads(point1.Y);
+            double latRad2 = DegreesToRads(point2.Y);
+            double deltaLat = DegreesToRads(point2.Y - point1.Y);
+            double deltaLon = DegreesToRads(point2.X - point1.X);
+            double a = Math.Pow(Math.Sin(deltaLat / 2d), 2) + Math.Cos(latRad1) * Math.Cos(latRad2) * Math.Pow(Math.Sin(deltaLon / 2d), 2);
+            double c = 2d * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return c * EarthRadiusM;
         }
     }
 }
