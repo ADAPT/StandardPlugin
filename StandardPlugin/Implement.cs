@@ -1,16 +1,15 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
-using AgGateway.ADAPT.ApplicationDataModel.Representations;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
-    internal class ImplementDefinition
+    internal class Implement
     {
-        public ImplementDefinition(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition)
+        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition)
         {
             Sections = new List<SectionDefinition>();
 
@@ -34,6 +33,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                         SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, deviceElementConfig, deviceElement);
                         while (deviceElement != null)
                         {
+                            TopDeviceElement = deviceElement; //Keep overwriting this until we get the top Device Element
+
                             if (deviceElement != section.DeviceElement)
                             {
                                 var ancestorConfigs = catalog.DeviceElementConfigurations.Where(x => x.DeviceElementId == deviceElement.Id.ReferenceId);
@@ -47,7 +48,14 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     }
                                 }
                             }
-                            deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+
+                            //At the top level, the parent id often maps to the device model
+                            DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+                            if (DeviceModel == null)
+                            { 
+                                //We are not at the top
+                                deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+                            }
                         }
 
                         if (position == SourceGeometryPosition.GPSReceiver)
@@ -92,90 +100,43 @@ namespace AgGateway.ADAPT.StandardPlugin
                 else
                 {
                     Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null));
+                    TopDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == implementConfiguration.DeviceElementId);
+                    //TODO is there a Device Model?
                 }
             }
         }
+
+        public DeviceElement TopDeviceElement { get; set; }
+        public DeviceModel  DeviceModel { get; set; }
         public List<SectionDefinition> Sections { get; set; }
-    }
 
-    internal class SectionDefinition
-    {
-        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement)
+        public string GetDefinitionKey()
         {
-            //DeviceElementUse = deviceElementUse;
-            //DeviceElementConfiguration = deviceElementConfiguration;
-            DeviceElement = deviceElement;
-            
-            WorkstateDefinition = deviceElementUse.GetWorkingDatas().OfType<EnumeratedWorkingData>().FirstOrDefault(x => x.Representation.Code == "dtRecordingStatus");
-            NumericDefinitions = new List<NumericWorkingData>();
-            NumericDefinitions.AddRange(deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>());
-
-            if (deviceElementConfiguration is SectionConfiguration sectionConfiguration)
+            StringBuilder builder = new StringBuilder();
+            builder.Append(DeviceModel?.Description ?? string.Empty);
+            builder.Append("_");
+            builder.Append(TopDeviceElement?.Description ?? string.Empty);
+            builder.Append("_");
+            builder.Append(TopDeviceElement?.SerialNumber ?? string.Empty);
+            foreach(var section in Sections)
             {
-                WidthM = sectionConfiguration.SectionWidth?.AsConvertedDouble("m") ?? 0d;
+                builder.Append(section.GetDefinitionKey());
             }
-            else if (deviceElementConfiguration is ImplementConfiguration implementConfiguration)
-            {
-                WidthM = implementConfiguration.PhysicalWidth.AsConvertedDouble("m") ?? implementConfiguration.Width?.AsConvertedDouble("m") ?? 0d;
-            }
-
-            Offset = deviceElementConfiguration.AsOffset();
+            return builder.ToString().AsMD5Hash();
         }
-        public Offset Offset { get; set; }
-        //public DeviceElementUse DeviceElementUse { get; set; }
-        //public DeviceElementConfiguration DeviceElementConfiguration { get; set; }
-        public DeviceElement DeviceElement { get; set; }
-        public EnumeratedWorkingData WorkstateDefinition { get; set; }
-        public List<NumericWorkingData> NumericDefinitions { get; set; }
 
-        public double WidthM { get; set; }
-
-        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse)
+        public List<NumericWorkingData>  GetDistinctWorkingDatas()
         {
-            foreach (var workingData in ancestorUse.GetWorkingDatas())
+            List<NumericWorkingData> distinctWorkingDatas = new List<NumericWorkingData>();
+            foreach (var nwd in Sections.SelectMany(s => s.NumericDefinitions))
             {
-                if (WorkstateDefinition == null &&
-                    workingData.Representation.Code == "dtRecordingStatus" &&
-                    workingData is EnumeratedWorkingData ewd)
+                if (!distinctWorkingDatas.Any(d => d.Representation.Code == nwd.Representation.Code))
                 {
-                    WorkstateDefinition = ewd;
-                }
-                else if (workingData is NumericWorkingData nwd &&
-                    !NumericDefinitions.Any(x => x.Representation.Code == nwd.Representation.Code))
-                {
-                    NumericDefinitions.Add(nwd);
+                    distinctWorkingDatas.Add(nwd);
                 }
             }
-        }
-
-        public bool IsEngaged(SpatialRecord record)
-        {
-            if (WorkstateDefinition != null)
-            {
-                EnumeratedValue engagedValue = record.GetMeterValue(WorkstateDefinition) as EnumeratedValue;
-                return engagedValue.Value.Value == "dtiRecordingStatusOn" || engagedValue.Value.Value == "On";
-            }
-            return true;
+            return distinctWorkingDatas;
         }
     }
 
-    public class Offset
-    {
-        public Offset(double? x, double? y, double? z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
-        }
-        public double? X { get; set; }
-        public double? Y { get; set; }
-        public double? Z { get; set; }
-
-        public Offset Add(Offset other)
-        {
-            return new Offset(((X ?? 0d) + other.X) ?? 0d,
-                            ((Y ?? 0) + other.Y) ?? 0d,
-                            ((Z ?? 0) + other.Z) ?? 0d);
-        }
-    }
 }
