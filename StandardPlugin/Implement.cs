@@ -49,13 +49,14 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 }
                             }
 
+                            deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+
+                            //TODO
                             //At the top level, the parent id often maps to the device model
-                            DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
-                            if (DeviceModel == null)
-                            { 
-                                //We are not at the top
-                                deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
-                            }
+                            // if (deviceElement == null)
+                            // { 
+                            //     DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+                            // }
                         }
 
                         if (position == SourceGeometryPosition.GPSReceiver)

@@ -73,7 +73,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             if (WorkstateDefinition != null)
             {
                 EnumeratedValue engagedValue = record.GetMeterValue(WorkstateDefinition) as EnumeratedValue;
-                return engagedValue.Value.Value == "dtiRecordingStatusOn" || engagedValue.Value.Value == "On";
+                return engagedValue != null && (engagedValue.Value.Value == "dtiRecordingStatusOn" || engagedValue.Value.Value == "On");
             }
             return true;
         }
@@ -110,6 +110,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(distanceData)).Value.Value;
             }
             return xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
+        }
+
+        public void ClearLeadingEdge()
+        {
+            _latestLeadingEdge = null;
         }
     }
 

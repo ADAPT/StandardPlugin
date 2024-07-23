@@ -191,7 +191,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                    Math.Sin(latRad) *
                                    Math.Sin(otherLat)
                                   );
-            return new Point(RadsToDegrees(otherLat), RadsToDegrees(otherLon));
+            return new Point(RadsToDegrees(otherLon), RadsToDegrees(otherLat));
         }
 
         public static double DegreesToRads(double d)

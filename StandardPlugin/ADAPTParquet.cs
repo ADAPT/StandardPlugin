@@ -20,7 +20,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 return new Dictionary<string, string>
                 {
                     ["geo"] =
-                    "{\"version\":\"1.0.0-beta.1\",\"primary_column\":\"wkb\",\"columns\":{\"wkb\":{\"encoding\":\"WKB\",\"geometry_types\":[\"Point\"],\"edges\":0,\"epoch\":0.0,\"additionalProperties\":{}}},\"additionalProperties\":{}}"
+                    "{\"version\":\"1.0.0\",\"primary_column\":\"geometry\",\"columns\":{\"geometry\":{\"encoding\":\"WKB\",\"geometry_types\":[\"Polygon\"]}}}"
                 };
             }
         }
@@ -32,8 +32,8 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 dataFields.Add(new DataField<string>("timestamp"));
             }
-            dataFields.AddRange(columnData.Columns.Select(n => new DataField<double>(n.SrcName))); //TODO change the name to destination name
-            dataFields.Add(new DataField<byte[]>("wkb"));
+            dataFields.AddRange(columnData.Columns.Select(n => new DataField<double?>(n.SrcName))); //TODO change the name to destination name
+            dataFields.Add(new DataField<byte[]>("geometry"));
             Schema = new ParquetSchema(dataFields);
             ColumnData = columnData;
         }

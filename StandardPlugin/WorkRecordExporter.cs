@@ -69,10 +69,11 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             int exportIndex = 0;
+            Directory.CreateDirectory(_exportPath);
             foreach(var implementKey in columnDataByImplement.Keys)
             {
                 //TODO possiblity for too much data in memory
-                string outputFile = Path.Combine(_exportPath + (++exportIndex).ToString() + ".parquet"); 
+                string outputFile = Path.Combine(_exportPath, (++exportIndex).ToString() + ".parquet"); 
                 ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByImplement[implementKey]);
                 await writer.Write(outputFile);
             }
@@ -86,7 +87,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             SpatialRecord priorSpatialRecord = null;
             foreach (var record in operationData.GetSpatialRecords())
             {
-                foreach (var section in implement.Sections.Where(s => s.IsEngaged(record)))
+                foreach (var section in implement.Sections)
                 {
                     runningOutput.Timestamps.Add(record.Timestamp);
 
@@ -103,8 +104,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                             dataColumn.Values.Add(null);
                         }
                     }
-                    var polygon = section.AsCoveragePolygon(record, priorSpatialRecord);
-                    runningOutput.Geometries.Add(polygon.ToBinary());
+                    if (section.IsEngaged(record))
+                    {
+                        var polygon = section.AsCoveragePolygon(record, priorSpatialRecord);
+                        runningOutput.Geometries.Add(polygon.ToBinary());
+                    }
+                    else
+                    {
+                        section.ClearLeadingEdge();
+                    }
                 }
                 priorSpatialRecord = record;
             }
