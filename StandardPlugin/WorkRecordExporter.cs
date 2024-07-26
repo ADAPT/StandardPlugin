@@ -89,27 +89,28 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 foreach (var section in implement.Sections)
                 {
-                    runningOutput.Timestamps.Add(record.Timestamp);
-
-                    foreach (var dataColumn in runningOutput.Columns)
-                    {
-                        var workingData = section.NumericDefinitions.FirstOrDefault(x => x.Representation.Code == dataColumn.SrcName);
-                        double? doubleVal = null;
-                        if (workingData != null)
-                        {
-                            var value = record.GetMeterValue(workingData) as NumericRepresentationValue;
-                            if (value != null)
-                            {
-                                doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode);
-                            }
-                        }
-                        dataColumn.Values.Add(doubleVal);
-
-                    }
-                    if (section.IsEngaged(record) && 
+                   if (section.IsEngaged(record) && 
                         section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon) )
                     {
                         runningOutput.Geometries.Add(polygon.ToBinary());
+
+                        runningOutput.Timestamps.Add(record.Timestamp);
+
+                        foreach (var dataColumn in runningOutput.Columns)
+                        {
+                            var workingData = section.NumericDefinitions.FirstOrDefault(x => x.Representation.Code == dataColumn.SrcName);
+                            double? doubleVal = null;
+                            if (workingData != null)
+                            {
+                                var value = record.GetMeterValue(workingData) as NumericRepresentationValue;
+                                if (value != null)
+                                {
+                                    doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode);
+                                }
+                            }
+                            dataColumn.Values.Add(doubleVal);
+
+                        }
                     }
                     else
                     {
