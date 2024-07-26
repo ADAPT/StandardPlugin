@@ -11,7 +11,7 @@ using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
-    public class ADAPTParquetWriter
+    internal class ADAPTParquetWriter
     {
         public static Dictionary<string, string> GeoParquetMetadata
         {
@@ -25,7 +25,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
         }
 
-        public ADAPTParquetWriter(ADAPTColumnData columnData)
+        public ADAPTParquetWriter(ADAPTParquetColumnData columnData)
         {
             List<DataField> dataFields = new List<DataField>();
             if (columnData.Timestamps.Any())
@@ -39,7 +39,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         private ParquetSchema Schema { get; set; }
-        private ADAPTColumnData ColumnData { get; set; }
+        private ADAPTParquetColumnData ColumnData { get; set; }
 
         public async Task Write(string outputFile)
         {
@@ -67,12 +67,12 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
     }
 
-    public class ADAPTColumnData
+    internal class ADAPTParquetColumnData
     {
-        public ADAPTColumnData(IEnumerable<NumericWorkingData> distinctNumericColumns)
+        public ADAPTParquetColumnData(IEnumerable<NumericWorkingData> distinctNumericColumns, CommonExporters commonExporters)
         {
             Timestamps = new List<DateTime>();
-            Columns = distinctNumericColumns.Select(x => new ADAPTDataColumn(x.Representation.Code, x.UnitOfMeasure.Code)).ToList();
+            Columns = distinctNumericColumns.Select(x => new ADAPTDataColumn(x, commonExporters)).ToList();
             Geometries = new List<byte[]>();
         }
         public List<DateTime> Timestamps { get; set; }
@@ -82,12 +82,15 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<byte[]> Geometries { get; set; }
     }
 
-    public class ADAPTDataColumn
+    internal class ADAPTDataColumn
     {
-        public ADAPTDataColumn(string srcName, string uomCode)
+        public ADAPTDataColumn(NumericWorkingData numericWorkingData, CommonExporters commonExporters)
         {
-            SrcName = srcName;
-            SrcUOMCode = uomCode;
+            SrcObject = numericWorkingData;
+            SrcName = numericWorkingData.Representation.Code;
+            SrcUOMCode = numericWorkingData.UnitOfMeasure.Code;
+            TargetName = commonExporters.TypeMappings[numericWorkingData.Representation.Code];
+            TargetUOMCode = commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == TargetName).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
             Values = new List<double?>();
         }
         public string SrcName { get; set; }
@@ -95,6 +98,10 @@ namespace AgGateway.ADAPT.StandardPlugin
         public string SrcUOMCode { get; set; }
 
         public string TargetUOMCode { get; set; }
+
+        public string TargetName { get; set; }
+
+        public NumericWorkingData SrcObject { get; set; }
 
         public List<double?> Values { get; set; }
     }

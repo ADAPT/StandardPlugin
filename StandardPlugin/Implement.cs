@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
+using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 
@@ -9,7 +10,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class Implement
     {
-        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition)
+        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition, Dictionary<string, string> typeMappings)
         {
             Sections = new List<SectionDefinition>();
 
@@ -30,7 +31,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     if (deviceElementConfig != null)
                     {
                         var deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElementConfig.DeviceElementId);
-                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, deviceElementConfig, deviceElement);
+                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, deviceElementConfig, deviceElement, typeMappings);
                         while (deviceElement != null)
                         {
                             TopDeviceElement = deviceElement; //Keep overwriting this until we get the top Device Element
@@ -44,7 +45,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                                     foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
                                     {
-                                        section.AddAncestorWorkingDatas(ancestorUse);
+                                        section.AddAncestorWorkingDatas(ancestorUse, typeMappings);
                                     }
                                 }
                             }
@@ -92,15 +93,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                         SectionConfiguration sectionConfiguration = catalog.DeviceElementConfigurations.First(d => d.Id.ReferenceId == sectionUse.DeviceConfigurationId) as SectionConfiguration;
                         if (sectionConfiguration != null)
                         {
-                            SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null);
-                            section.AddAncestorWorkingDatas(implementUse);
+                            SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, typeMappings);
+                            section.AddAncestorWorkingDatas(implementUse, typeMappings);
                             Sections.Add(section);
                         }
                     }
                 }
                 else
                 {
-                    Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null));
+                    Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null, typeMappings));
                     TopDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == implementConfiguration.DeviceElementId);
                     //TODO is there a Device Model?
                 }
@@ -117,9 +118,17 @@ namespace AgGateway.ADAPT.StandardPlugin
         public DeviceModel  DeviceModel { get; set; }
         public List<SectionDefinition> Sections { get; set; }
 
-        public string GetDefinitionKey()
+        public string GetOperationDefinitionKey(OperationData srcOperation)
         {
             StringBuilder builder = new StringBuilder();
+            builder.Append(srcOperation.OperationType.ToString());
+            builder.Append("_");
+            builder.Append(string.Join("|", srcOperation.ProductIds));
+            builder.Append("_");
+            builder.Append(srcOperation.LoadId?.ToString() ?? string.Empty); //TODO add load to output operation
+            builder.Append(srcOperation.WorkItemOperationId?.ToString() ?? string.Empty); //TODO add these links to output operation
+            builder.Append(srcOperation.PrescriptionId?.ToString() ?? string.Empty);
+            builder.Append("_");
             builder.Append(DeviceModel?.Description ?? string.Empty);
             builder.Append("_");
             builder.Append(TopDeviceElement?.Description ?? string.Empty);

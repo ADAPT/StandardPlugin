@@ -1,11 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Logistics;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
+using Newtonsoft.Json;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -14,10 +17,22 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly List<IError> _errors;
         private readonly Standard.Catalog _catalog;
 
+        public Dictionary<string, string> TypeMappings { get; private set; }
+
+        public AgGateway.ADAPT.DataTypeDefinitions.DataTypeDefinitions StandardDataTypes { get;  private set; }
+
         public CommonExporters(Standard.Root root)
         {
             _catalog = root.Catalog;
             _errors = new List<IError>();
+
+            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/framework-to-standard-type-mappings.json");
+            string mappingData = File.ReadAllText(mappingFile);
+            TypeMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(mappingData);
+
+            var standardTypesFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/adapt-data-type-definitions.json");
+            string typesJson = File.ReadAllText(standardTypesFile);
+            StandardDataTypes = JsonConvert.DeserializeObject<DataTypeDefinitions.DataTypeDefinitions>(typesJson);
         }
 
         public List<IError> Errors

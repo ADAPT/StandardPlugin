@@ -10,13 +10,15 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class SectionDefinition
     {
-        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement)
+        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement, Dictionary<string, string> typeMappings)
         {
             DeviceElement = deviceElement;
             
             WorkstateDefinition = deviceElementUse.GetWorkingDatas().OfType<EnumeratedWorkingData>().FirstOrDefault(x => x.Representation.Code == "dtRecordingStatus");
             NumericDefinitions = new List<NumericWorkingData>();
-            NumericDefinitions.AddRange(deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>());
+
+            //Add only the variables we can map to a standard type
+            NumericDefinitions.AddRange(deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>().Where(nwd => typeMappings.ContainsKey(nwd.Representation.Code)));
 
             if (deviceElementConfiguration is SectionConfiguration sectionConfiguration)
             {
@@ -50,7 +52,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return builder.ToString().AsMD5Hash();
         }
 
-        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse)
+        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse, Dictionary<string, string> typeMappings)
         {
             foreach (var workingData in ancestorUse.GetWorkingDatas())
             {
@@ -61,6 +63,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     WorkstateDefinition = ewd;
                 }
                 else if (workingData is NumericWorkingData nwd &&
+                    typeMappings.ContainsKey(nwd.Representation.Code) &&
                     !NumericDefinitions.Any(x => x.Representation.Code == nwd.Representation.Code))
                 {
                     NumericDefinitions.Add(nwd);
