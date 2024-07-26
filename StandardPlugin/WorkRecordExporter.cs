@@ -93,20 +93,22 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                     foreach (var dataColumn in runningOutput.Columns)
                     {
-                        var workingData = section.NumericDefinitions.Single(x => x.Representation.Code == dataColumn.SrcName);
-                        var value = record.GetMeterValue(workingData) as NumericRepresentationValue;
-                        if (value != null)
+                        var workingData = section.NumericDefinitions.FirstOrDefault(x => x.Representation.Code == dataColumn.SrcName);
+                        double? doubleVal = null;
+                        if (workingData != null)
                         {
-                            dataColumn.Values.Add(value.AsConvertedDouble(dataColumn.TargetUOMCode));
+                            var value = record.GetMeterValue(workingData) as NumericRepresentationValue;
+                            if (value != null)
+                            {
+                                doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode);
+                            }
                         }
-                        else
-                        {
-                            dataColumn.Values.Add(null);
-                        }
+                        dataColumn.Values.Add(doubleVal);
+
                     }
-                    if (section.IsEngaged(record))
+                    if (section.IsEngaged(record) && 
+                        section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon) )
                     {
-                        var polygon = section.AsCoveragePolygon(record, priorSpatialRecord);
                         runningOutput.Geometries.Add(polygon.ToBinary());
                     }
                     else

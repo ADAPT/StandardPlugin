@@ -105,6 +105,12 @@ namespace AgGateway.ADAPT.StandardPlugin
                     //TODO is there a Device Model?
                 }
             }
+
+            //Apply a default width for sections that incorrectly did not report any width
+            foreach (var sectionWithoutWidth in Sections.Where(s => s.WidthM == 0))
+            {
+                sectionWithoutWidth.WidthM = 5d / Sections.Count;
+            }
         }
 
         public DeviceElement TopDeviceElement { get; set; }

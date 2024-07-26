@@ -79,10 +79,17 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         private LeadingEdge _latestLeadingEdge;
-        public Polygon AsCoveragePolygon(SpatialRecord record, SpatialRecord previousRecord)
+        public bool TryGetCoveragePolygon(SpatialRecord record, SpatialRecord previousRecord, out Polygon polygon)
         {
+            polygon = null;
             var adaptPoint = (AgGateway.ADAPT.ApplicationDataModel.Shapes.Point)record.Geometry;
             Point point = new Point(adaptPoint.X, adaptPoint.Y);
+
+            if (point.X == 0 && point.Y == 0)
+            {
+                return false;
+            }
+
             Point priorPoint = null;
             if (previousRecord != null)
             {
@@ -109,7 +116,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(distanceData)).Value.Value;
             }
-            return xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
+            polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
+            if (polygon.IsEmpty || !polygon.IsValid)
+            {
+                return false;
+            }
+            return true;
         }
 
         public void ClearLeadingEdge()
