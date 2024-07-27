@@ -49,11 +49,6 @@ namespace AgGateway.ADAPT.StandardPlugin
         
         private async Task<IEnumerable<IError>> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
         {
-            //TODO this logic will need to be rewritten so that
-            //1. We  create a separate work record for each Field and each set of OperationDatas of the same Operation Type within a few days of one another, regardless of what Logged Data they are in
-            //2. We need to group OperationData objects into Operations inside the WorkRecord based on identical OperationTypes, implement keys, and starting on the same day
-            //3. Each Operation should have 1 parquet export file.
-
             foreach (int fieldId in model.Documents.LoggedData.Select(ld => ld.FieldId).Distinct())
             {
                 Dictionary<string, ADAPTParquetColumnData> columnDataByOutputKey = new Dictionary<string, ADAPTParquetColumnData>();
@@ -85,7 +80,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         }
                        
                         var variables = ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData);
-                        //TODO handle variables
+                        //TODO handle the variables
                     }
                 }
 
@@ -142,6 +137,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                             }
                             dataColumn.Values.Add(doubleVal);
 
+                            //TODO Multivariety - see left/right example https://adaptstandard.org/docs/scenario-001/
+                            //If only one product on the operation, we can just set it on the relevant variables (rate, depth, etc.)
+                            //If more than one, we need to create an additional variable per product during the record iteration as vrProductIndex changes
+                            //The product that is set on a section gets the rate, the other products get a 0
                             if (!variables.Any(v => v.Name == dataColumn.SrcName)) //TODO improve on doing this conditional every time
                             {
                                 VariableElement variable = new VariableElement()
@@ -150,7 +149,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     DefinitionCode = dataColumn.TargetName,
                                     //ProductId =  TODO multivariety etc.
                                     Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
-                                    //TODO rest
+                                    //FileDataIndex = TODO 1-based index of where this data will be in the geoparquet file,
+                                    //TODO rest.  
+                                    //Rate properties are only relevant for Work Order variables, not here
                                 };
                                 variables.Add(variable);
                             }
