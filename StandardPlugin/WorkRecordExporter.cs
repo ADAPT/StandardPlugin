@@ -51,6 +51,12 @@ namespace AgGateway.ADAPT.StandardPlugin
         {
             foreach (int fieldId in model.Documents.LoggedData.Select(ld => ld.FieldId).Distinct())
             {
+                //TODO Summaries
+                //If a one-to-one mapping between source and destination operations, then we can just create SummaryValues on the Operation from the OperationSummaries src data (OperationSummaries mapped to src OperationDatas)
+                //If many-to-one, OperationSummaries should be summed or averaged (depending on presence of unit denominator)
+                //For the Sumamaries at the LoggedData level, LoggedData generates only one OperationData, then we can copy those summary values onto the operation
+                //If LoggedDatas get split in such a way that we cannot logically map them to the output, omit them.
+                
                 Dictionary<string, ADAPTParquetColumnData> columnDataByOutputKey = new Dictionary<string, ADAPTParquetColumnData>();
                 Dictionary<string, List<OperationData>> sourceOperationsByOutputKey = new Dictionary<string, List<OperationData>>();
                 foreach (var fieldLoggedData in model.Documents.LoggedData.Where(ld => ld.FieldId == fieldId))
