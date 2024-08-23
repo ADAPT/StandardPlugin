@@ -9,7 +9,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal static class GeometryExporter
     {
-        public const double EarthRadiusM = 6378137;
+        internal const double EarthRadiusM = 6378137;
 
         private static LinearRing ConvertToLinearRing(AdaptShapes.LinearRing srcRing)
         {
@@ -171,7 +171,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
         }
 
-        public static Point HaversineDestination(Point startPoint, double distanceM, double bearingDeg)
+        internal static Point HaversineDestination(Point startPoint, double distanceM, double bearingDeg)
         {
             double latRad = DegreesToRads(startPoint.Y);
             double lonRad = DegreesToRads(startPoint.X);
@@ -194,17 +194,17 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new Point(RadsToDegrees(otherLon), RadsToDegrees(otherLat));
         }
 
-        public static double DegreesToRads(double d)
+        internal static double DegreesToRads(double d)
         {
             return d * (Math.PI / 180d);
         }
 
-        public static double RadsToDegrees(double r)
+        internal static double RadsToDegrees(double r)
         {
             return r * (180d / Math.PI);
         }
 
-         public static double HaversineDistance(Point point1, Point point2)
+        internal static double HaversineDistance(Point point1, Point point2)
         {
             double latRad1 = DegreesToRads(point1.Y);
             double latRad2 = DegreesToRads(point2.Y);
@@ -215,7 +215,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return c * EarthRadiusM;
         }
 
-        public static double HaversineBearing(Point point1, Point point2)
+        internal static double HaversineBearing(Point point1, Point point2)
         {
             double latRad1 = DegreesToRads(point1.Y);
             double latRad2 = DegreesToRads(point2.Y);

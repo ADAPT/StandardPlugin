@@ -144,7 +144,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             LinearRing exterior = new LinearRing(ringCoordinates.ToArray());
             return new Polygon(exterior);
         }
-         public static string AsMD5Hash(this string input)
+        public static string AsMD5Hash(this string input)
          {
             var bytes = ASCIIEncoding.ASCII.GetBytes(input);
             var hashBytes = new MD5CryptoServiceProvider().ComputeHash(bytes);

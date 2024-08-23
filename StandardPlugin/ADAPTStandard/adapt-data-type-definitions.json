@@ -45,6 +45,34 @@
     {
       "dataDefinitionBaseTypeCode": "NUMERIC",
       "dataDefinitionStatusCode": "VALID",
+      "definitionCode": "AppliedSeedPerAreaTarget",
+      "description": "Seed rate, plant rate, etc. per area",
+      "name": "Applied Seed Per Area (Target)",
+      "numericDataTypeDefinitionAttributes": {
+        "numericDataTypeCode": "Double",
+        "unitOfMeasureCode": "seeds1ha-1"
+      },
+      "scopes": [
+        "Variable"
+      ]
+    },
+    {
+      "dataDefinitionBaseTypeCode": "NUMERIC",
+      "dataDefinitionStatusCode": "VALID",
+      "definitionCode": "AppliedSeedPerAreaActual",
+      "description": "Seed rate, plant rate, etc. per area",
+      "name": "Applied Seed Per Area (Actual)",
+      "numericDataTypeDefinitionAttributes": {
+        "numericDataTypeCode": "Double",
+        "unitOfMeasureCode": "seeds1ha-1"
+      },
+      "scopes": [
+        "Variable"
+      ]
+    },
+    {
+      "dataDefinitionBaseTypeCode": "NUMERIC",
+      "dataDefinitionStatusCode": "VALID",
       "definitionCode": "AppliedVolumePerAreaActual",
       "description": "Liquid applications expressed per area",
       "name": "Applied Volume Per Area (Actual)",

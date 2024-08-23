@@ -67,7 +67,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     OperationTypeCode = _commonExporters.ExportOperationType(frameworkRxPrescription.OperationType),
                     ProductIds = frameworkRxPrescription.ProductIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
                     Variables = ExportRxProductLookups(frameworkRxPrescription.RxProductLookups),
-                    TimeScopes = _commonExporters.ExportTimeScopes(frameworkRxPrescription.TimeScopes),
+                    TimeScopes = _commonExporters.ExportTimeScopes(frameworkRxPrescription.TimeScopes, out _),
                     PartyRoles = _commonExporters.ExportPersonRoles(frameworkRxPrescription.PersonRoles),
                     SpatialRecordsFile = ExportRates(frameworkRxPrescription),
                     ContextItems = _commonExporters.ExportContextItems(frameworkRxPrescription.ContextItems)
