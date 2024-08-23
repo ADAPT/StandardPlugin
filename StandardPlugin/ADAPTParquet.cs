@@ -32,7 +32,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 dataFields.Add(new DataField<string>("timestamp"));
             }
-            dataFields.AddRange(columnData.Columns.Select(n => new DataField<double?>(n.SrcName))); //TODO change the name to destination name
+            dataFields.AddRange(columnData.Columns.Select(n => new DataField<double?>(n.TargetName)));
             dataFields.Add(new DataField<byte[]>("geometry"));
             Schema = new ParquetSchema(dataFields);
             ColumnData = columnData;
@@ -80,6 +80,17 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<ADAPTDataColumn> Columns { get; set; }
 
         public List<byte[]> Geometries { get; set; }
+
+        public int GetDataColumnIndex(ADAPTDataColumn dataColumn)
+        {
+            var columnIndex = Columns.IndexOf(dataColumn);
+            if (columnIndex != -1)
+            {
+                columnIndex += Timestamps.Any() ? 1 : 0;
+            }
+
+            return columnIndex;
+        }
     }
 
     internal class ADAPTDataColumn

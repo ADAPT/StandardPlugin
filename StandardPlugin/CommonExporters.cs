@@ -230,6 +230,35 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
         }
 
+        internal List<GuidanceAllocationElement> ExportGuidanceAllocations(List<int> srcGuidanceAllocationIds, ApplicationDataModel.ADM.ApplicationDataModel model)
+        {
+            if (srcGuidanceAllocationIds.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            List<GuidanceAllocationElement> output = new List<GuidanceAllocationElement>();
+            foreach (var frameworkGuidanceAllocationId in srcGuidanceAllocationIds)
+            {
+                var frmeworkGuidanceAllocation = model.Documents.GuidanceAllocations.FirstOrDefault(x => x.Id.ReferenceId == frameworkGuidanceAllocationId);
+                if (frmeworkGuidanceAllocation == null)
+                {
+                    continue;
+                }
+
+                var guidanceAllocation = new GuidanceAllocationElement
+                {
+                    Id = ExportID(frmeworkGuidanceAllocation.Id),
+                    GuidanceGroupId = frmeworkGuidanceAllocation.GuidanceGroupId.ToString(CultureInfo.InvariantCulture),
+                    GuidanceShift = ExportGuidanceShift(frmeworkGuidanceAllocation.GuidanceShift, model.Catalog),
+                    TimeScopes = ExportTimeScopes(frmeworkGuidanceAllocation.TimeScopes, out _),
+                    Name = "GuidanceAllocation"
+                };
+            }
+
+            return output;
+        }
+
         public List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
         {
             if (srcPersonRoles.IsNullOrEmpty())
@@ -319,6 +348,21 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case VerticalAccuracy verticalAccuracy:
                     verticalAccuracy.NumericValue = numericValue;
                     verticalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case EastShift eastShift:
+                    eastShift.NumericValue = numericValue;
+                    eastShift.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case NorthShift northShift:
+                    northShift.NumericValue = numericValue;
+                    northShift.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case PropagationOffset propagationOffset:
+                    propagationOffset.NumericValue = numericValue;
+                    propagationOffset.UnitOfMeasureCode = unitOfMeasureCode;
                     break;
 
                 default:
@@ -431,5 +475,26 @@ namespace AgGateway.ADAPT.StandardPlugin
                 DataDefinitionStatusCode = statusCode,
             });
         }
+
+        private Standard.GuidanceShift ExportGuidanceShift(ApplicationDataModel.Guidance.GuidanceShift guidanceShift, ApplicationDataModel.ADM.Catalog catalog)
+        {
+            if (guidanceShift == null)
+            {
+                return null;
+            }
+
+            return new Standard.GuidanceShift
+            {
+                GuidanceGroupId = guidanceShift.GuidanceGroupId.ToString(CultureInfo.InvariantCulture),
+                EastShift = ExportAsNumericValue<EastShift>(guidanceShift.EastShift),
+                GuidancePatternId = guidanceShift.GuidancePatterId.ToString(CultureInfo.InvariantCulture),
+                NorthShift = ExportAsNumericValue<NorthShift>(guidanceShift.NorthShift),
+                PropagationOffset = ExportAsNumericValue<PropagationOffset>(guidanceShift.PropagationOffset),
+                TimeScopes = guidanceShift.TimeScopeIds.IsNullOrEmpty() 
+                    ? null 
+                    : ExportTimeScopes(catalog.TimeScopes.Where(x => guidanceShift.TimeScopeIds.Contains(x.Id.ReferenceId)).ToList(), out _)
+            };
+        }
+
     }
 }

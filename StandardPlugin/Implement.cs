@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
-using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 
@@ -17,10 +16,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<DeviceElementUse> allDeviceElementUses = new List<DeviceElementUse>();
             for (int depth = 0; depth < operation.MaxDepth; depth++)
             {
-                foreach (var deviceElementUse in operation.GetDeviceElementUses(depth))
-                {
-                    allDeviceElementUses.Add(deviceElementUse);
-                }
+                allDeviceElementUses.AddRange(operation.GetDeviceElementUses(depth));
             }
 
             if (definition == SourceDeviceDefinition.DeviceElementHierarchy)
@@ -52,29 +48,34 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                             deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
 
-                            //TODO
                             //At the top level, the parent id often maps to the device model
-                            // if (deviceElement == null)
-                            // { 
-                            //     DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
-                            // }
+                            if (deviceElement == null)
+                            {
+                                DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement.DeviceModelId);
+                            }
                         }
 
                         if (position == SourceGeometryPosition.GPSReceiver)
                         {
+                            MachineConfiguration machineConfiguration = null;
                             //Add any tractor offset
-                            var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.First(e => e.Id.ReferenceId == x)).FirstOrDefault();
+                            var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
                             if (equipConfig != null)
                             {
                                 Connector vehicle = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
                                 if (vehicle != null)
                                 {
-                                    MachineConfiguration machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
-                                    if (machineConfiguration != null)
-                                    {
-                                        section.Offset.Add(machineConfiguration.AsOffset());
-                                    }
+                                    machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
                                 }
+                            }
+                            else
+                            {
+                                machineConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault() as MachineConfiguration;
+                            }
+
+                            if (machineConfiguration != null)
+                            {
+                                section.Offset.Add(machineConfiguration.AsOffset());
                             }
                         }
                         Sections.Add(section);
@@ -84,7 +85,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             else if (definition == SourceDeviceDefinition.Machine0Implement1Section2)
             {
                 var vehicleUses = operation.GetDeviceElementUses(0); 
-                 var implementUse = operation.GetDeviceElementUses(1).FirstOrDefault();
+                var implementUse = operation.GetDeviceElementUses(1).FirstOrDefault();
                 ImplementConfiguration implementConfiguration = catalog.DeviceElementConfigurations.FirstOrDefault(c => c.Id.ReferenceId == implementUse.DeviceConfigurationId) as ImplementConfiguration;
                 if (operation.MaxDepth == 2)
                 {
@@ -102,9 +103,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                 else
                 {
                     Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null, typeMappings));
-                    TopDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == implementConfiguration.DeviceElementId);
-                    //TODO is there a Device Model?
                 }
+                TopDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == implementConfiguration?.DeviceElementId);
+                DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement?.DeviceModelId);
             }
 
             //Apply a default width for sections that incorrectly did not report any width

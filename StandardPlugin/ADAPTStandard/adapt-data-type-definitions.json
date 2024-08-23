@@ -157,12 +157,12 @@
     {
       "dataDefinitionBaseTypeCode": "NUMERIC",
       "dataDefinitionStatusCode": "VALID",
-      "definitionCode": "AppliedTotalCount",
-      "description": "Total Count of Application.  E.g., total seeds.",
-      "name": "Applied Total Count",
+      "definitionCode": "AppliedTotalSeed",
+      "description": "Total Seed Count of Application.",
+      "name": "Applied Total Seed Count",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Integer",
-        "unitOfMeasureCode": "count"
+        "unitOfMeasureCode": "seeds"
       },
       "scopes": [
         "Variable"
@@ -889,7 +889,7 @@
       "name": "Spray Pressure (Target)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -902,7 +902,7 @@
       "name": "Spray Pressure (Actual)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -915,7 +915,7 @@
       "name": "Spray Pressure (Control)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -928,7 +928,7 @@
       "name": "Tillage Pressure (Actual)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -941,7 +941,7 @@
       "name": "Tillage Pressure (Target)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -954,7 +954,7 @@
       "name": "Tillage Pressure (Control)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -968,7 +968,7 @@
       "name": "Row Cleaner Pressure (Actual)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -982,7 +982,7 @@
       "name": "Row Cleaner Pressure (Target)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"
@@ -996,7 +996,7 @@
       "name": "Row Cleaner Pressure (Control)",
       "numericDataTypeDefinitionAttributes": {
         "numericDataTypeCode": "Double",
-        "unitOfMeasureCode": "pa"
+        "unitOfMeasureCode": "Pa"
       },
       "scopes": [
         "Variable"

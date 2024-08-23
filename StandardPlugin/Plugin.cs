@@ -4,6 +4,7 @@ using System.IO;
 using System.Reflection;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.Standard;
+using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -35,7 +36,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public IList<IError> Errors { get; set; }
 
-        public async void Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel, string exportPath, Properties properties = null)
+        public void Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel, string exportPath, Properties properties = null)
         {
             var root = new Root
             {
@@ -45,8 +46,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             var catalogErrors = CatalogExporter.Export(dataModel, root, properties);
             var prescriptionErrors = PrescriptionExporter.Export(dataModel, root, exportPath, properties);
-            var workRecordErrors = await WorkRecordExporter.Export(dataModel, root, exportPath, properties);
-
+            var workRecordErrors = WorkRecordExporter.Export(dataModel, root, exportPath, properties);
 
             var errors = Errors as List<IError>;
             errors.AddRange(catalogErrors);

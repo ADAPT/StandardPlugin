@@ -25,7 +25,7 @@
 
     "vrSeedRateMassSetPoint": "AppliedMassPerAreaTarget",
 
-    "vrTotalSeedQuantityAppliedSeed": "AppliedTotalCount",
+    "vrTotalSeedQuantityAppliedSeed": "AppliedTotalSeed",
 
     "vrTotalSeedQuantityAppliedMass": "AppliedTotalMass",
 
@@ -72,6 +72,8 @@
     "vrForageMassProductivity": "YieldDryMassPerTime",
 
     "vrHarvestMoisture": "CommodityMoisture",
+
+	"vrAvgHarvestMoisture": "CommodityMoisture",
 
     "vrAppHeightTarget": "ApplicationHeightTarget",
 

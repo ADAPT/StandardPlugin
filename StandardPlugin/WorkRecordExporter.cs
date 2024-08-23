@@ -1,29 +1,37 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
+using AgGateway.ADAPT.ApplicationDataModel.Documents;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
+using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class WorkRecordExporter
     {
-        private List<IError> _errors;
+        private readonly List<IError> _errors;
         private readonly SourceGeometryPosition _geometryPositition;
         private readonly SourceDeviceDefinition _deviceDefinition;
-         private readonly CommonExporters _commonExporters;
-        private Standard.Root _root;
+        private readonly CommonExporters _commonExporters;
+        private readonly Standard.Root _root;
+        private int _variableCounter;
 
         private readonly string _exportPath;
         private WorkRecordExporter(Root root, string exportPath, Properties properties)
         {
+            _variableCounter = 0;
             _exportPath = exportPath;
             _root = root;
+            _root.Documents.WorkOrders = new List<WorkOrderElement>();
+            _errors = new List<IError>();
             _commonExporters = new CommonExporters(root);
+
             _geometryPositition = SourceGeometryPosition.GPSReceiver;
             _deviceDefinition = SourceDeviceDefinition.DeviceElementHierarchy;
             if (properties != null)
@@ -41,25 +49,27 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
         }
 
-        public static async Task<IEnumerable<IError>> Export(ApplicationDataModel.ADM.ApplicationDataModel model, Root root, string exportPath, Properties properties)
+        public static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model, Root root, string exportPath, Properties properties)
         {
             WorkRecordExporter exporter = new WorkRecordExporter(root, exportPath, properties);
-            return await exporter.Export(model);
+            return exporter.Export(model);
         }
-        
-        private async Task<IEnumerable<IError>> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
+
+        private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
         {
-            foreach (int fieldId in model.Documents.LoggedData.Select(ld => ld.FieldId).Distinct())
+            foreach (var fieldIdGroupBy in model.Documents.LoggedData.GroupBy(ld => ld.FieldId))
             {
                 //TODO Summaries
                 //If a one-to-one mapping between source and destination operations, then we can just create SummaryValues on the Operation from the OperationSummaries src data (OperationSummaries mapped to src OperationDatas)
                 //If many-to-one, OperationSummaries should be summed or averaged (depending on presence of unit denominator)
                 //For the Sumamaries at the LoggedData level, LoggedData generates only one OperationData, then we can copy those summary values onto the operation
                 //If LoggedDatas get split in such a way that we cannot logically map them to the output, omit them.
-                
+
                 Dictionary<string, ADAPTParquetColumnData> columnDataByOutputKey = new Dictionary<string, ADAPTParquetColumnData>();
                 Dictionary<string, List<OperationData>> sourceOperationsByOutputKey = new Dictionary<string, List<OperationData>>();
-                foreach (var fieldLoggedData in model.Documents.LoggedData.Where(ld => ld.FieldId == fieldId))
+                Dictionary<string, List<VariableElement>> variablesByOutputKey = new Dictionary<string, List<VariableElement>>();
+                Dictionary<string, LoggedData> loggedDataByOutputKey = new Dictionary<string, LoggedData>();
+                foreach (var fieldLoggedData in fieldIdGroupBy)
                 {
                     foreach (var operationData in fieldLoggedData.OperationData)
                     {
@@ -70,7 +80,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         //on this same field within 3 days of another OperationData, they are grouped into the 
                         //same output operation.  For now, we'll group all field data with the same implement/op type into a single operation
                         //E.g. case would be multiple spray operations over the course of a summer with the same sprayer.
-                        
+
                         //Output grouping
                         if (!sourceOperationsByOutputKey.ContainsKey(outputOperationKey))
                         {
@@ -82,48 +92,160 @@ namespace AgGateway.ADAPT.StandardPlugin
                         if (!columnDataByOutputKey.ContainsKey(outputOperationKey))
                         {
                             columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData(implement.GetDistinctWorkingDatas(), _commonExporters));
-
                         }
-                       
-                        var variables = ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData);
-                        //TODO handle the variables
+
+                        if (!variablesByOutputKey.ContainsKey(outputOperationKey))
+                        {
+                            variablesByOutputKey.Add(outputOperationKey, new List<VariableElement>());
+                        }
+                        ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesByOutputKey[outputOperationKey]);
+
+                        loggedDataByOutputKey[outputOperationKey] = fieldLoggedData;
                     }
                 }
 
                 int exportIndex = 0;
                 Directory.CreateDirectory(_exportPath);
-                foreach (var outputOperationKey in sourceOperationsByOutputKey.Keys)
+
+                foreach (var kvp in sourceOperationsByOutputKey)
                 {
+                    string outputFileName = (++exportIndex).ToString() + ".parquet";
+                    var loggedData = loggedDataByOutputKey[kvp.Key];
+                    var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
+                    var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
+
                     Standard.OperationElement outputOperation = new OperationElement()
                     {
-                        OperationTypeCode = _commonExporters.ExportOperationType(sourceOperationsByOutputKey[outputOperationKey].First().OperationType),
-                        //TODO all the rest of the properties
+                        OperationTypeCode = _commonExporters.ExportOperationType(kvp.Value.First().OperationType),
+                        ContextItems = _commonExporters.ExportContextItems(kvp.Value.First().ContextItems),
+                        Name = string.Join(";", kvp.Value.Select(x => x.Description)),
+                        Variables = variablesByOutputKey[kvp.Key],
+                        ProductIds = productIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                        HarvestLoadIdentifier = ExportLoad(kvp.Value, model.Documents.Loads),
+                        SpatialRecordsFile = outputFileName,
+                        GuidanceAllocations = _commonExporters.ExportGuidanceAllocations(loggedData.GuidanceAllocationIds, model),
+                        PartyRoles = _commonExporters.ExportPersonRoles(model.Catalog.PersonRoles.Where(x => loggedData.PersonRoleIds.Contains(x.Id.ReferenceId)).ToList()),
+                        SummaryValues = ExportSummaryValues(summary, variablesByOutputKey[kvp.Key], productIds),
                     };
 
                     //Output any spatial data
-                    if (columnDataByOutputKey.ContainsKey(outputOperationKey))
+                    string outputFile = Path.Combine(_exportPath, outputFileName);
+                    ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByOutputKey[kvp.Key]);
+                    AsyncContext.Run(async () => await writer.Write(outputFile));
+
+                    var loggedDataIdAsString = loggedData.Id.ReferenceId.ToString(CultureInfo.InvariantCulture);
+                    var workOrder = _root.Documents.WorkOrders.FirstOrDefault(x => x.Id.ReferenceId == loggedDataIdAsString);
+                    if (workOrder == null)
                     {
-                        string outputFile = Path.Combine(_exportPath, (++exportIndex).ToString() + ".parquet");
-                        ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByOutputKey[outputOperationKey]);
-                        await writer.Write(outputFile);
+                        workOrder = new WorkOrderElement
+                        {
+                            Operations = new List<OperationElement>(),
+                            FieldId = loggedData.FieldId?.ToString(CultureInfo.InvariantCulture),
+                            Id = _commonExporters.ExportID(loggedData.Id),
+                            CropZoneId = loggedData.CropZoneId?.ToString(CultureInfo.InvariantCulture),
+                            Name = loggedData.Description,
+                            Notes = loggedData.Notes.Select(x => x.Description).ToList(),
+                            TimeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds),
+                            SeasonId = seasonIds?.FirstOrDefault()
+                        };
+                        _root.Documents.WorkOrders.Add(workOrder);
                     }
+                    workOrder.Operations.Add(outputOperation);
                 }
             }
 
-            //TODO add diagnostic errors
-            return new List<IError>();
+            _errors.AddRange(_commonExporters.Errors);
+            return _errors;
         }
 
-        private List<Standard.VariableElement> ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData)
+        private List<SummaryValueElement> ExportSummaryValues(Summary srcSummary, List<VariableElement> variables, IEnumerable<int> productIds)
         {
-            List<Standard.VariableElement> variables = new List<Standard.VariableElement>();
+            if (srcSummary == null || 
+                (srcSummary.OperationSummaries.IsNullOrEmpty() && srcSummary.SummaryData.IsNullOrEmpty()))
+            {
+                return null;
+            }
+
+            List<SummaryValueElement> output = new List<SummaryValueElement>();
+            var operationSummaries = srcSummary.OperationSummaries?.Where(x => productIds.Contains(x.ProductId));
+            var stampedMeteredValues = operationSummaries.IsNullOrEmpty()
+                ? srcSummary.SummaryData
+                : operationSummaries.SelectMany(x => x.Data);
+
+            var groupedByCode = stampedMeteredValues
+                .SelectMany(x => x.Values.Select(y => new { MeteredValue = y.Value as NumericRepresentationValue, StampedVaue = x }))
+                .Where(x => x.MeteredValue != null)
+                .GroupBy(x => x.MeteredValue.Representation.Code)
+                .ToList();
+            foreach (var kvp in groupedByCode)
+            {
+                var timeScopes = _commonExporters.ExportTimeScopes(kvp.Select(x => x.StampedVaue.Stamp).Where(x => x != null).Distinct().ToList(), out _);
+                var variableElement = GetOrCreateVariableEment(variables, kvp.Key);
+                if (variableElement == null)
+                {
+                    continue;
+                }
+
+                var targetUoM = _commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == variableElement.DefinitionCode).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
+                var summaryValues = kvp.Select(x => x.MeteredValue.AsConvertedDouble(targetUoM)).Where(x => x.HasValue);
+                var summaryValue = HasDenominator(targetUoM) ? summaryValues.Average() : summaryValues.Sum();
+                var summary = new SummaryValueElement
+                {
+                    TimeScopes = timeScopes,
+                    VariableId = variableElement.Id.ReferenceId,
+                    ValueText = summaryValue?.ToString(CultureInfo.InvariantCulture)
+                };
+
+                output.Add(summary);
+            }
+
+            return output;
+        }
+
+        private bool HasDenominator(string unitCode)
+        {
+            var unitOfMeasure = Representation.UnitSystem.InternalUnitSystemManager.Instance.UnitOfMeasures[unitCode];
+            return (unitOfMeasure is Representation.UnitSystem.CompositeUnitOfMeasure compUoM) && compUoM.Components.Any(x => x.Power < 0);
+        }
+
+        private VariableElement GetOrCreateVariableEment(List<VariableElement> variables, string variableName)
+        {
+            var variableElement = variables.FirstOrDefault(x => x.Name == variableName);
+            if (variableElement == null)
+            {
+                if (!_commonExporters.TypeMappings.TryGetValue(variableName, out var definitionCode))
+                {
+                    return null;
+                }
+
+                variableElement = new VariableElement
+                {
+                    DefinitionCode = definitionCode,
+                    Name = variableName,
+                    Id = new Id { ReferenceId = string.Format(CultureInfo.InvariantCulture, "total-{0}", ++_variableCounter) }
+                };
+                variables.Add(variableElement);
+            }
+            return variableElement;
+        }
+
+        private string ExportLoad(List<OperationData> srcOperations, IEnumerable<Load> srcloads)
+        {
+            var loadId = srcOperations.Select(x => x.LoadId).FirstOrDefault(x => x.HasValue);
+            return loadId.HasValue
+                ? srcloads.FirstOrDefault(x => x.Id.ReferenceId == loadId)?.LoadNumber
+                : null;
+        }
+
+        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData, List<VariableElement> variables)
+        {
             SpatialRecord priorSpatialRecord = null;
             foreach (var record in operationData.GetSpatialRecords())
             {
                 foreach (var section in implement.Sections)
                 {
-                   if (section.IsEngaged(record) && 
-                        section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon) )
+                    if (section.IsEngaged(record) &&
+                        section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
                     {
                         runningOutput.Geometries.Add(polygon.ToBinary());
 
@@ -135,8 +257,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             double? doubleVal = null;
                             if (workingData != null)
                             {
-                                var value = record.GetMeterValue(workingData) as NumericRepresentationValue;
-                                if (value != null)
+                                if (record.GetMeterValue(workingData) is NumericRepresentationValue value)
                                 {
                                     doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode);
                                 }
@@ -155,7 +276,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     DefinitionCode = dataColumn.TargetName,
                                     //ProductId =  TODO multivariety etc.
                                     Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
-                                    //FileDataIndex = TODO 1-based index of where this data will be in the geoparquet file,
+                                    FileDataIndex = runningOutput.GetDataColumnIndex(dataColumn),
                                     //TODO rest.  
                                     //Rate properties are only relevant for Work Order variables, not here
                                 };
@@ -170,7 +291,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 priorSpatialRecord = record;
             }
-            return variables;
         }
     }
 }

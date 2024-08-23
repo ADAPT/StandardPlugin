@@ -85,7 +85,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         public bool TryGetCoveragePolygon(SpatialRecord record, SpatialRecord previousRecord, out Polygon polygon)
         {
             polygon = null;
-            var adaptPoint = (AgGateway.ADAPT.ApplicationDataModel.Shapes.Point)record.Geometry;
+            var adaptPoint = (ApplicationDataModel.Shapes.Point)record.Geometry;
             Point point = new Point(adaptPoint.X, adaptPoint.Y);
 
             if (point.X == 0 && point.Y == 0)
@@ -96,7 +96,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             Point priorPoint = null;
             if (previousRecord != null)
             {
-                var priorADAPTPoint = (AgGateway.ADAPT.ApplicationDataModel.Shapes.Point)previousRecord.Geometry;
+                var priorADAPTPoint = (ApplicationDataModel.Shapes.Point)previousRecord.Geometry;
                 priorPoint = new Point(priorADAPTPoint.X, priorADAPTPoint.Y);
             }
 
@@ -162,7 +162,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
     }
 
-    public class Offset
+    internal class Offset
     {
         public Offset(double? x, double? y, double? z)
         {
