@@ -113,20 +113,22 @@ namespace AgGateway.ADAPT.StandardPlugin
                     var loggedData = loggedDataByOutputKey[kvp.Key];
                     var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
                     var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
+                    var variables = variablesByOutputKey[kvp.Key];
 
                     Standard.OperationElement outputOperation = new OperationElement()
                     {
                         OperationTypeCode = _commonExporters.ExportOperationType(kvp.Value.First().OperationType),
                         ContextItems = _commonExporters.ExportContextItems(kvp.Value.First().ContextItems),
                         Name = string.Join(";", kvp.Value.Select(x => x.Description)),
-                        Variables = variablesByOutputKey[kvp.Key],
+                        Variables = variables,
                         ProductIds = productIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                        HarvestLoadIdentifier = ExportLoad(kvp.Value, model.Documents.Loads),
                         SpatialRecordsFile = outputFileName,
                         GuidanceAllocations = _commonExporters.ExportGuidanceAllocations(loggedData.GuidanceAllocationIds, model),
                         PartyRoles = _commonExporters.ExportPersonRoles(model.Catalog.PersonRoles.Where(x => loggedData.PersonRoleIds.Contains(x.Id.ReferenceId)).ToList()),
-                        SummaryValues = ExportSummaryValues(summary, variablesByOutputKey[kvp.Key], productIds),
+                        SummaryValues = ExportSummaryValues(summary, variables, productIds),
                     };
+
+                    ExportLoad(kvp.Value, model.Documents.Loads, outputOperation);
 
                     //Output any spatial data
                     string outputFile = Path.Combine(_exportPath, outputFileName);
@@ -229,12 +231,41 @@ namespace AgGateway.ADAPT.StandardPlugin
             return variableElement;
         }
 
-        private string ExportLoad(List<OperationData> srcOperations, IEnumerable<Load> srcloads)
+        private void ExportLoad(List<OperationData> srcOperations, IEnumerable<Load> srcloads, OperationElement operationElement)
         {
             var loadId = srcOperations.Select(x => x.LoadId).FirstOrDefault(x => x.HasValue);
-            return loadId.HasValue
-                ? srcloads.FirstOrDefault(x => x.Id.ReferenceId == loadId)?.LoadNumber
+            var srcLoad = loadId.HasValue
+                ? srcloads.FirstOrDefault(x => x.Id.ReferenceId == loadId)
                 : null;
+            if (srcLoad?.LoadQuantity != null)
+            {
+                var variableElement = GetOrCreateVariableEment(operationElement.Variables, srcLoad.LoadQuantity.Representation.Code)
+                    ?? operationElement.Variables.FirstOrDefault(x => x.Name.EqualsIgnoreCase(srcLoad.LoadNumber));
+                if (variableElement == null)
+                {
+                    variableElement = new VariableElement
+                    {
+                        Name = srcLoad.LoadNumber,
+                        Id = new Id { ReferenceId = string.Format(CultureInfo.InvariantCulture, "total-{0}", ++_variableCounter) }
+                    };
+                    operationElement.Variables.Add(variableElement);
+                }
+
+                var loadQuantity = string.IsNullOrEmpty(variableElement.DefinitionCode)
+                    ? srcLoad.LoadQuantity.Value.Value
+                    : srcLoad.LoadQuantity.AsConvertedDouble(_commonExporters.StandardDataTypes.Definitions
+                                                                    .First(x => x.DefinitionCode == variableElement.DefinitionCode)
+                                                                    .NumericDataTypeDefinitionAttributes.UnitOfMeasureCode);
+
+                var summary = new SummaryValueElement
+                {
+                    VariableId = variableElement.Id.ReferenceId,
+                    ValueText = loadQuantity?.ToString(CultureInfo.InvariantCulture)
+                };
+                operationElement.SummaryValues.Add(summary);
+            }
+
+            operationElement.HarvestLoadIdentifier = srcLoad?.LoadNumber;
         }
 
         private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData, List<VariableElement> variables)

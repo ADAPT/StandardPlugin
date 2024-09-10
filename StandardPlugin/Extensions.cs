@@ -12,6 +12,26 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal static class Extensions
     {
+        private class UnitCodeRemap
+        {
+            public string SourceUnitCode;
+            public string NewSourceUnitCode;
+            public string TargetUnitCode;
+        }
+        private readonly static Dictionary<string, UnitCodeRemap> UnitOfMeasureMapping = new Dictionary<string, UnitCodeRemap>
+        {
+            // vrSeedRateSeeds... are mapped to AppliedCountPerArea... variables that use a different UoM domain.
+            // Here we switch target unit of measure to correct one.
+            { "vrSeedRateSeedsTarget", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
+            { "vrSeedRateSeedsActual", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
+            { "vrSeedRateSeedsSetPoint", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
+            { "vrTotalSeedQuantityAppliedSeed", new UnitCodeRemap { TargetUnitCode = "seeds" } },
+            // Some plugins by mistake assign "lb" to DownForce sensors instead of "lbf".
+            // Here we fix this by replacing "lb" with "lbf"
+            { "vrDownForceMargin", new UnitCodeRemap { SourceUnitCode = "lb", NewSourceUnitCode = "lbf" } },
+            { "vrDownForceApplied", new UnitCodeRemap { SourceUnitCode = "lb", NewSourceUnitCode = "lbf" } },
+        };
+
         public static bool IsNullOrEmpty<T>(this IEnumerable<T> collection)
         {
             return collection == null || !collection.Any();
@@ -49,10 +69,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return value.Value.Value; //Return the unconverted value
             }
-            else
+
+            var srcUnitCode = value.Value.UnitOfMeasure.Code;
+            if (UnitOfMeasureMapping.TryGetValue(value.Representation.Code, out var unitCodeRemap))
             {
-                return value.Value.Value.ConvertValue(value.Value.UnitOfMeasure.Code, targetUnitCode);
+                if (!string.IsNullOrEmpty(unitCodeRemap.NewSourceUnitCode) && unitCodeRemap.SourceUnitCode == srcUnitCode)
+                {
+                    srcUnitCode = unitCodeRemap.NewSourceUnitCode;
+                }
+                if (!string.IsNullOrEmpty(unitCodeRemap.TargetUnitCode))
+                {
+                    targetUnitCode = unitCodeRemap.TargetUnitCode;
+                }
             }
+
+            return value.Value.Value.ConvertValue(srcUnitCode, targetUnitCode);
         }
 
         public static double ConvertValue(this double n, string srcUnitCode, string dstUnitCode)
@@ -63,11 +94,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return n; //Return the unconverted value
             }
-            else
-            {
-                RepresentationUnitSystem.UnitOfMeasureConverter converter = new RepresentationUnitSystem.UnitOfMeasureConverter();
-                return converter.Convert(sourceUOM, targetUOM, n);
-            }
+
+            RepresentationUnitSystem.UnitOfMeasureConverter converter = new RepresentationUnitSystem.UnitOfMeasureConverter();
+            return converter.Convert(sourceUOM, targetUOM, n);
         }
 
         public static Offset AsOffset(this DeviceElementConfiguration configuration)

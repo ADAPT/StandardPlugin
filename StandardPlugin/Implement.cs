@@ -126,7 +126,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             builder.Append("_");
             builder.Append(string.Join("|", srcOperation.ProductIds));
             builder.Append("_");
-            builder.Append(srcOperation.LoadId?.ToString() ?? string.Empty); //TODO add load to output operation
+            builder.Append(srcOperation.LoadId?.ToString() ?? string.Empty);
             builder.Append(srcOperation.WorkItemOperationId?.ToString() ?? string.Empty); //TODO add these links to output operation
             builder.Append(srcOperation.PrescriptionId?.ToString() ?? string.Empty);
             builder.Append("_");

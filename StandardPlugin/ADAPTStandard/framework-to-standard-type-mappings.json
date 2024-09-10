@@ -1,9 +1,9 @@
 {
-    "vrSeedRateSeedsTarget": "AppliedSeedPerAreaTarget",
+    "vrSeedRateSeedsTarget": "AppliedCountPerAreaTarget",
 
-    "vrSeedRateSeedsActual": "AppliedSeedPerAreaActual",
+    "vrSeedRateSeedsActual": "AppliedCountPerAreaActual",
 
-    "vrSeedRateSeedsSetPoint": "AppliedSeedPerAreaTarget",
+    "vrSeedRateSeedsSetPoint": "AppliedCountPerAreaTarget",
 
     "vrCountPerArea": "AppliedCountPerAreaActual",
 
@@ -25,7 +25,7 @@
 
     "vrSeedRateMassSetPoint": "AppliedMassPerAreaTarget",
 
-    "vrTotalSeedQuantityAppliedSeed": "AppliedTotalSeed",
+    "vrTotalSeedQuantityAppliedSeed": "AppliedTotalCount",
 
     "vrTotalSeedQuantityAppliedMass": "AppliedTotalMass",
 

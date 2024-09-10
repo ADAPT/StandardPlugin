@@ -289,7 +289,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             var numericValue = srcRepresentationValue.Value.Value;
-            var unitOfMeasureCode = srcRepresentationValue.UserProvidedUnitOfMeasure?.Code ?? srcRepresentationValue.Value.UnitOfMeasure?.Code;
+            var unitOfMeasureCode = srcRepresentationValue.Value.UnitOfMeasure?.Code ?? "unitless";
 
             var output = Activator.CreateInstance(typeof(T));
 

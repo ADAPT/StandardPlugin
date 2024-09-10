@@ -1,10 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.Standard;
-using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -23,6 +22,8 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     public class Plugin : IPlugin
     {
+        private Properties _properties;
+        private const string Property_FileName = "FileName";
         public Plugin()
         {
             Errors = new List<IError>();
@@ -52,11 +53,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             errors.AddRange(catalogErrors);
             errors.AddRange(prescriptionErrors);
             errors.AddRange(workRecordErrors);
+            var json = Serialize.ToJson(root);
+
+            Directory.CreateDirectory(exportPath);
+            var outputFileName = Path.Combine(exportPath, (properties ?? GetProperties(exportPath)).GetProperty(Property_FileName));
+            File.WriteAllText(outputFileName, json, Encoding.UTF8);
         }
 
         public Properties GetProperties(string dataPath)
         {
-            throw new NotImplementedException("This plugin only supports exporting from the ADAPT Fraemwork to the ADAPT Standard.");
+            if (_properties == null)
+            {
+                _properties = new Properties();
+                _properties.SetProperty(Property_FileName, "standard.json");
+            }
+            return _properties;
         }
 
         public IList<ApplicationDataModel.ADM.ApplicationDataModel> Import(string dataPath, Properties properties = null)
