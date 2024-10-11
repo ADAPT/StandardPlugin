@@ -99,8 +99,16 @@ namespace AgGateway.ADAPT.StandardPlugin
                             variablesByOutputKey.Add(outputOperationKey, new List<VariableElement>());
                         }
                         ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesByOutputKey[outputOperationKey]);
-
-                        loggedDataByOutputKey[outputOperationKey] = fieldLoggedData;
+                        if (!columnDataByOutputKey[outputOperationKey].Timestamps.Any() || !columnDataByOutputKey[outputOperationKey].Geometries.Any())
+                        {
+                            columnDataByOutputKey.Remove(outputOperationKey);
+                            loggedDataByOutputKey.Remove(outputOperationKey);
+                            sourceOperationsByOutputKey.Remove(outputOperationKey);
+                        }
+                        else
+                        {  
+                            loggedDataByOutputKey[outputOperationKey] = fieldLoggedData;
+                        }
                     }
                 }
 

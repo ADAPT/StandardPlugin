@@ -174,11 +174,14 @@ namespace AgGateway.ADAPT.StandardPlugin
         public double? Y { get; set; }
         public double? Z { get; set; }
 
-        public Offset Add(Offset other)
+        public void Add(Offset other)
         {
-            return new Offset(((X ?? 0d) + other.X) ?? 0d,
-                            ((Y ?? 0) + other.Y) ?? 0d,
-                            ((Z ?? 0) + other.Z) ?? 0d);
+            if (!X.HasValue) X = 0;
+            X += other.X ?? 0;
+            if (!Y.HasValue) Y = 0;
+            Y += other.Y ?? 0;
+            if (!Z.HasValue) Z = 0;
+            Z += other.Z ?? 0;
         }
     }
 }

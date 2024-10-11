@@ -23,33 +23,30 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 foreach (var lowestDeviceElementUse in operation.GetDeviceElementUses(operation.MaxDepth))
                 {
-                    var deviceElementConfig = catalog.DeviceElementConfigurations.FirstOrDefault(d => d.Id.ReferenceId == lowestDeviceElementUse.DeviceConfigurationId);
-                    if (deviceElementConfig != null)
+                    var sectionDeviceElementConfig = catalog.DeviceElementConfigurations.FirstOrDefault(d => d.Id.ReferenceId == lowestDeviceElementUse.DeviceConfigurationId);
+                    if (sectionDeviceElementConfig != null)
                     {
-                        var deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElementConfig.DeviceElementId);
-                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, deviceElementConfig, deviceElement, typeMappings);
-                        while (deviceElement != null)
+                        var sectionDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElementConfig.DeviceElementId);
+                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, sectionDeviceElementConfig, sectionDeviceElement, typeMappings);
+                        DeviceElement parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElement.ParentDeviceId);
+                        while (parent != null)
                         {
-                            TopDeviceElement = deviceElement; //Keep overwriting this until we get the top Device Element
-
-                            if (deviceElement != section.DeviceElement)
+                            TopDeviceElement = parent; //Keep overwriting this until we get the top Device Element
+                            var ancestorConfig = catalog.DeviceElementConfigurations.SingleOrDefault(x => x.DeviceElementId == parent.Id.ReferenceId);
+                            if (ancestorConfig != null)
                             {
-                                var ancestorConfigs = catalog.DeviceElementConfigurations.Where(x => x.DeviceElementId == deviceElement.Id.ReferenceId);
-                                foreach (var ancestorConfig in ancestorConfigs)
-                                {
-                                    section.Offset.Add(ancestorConfig.AsOffset());
+                                section.Offset.Add(ancestorConfig.AsOffset());
 
-                                    foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
-                                    {
-                                        section.AddAncestorWorkingDatas(ancestorUse, typeMappings);
-                                    }
+                                foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
+                                {
+                                    section.AddAncestorWorkingDatas(ancestorUse, typeMappings);
                                 }
                             }
 
-                            deviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == deviceElement.ParentDeviceId);
+                            parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == parent.ParentDeviceId);
 
                             //At the top level, the parent id often maps to the device model
-                            if (deviceElement == null)
+                            if (sectionDeviceElement == null)
                             {
                                 DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement.DeviceModelId);
                             }
