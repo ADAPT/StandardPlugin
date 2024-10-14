@@ -21,11 +21,12 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly static Dictionary<string, UnitCodeRemap> UnitOfMeasureMapping = new Dictionary<string, UnitCodeRemap>
         {
             // vrSeedRateSeeds... are mapped to AppliedCountPerArea... variables that use a different UoM domain.
-            //TODO not sure this works
+            //'Seeds' is effectively the same as 'Count', so these unit conversions will suceed and be correct
             { "vrSeedRateSeedsTarget", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
             { "vrSeedRateSeedsActual", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
             { "vrSeedRateSeedsSetPoint", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
             { "vrTotalSeedQuantityAppliedSeed", new UnitCodeRemap { TargetUnitCode = "seeds" } },
+            { "vrSeedsProductivity", new UnitCodeRemap { TargetUnitCode = "seed1sec-1" } },
             // Some plugins by mistake assign "lb" to DownForce sensors instead of "lbf".
             // Here we fix this by replacing "lb" with "lbf"
             { "vrDownForceMargin", new UnitCodeRemap { SourceUnitCode = "lb", NewSourceUnitCode = "lbf" } },
