@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -56,19 +57,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             var json = Serialize.ToJson(root);
 
             Directory.CreateDirectory(exportPath);
-            var outputFileName = Path.Combine(exportPath, (properties ?? GetProperties(exportPath)).GetProperty(Property_FileName));
+            var outputFileName = Path.Combine(exportPath, "adapt.json");
             File.WriteAllText(outputFileName, json, Encoding.UTF8);
         }
+
 
         public Properties GetProperties(string dataPath)
         {
             if (_properties == null)
             {
                 _properties = new Properties();
-                _properties.SetProperty(Property_FileName, "standard.json");
             }
             return _properties;
         }
+
 
         public IList<ApplicationDataModel.ADM.ApplicationDataModel> Import(string dataPath, Properties properties = null)
         {

@@ -112,12 +112,27 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                 }
 
-                int exportIndex = 0;
                 Directory.CreateDirectory(_exportPath);
 
                 foreach (var kvp in sourceOperationsByOutputKey)
                 {
-                    string outputFileName = (++exportIndex).ToString() + ".parquet";
+                    //Give the parquet file a meaningful name
+                    string outputFileName = string.Concat(Enum.GetName(typeof(AgGateway.ADAPT.ApplicationDataModel.Common.OperationTypeEnum), kvp.Value.First().OperationType),
+                                "_", 
+                                kvp.Value.SelectMany(x => 
+                                    x.ProductIds)
+                                    .Distinct()
+                                    .Select(r => 
+                                        model.Catalog.Products.First(p => 
+                                            p.Id.ReferenceId == r).Description)
+                                    .Aggregate((i, j) => i + "_" + j),
+                                 ".parquet");
+                    outputFileName = new string(outputFileName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
+                    if (outputFileName.Length > 255)
+                    {
+                        outputFileName = outputFileName.Substring(0, 255);
+                    }
+                   
                     var loggedData = loggedDataByOutputKey[kvp.Key];
                     var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
                     var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
@@ -190,7 +205,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             foreach (var kvp in groupedByCode)
             {
                 var timeScopes = _commonExporters.ExportTimeScopes(kvp.Select(x => x.StampedVaue.Stamp).Where(x => x != null).Distinct().ToList(), out _);
-                var variableElement = GetOrCreateVariableEment(variables, kvp.Key);
+                var variableElement = GetOrCreateVariableElement(variables, kvp.Key);
                 if (variableElement == null)
                 {
                     continue;
@@ -218,19 +233,19 @@ namespace AgGateway.ADAPT.StandardPlugin
             return (unitOfMeasure is Representation.UnitSystem.CompositeUnitOfMeasure compUoM) && compUoM.Components.Any(x => x.Power < 0);
         }
 
-        private VariableElement GetOrCreateVariableEment(List<VariableElement> variables, string variableName)
+        private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string variableName)
         {
             var variableElement = variables.FirstOrDefault(x => x.Name == variableName);
             if (variableElement == null)
             {
-                if (!_commonExporters.TypeMappings.TryGetValue(variableName, out var definitionCode))
+                if (!_commonExporters.TypeMappings.Any(m => m.Source == variableName))
                 {
                     return null;
                 }
 
                 variableElement = new VariableElement
                 {
-                    DefinitionCode = definitionCode,
+                    DefinitionCode = _commonExporters.TypeMappings.First(m => m.Source == variableName).Target,
                     Name = variableName,
                     Id = new Id { ReferenceId = string.Format(CultureInfo.InvariantCulture, "total-{0}", ++_variableCounter) }
                 };
@@ -247,7 +262,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 : null;
             if (srcLoad?.LoadQuantity != null)
             {
-                var variableElement = GetOrCreateVariableEment(operationElement.Variables, srcLoad.LoadQuantity.Representation.Code)
+                var variableElement = GetOrCreateVariableElement(operationElement.Variables, srcLoad.LoadQuantity.Representation.Code)
                     ?? operationElement.Variables.FirstOrDefault(x => x.Name.EqualsIgnoreCase(srcLoad.LoadNumber));
                 if (variableElement == null)
                 {
@@ -292,14 +307,12 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                         foreach (var dataColumn in runningOutput.Columns)
                         {
-                            var workingData = section.NumericDefinitions.FirstOrDefault(x => x.Representation.Code == dataColumn.SrcName);
+                            var factoredDefinition = section.FactoredDefinitions.FirstOrDefault(x => x.WorkingData.Representation.Code == dataColumn.SrcName);
                             double? doubleVal = null;
-                            if (workingData != null)
+                            if (factoredDefinition != null)
                             {
-                                if (record.GetMeterValue(workingData) is NumericRepresentationValue value)
-                                {
-                                    doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode);
-                                }
+                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;  
                             }
                             dataColumn.Values.Add(doubleVal);
 

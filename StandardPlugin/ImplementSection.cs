@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,31 +11,23 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class SectionDefinition
     {
-        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement, Dictionary<string, string> typeMappings)
+        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement, List<TypeMapping> typeMappings)
         {
             DeviceElement = deviceElement;
             
             WorkstateDefinition = deviceElementUse.GetWorkingDatas().OfType<EnumeratedWorkingData>().FirstOrDefault(x => x.Representation.Code == "dtRecordingStatus");
-            NumericDefinitions = new List<NumericWorkingData>();
+            FactoredDefinitions = new List<FactoredWorkingData>();
 
             //Add only the variables we can map to a standard type
-            NumericDefinitions.AddRange(deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>().Where(nwd => typeMappings.ContainsKey(nwd.Representation.Code)));
-
-            if (deviceElementConfiguration is SectionConfiguration sectionConfiguration)
-            {
-                WidthM = sectionConfiguration.SectionWidth?.AsConvertedDouble("m") ?? 0d;
-            }
-            else if (deviceElementConfiguration is ImplementConfiguration implementConfiguration)
-            {
-                WidthM = implementConfiguration.PhysicalWidth.AsConvertedDouble("m") ?? implementConfiguration.Width?.AsConvertedDouble("m") ?? 0d;
-            }
-
+            var numericWorkingDatas = deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>().Where(nwd => typeMappings.Any(m => m.Source == nwd.Representation.Code));
+            WidthM = deviceElementConfiguration.WidthM();
+            FactoredDefinitions.AddRange(numericWorkingDatas.Select(nwd => new FactoredWorkingData(nwd, WidthM, WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code))));
             Offset = deviceElementConfiguration.AsOffset();
         }
         public Offset Offset { get; set; }
         public DeviceElement DeviceElement { get; set; }
         public EnumeratedWorkingData WorkstateDefinition { get; set; }
-        public List<NumericWorkingData> NumericDefinitions { get; set; }
+        public List<FactoredWorkingData> FactoredDefinitions { get; set; }
 
         public double WidthM { get; set; }
 
@@ -45,14 +38,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             builder.Append(Offset.X?.ToString() ?? string.Empty);
             builder.Append(Offset.Y?.ToString() ?? string.Empty);
             builder.Append(WidthM.ToString());
-            foreach(var workingData in NumericDefinitions)
+            foreach(var factoredDefinition in FactoredDefinitions)
             {
-                builder.Append(workingData.Representation.Code);
+                builder.Append(factoredDefinition.WorkingData.Representation.Code);
             }
             return builder.ToString().AsMD5Hash();
         }
 
-        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse, Dictionary<string, string> typeMappings)
+        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse, DeviceElementConfiguration ancestorConfig, List<TypeMapping> typeMappings)
         {
             foreach (var workingData in ancestorUse.GetWorkingDatas())
             {
@@ -63,10 +56,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                     WorkstateDefinition = ewd;
                 }
                 else if (workingData is NumericWorkingData nwd &&
-                    typeMappings.ContainsKey(nwd.Representation.Code) &&
-                    !NumericDefinitions.Any(x => x.Representation.Code == nwd.Representation.Code))
+                    typeMappings.Any(m => m.Source == nwd.Representation.Code) &&
+                    !FactoredDefinitions.Any(x => x.WorkingData.Representation.Code == nwd.Representation.Code))
                 {
-                    NumericDefinitions.Add(nwd);
+                    FactoredDefinitions.Add(new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
                 }
             }
         }
@@ -101,10 +94,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             double bearing = 0;
-            var headingData = NumericDefinitions.FirstOrDefault(d => d.Representation.Code == "vrHeading");
+            var headingData = FactoredDefinitions.FirstOrDefault(d => d.WorkingData.Representation.Code == "vrHeading");
             if (headingData != null)
             {
-                bearing = ((NumericRepresentationValue)record.GetMeterValue(headingData)).Value.Value;
+                bearing = ((NumericRepresentationValue)record.GetMeterValue(headingData.WorkingData)).Value.Value;
             }
             else if (priorPoint != null)
             {
@@ -114,10 +107,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             var x = point.Destination(Offset.X ?? 0d, bearing % 360d);
             var xy = x.Destination(Offset.Y ?? 0d, bearing + 90d % 360d);
             double? reportedDistance = null;
-            var distanceData = NumericDefinitions.FirstOrDefault(d => d.Representation.Code == "vrDistanceTraveled");
+            var distanceData = FactoredDefinitions.FirstOrDefault(d => d.WorkingData.Representation.Code == "vrDistanceTraveled");
             if (distanceData != null)
             {
-                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(distanceData)).Value.Value;
+                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(distanceData.WorkingData)).Value.Value;
             }
             polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
             if (polygon.IsEmpty || !polygon.IsValid)
@@ -183,5 +176,31 @@ namespace AgGateway.ADAPT.StandardPlugin
             if (!Z.HasValue) Z = 0;
             Z += other.Z ?? 0;
         }
+    }
+
+    /// <summary>
+    /// In cases where an implement reports a single total value, e.g., at the implement level and then models multiple sections for on/off values only
+    /// The total must be factored down for the width of the section relative to the total width of the implement
+    /// For rates, percentages, etc.  No factor is needed.
+    /// </summary>
+    internal class FactoredWorkingData
+    {
+        public FactoredWorkingData(NumericWorkingData workingData, double dataWidthM, double sectionWidthM, TypeMapping mapping)
+        {
+            WorkingData = workingData;
+            
+            if (mapping.ShouldFactor && 
+                dataWidthM > 0d &&
+                Math.Abs(dataWidthM - sectionWidthM) > .001) //Floating point values are sometimes not exact
+            {
+                Factor = sectionWidthM / dataWidthM;
+            }
+            else
+            {
+                Factor = 1d;
+            }
+        }
+        public double Factor { get; set; }
+        public NumericWorkingData WorkingData { get; set; }
     }
 }

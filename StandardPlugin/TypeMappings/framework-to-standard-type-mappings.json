@@ -1,0 +1,347 @@
+[
+    {
+        "source": "vrSeedRateSeedsTarget",
+        "target": "AppliedCountPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrSeedRateSeedsActual",
+        "target": "AppliedCountPerAreaActual",
+        "factor": false
+    },
+    {
+        "source": "vrSeedRateSeedsSetPoint",
+        "target": "AppliedCountPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrCountPerArea",
+        "target": "AppliedCountPerAreaActual",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateVolumeActual",
+        "target": "AppliedVolumePerAreaActual",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateVolumeTarget",
+        "target": "AppliedVolumePerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateVolumnSetPoint",
+        "target": "AppliedVolumePerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateMassActual",
+        "target": "AppliedMassPerAreaActual",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateMassTarget",
+        "target": "AppliedMassPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateMassSetPoint",
+        "target": "AppliedMassPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrSeedRateMassActual",
+        "target": "AppliedMassPerAreaActual",
+        "factor": false
+    },
+    {
+        "source": "vrSeedRateMassTarget",
+        "target": "AppliedMassPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrSeedRateMassSetPoint",
+        "target": "AppliedMassPerAreaTarget",
+        "factor": false
+    },
+    {
+        "source": "vrTotalSeedQuantityAppliedSeed",
+        "target": "AppliedTotalCount",
+        "factor": false
+    },
+    {
+        "source": "vrTotalSeedQuantityAppliedMass",
+        "target": "AppliedTotalMass",
+        "factor": false
+    },
+    {
+        "source": "vrTotalQuantityAppliedMass",
+        "target": "AppliedTotalMass",
+        "factor": false
+    },
+    {
+        "source": "vrTotalQuantityAppliedVolume",
+        "target": "AppliedTotalVolume",
+        "factor": false
+    },
+    {
+        "source": "vrYieldWetMassPerArea",
+        "target": "YieldWetMassPerArea",
+        "factor": false
+    },
+    {
+        "source": "vrTotalYieldWetMass",
+        "target": "YieldTotalWetMass",
+        "factor": true
+    },
+    {
+        "source": "vrYieldMassPerArea",
+        "target": "YieldDryMassPerArea",
+        "factor": false
+    },
+    {
+        "source": "vrTotalYieldMass",
+        "target": "YieldTotalDryMass",
+        "factor": true
+    },
+    {
+        "source": "vrYieldMass",
+        "target": "YieldTotalDryMass",
+        "factor": true
+    },
+    {
+        "source": "vrYieldWetMass",
+        "target": "YieldTotalWetMass",
+        "factor": true
+    },
+    {
+        "source": "vrYieldBalePerArea",
+        "target": "YieldBaleCountPerArea",
+        "factor": false
+    },
+    {
+        "source": "vrYieldBale",
+        "target": "YieldTotalBaleCount",
+        "factor": true
+    },
+    {
+        "source": "vrYieldVolumePerArea",
+        "target": "YieldDryVolumePerArea",
+        "factor": false
+    },
+    {
+        "source": "vrYieldWetVolumePerArea",
+        "target": "YieldWetVolumePerArea",
+        "factor": false
+    },
+    {
+        "source": "vrTotalYieldVolume",
+        "target": "YieldTotalDryVolume",
+        "factor": true
+    },
+    {
+        "source": "vrYieldVolume",
+        "target": "YieldTotalDryVolume",
+        "factor": true
+    },
+    {
+        "source": "vrTotalYieldWetVolume",
+        "target": "YieldTotalWetVolume",
+        "factor": true
+    },
+    {
+        "source": "vrSeedsProductivity",
+        "target": "AppliedCountPerTime",
+        "factor": false
+    },
+    {
+        "source": "vrAppRateVolumePerHour",
+        "target": "AppliedVolumePerTime",
+        "factor": false
+    },
+    {
+        "source": "vrMassProductivity",
+        "target": "AppliedMassPerTime",
+        "factor": false
+    },
+    {
+        "source": "vrYieldWetMassFlow",
+        "target": "YieldWetMassPerTime",
+        "factor": false
+    },
+    {
+        "source": "vrForageMassProductivity",
+        "target": "YieldDryMassPerTime",
+        "factor": false
+    },
+    {
+        "source": "vrHarvestMoisture",
+        "target": "CommodityMoisture",
+        "factor": false
+    },
+    {
+        "source": "vrAvgHarvestMoisture",
+        "target": "CommodityMoisture",
+        "factor": false
+    },
+    {
+        "source": "vrAppHeightTarget",
+        "target": "ApplicationHeightTarget",
+        "factor": false
+    },
+    {
+        "source": "vrSeedDepthTarget",
+        "target": "SeedingDepthTarget",
+        "factor": false
+    },
+    {
+        "source": "vrTillageDepthActual",
+        "target": "TillageDepthActual",
+        "factor": false
+    },
+    {
+        "source": "vrTillageDepthTarget",
+        "target": "TillageDepthTarget",
+        "factor": false
+    },
+    {
+        "source": "vrTillageDepthControl",
+        "target": "TillageDepthControl",
+        "factor": false
+    },
+    {
+        "source": "vrTotalOperationTime",
+        "target": "ElapsedTime",
+        "factor": false
+    },
+    {
+        "source": "vrDeltaTime",
+        "target": "ElapsedTime",
+        "factor": false
+    },
+    {
+        "source": "vrDistanceTraveled",
+        "target": "DistanceTraveled",
+        "factor": false
+    },
+    {
+        "source": "vrHeading",
+        "target": "Heading",
+        "factor": false
+    },
+    {
+        "source": "vrElevation",
+        "target": "Elevation",
+        "factor": false
+    },
+    {
+        "source": "vrSeedSpacingDistance",
+        "target": "SeedSpacingActual",
+        "factor": false
+    },
+    {
+        "source": "vrSeedSpacing",
+        "target": "SeedSpacingActual",
+        "factor": false
+    },
+    {
+        "source": "vrPlantingSingulation",
+        "target": "SeedSingulation",
+        "factor": false
+    },
+    {
+        "source": "vrPlantingSkips",
+        "target": "SeedSkips",
+        "factor": false
+    },
+    {
+        "source": "vrPlantingDoubles",
+        "target": "SeedDoubles",
+        "factor": false
+    },
+    {
+        "source": "vrRideQuality",
+        "target": "RideQuality",
+        "factor": false
+    },
+    {
+        "source": "vrGroundContact",
+        "target": "GroundContact",
+        "factor": false
+    },
+    {
+        "source": "vrDownForceMargin",
+        "target": "DownforceMargin",
+        "factor": false
+    },
+    {
+        "source": "vrDownForceApplied",
+        "target": "DownforceAppliedActual",
+        "factor": false
+    },
+    {
+        "source": "vrTillagePressureActual",
+        "target": "TillagePressureActual",
+        "factor": false
+    },
+    {
+        "source": "vrTillagePressureSetPoint",
+        "target": "TillagePressureTarget",
+        "factor": false
+    },
+    {
+        "source": "vrTillagePressureTarget",
+        "target": "TillagePressureTarget",
+        "factor": false
+    },
+    {
+        "source": "vrSoilTemperature",
+        "target": "SoilTemperature",
+        "factor": false
+    },
+    {
+        "source": "vrTaskArea",
+        "target": "AppliedArea",
+        "factor": true
+    },
+    {
+        "source": "vrTotalAreaCovered",
+        "target": "AppliedArea",
+        "factor": true
+    },
+    {
+        "source": "vrDeltaArea",
+        "target": "AppliedArea",
+        "factor": true
+    },
+    {
+        "source": "vrReportedFieldArea",
+        "target": "ReportedArea",
+        "factor": false
+    },
+    {
+        "source": "vrSpatialFieldArea",
+        "target": "CalculatedArea",
+        "factor": false
+    },
+    {
+        "source": "vrAirTemperature",
+        "target": "AirTemperature",
+        "factor": false
+    },
+    {
+        "source": "vrWindSpeed",
+        "target": "WindSpeed",
+        "factor": false
+    },
+    {
+        "source": "vrRelativeHumidity",
+        "target": "RelativeHumidity",
+        "factor": false
+    },
+    {
+        "source": "vrWorkingWidthActual",
+        "target": "Width",
+        "factor": false
+    }
+]

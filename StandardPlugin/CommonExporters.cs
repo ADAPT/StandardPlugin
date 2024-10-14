@@ -18,7 +18,7 @@ namespace AgGateway.ADAPT.StandardPlugin
     {
         private readonly Standard.Catalog _catalog;
 
-        public Dictionary<string, string> TypeMappings { get; private set; }
+        public List<TypeMapping> TypeMappings { get; private set; }
 
         public AgGateway.ADAPT.DataTypeDefinitions.DataTypeDefinitions StandardDataTypes { get; private set; }
 
@@ -27,9 +27,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog = root.Catalog;
             Errors = new List<IError>();
 
-            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/framework-to-standard-type-mappings.json");
+            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TypeMappings/framework-to-standard-type-mappings.json");
             string mappingData = File.ReadAllText(mappingFile);
-            TypeMappings = JsonConvert.DeserializeObject<Dictionary<string, string>>(mappingData);
+            TypeMappings = JsonConvert.DeserializeObject<List<TypeMapping>>(mappingData);
 
             var standardTypesFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/adapt-data-type-definitions.json");
             string typesJson = File.ReadAllText(standardTypesFile);

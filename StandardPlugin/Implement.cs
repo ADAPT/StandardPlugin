@@ -9,7 +9,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class Implement
     {
-        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition, Dictionary<string, string> typeMappings)
+        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition, List<TypeMapping> typeMappings)
         {
             Sections = new List<SectionDefinition>();
 
@@ -35,11 +35,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                             var ancestorConfig = catalog.DeviceElementConfigurations.SingleOrDefault(x => x.DeviceElementId == parent.Id.ReferenceId);
                             if (ancestorConfig != null)
                             {
-                                section.Offset.Add(ancestorConfig.AsOffset());
+                                if (ancestorConfig is ImplementConfiguration)
+                                {
+                                    //Intermediate sections are all relative to the implement and not one another.
+                                    section.Offset.Add(ancestorConfig.AsOffset());
+                                }
 
                                 foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
                                 {
-                                    section.AddAncestorWorkingDatas(ancestorUse, typeMappings);
+                                    section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, typeMappings);
                                 }
                             }
 
@@ -91,8 +95,12 @@ namespace AgGateway.ADAPT.StandardPlugin
                         SectionConfiguration sectionConfiguration = catalog.DeviceElementConfigurations.First(d => d.Id.ReferenceId == sectionUse.DeviceConfigurationId) as SectionConfiguration;
                         if (sectionConfiguration != null)
                         {
+                            if (sectionConfiguration.SectionWidth?.Value == null || sectionConfiguration.SectionWidth.Value.Value == 0)
+                            {
+                                //TODO log error
+                            }
                             SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, typeMappings);
-                            section.AddAncestorWorkingDatas(implementUse, typeMappings);
+                            section.AddAncestorWorkingDatas(implementUse, implementConfiguration, typeMappings);
                             Sections.Add(section);
                         }
                     }
@@ -142,11 +150,11 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<NumericWorkingData>  GetDistinctWorkingDatas()
         {
             List<NumericWorkingData> distinctWorkingDatas = new List<NumericWorkingData>();
-            foreach (var nwd in Sections.SelectMany(s => s.NumericDefinitions))
+            foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitions))
             {
-                if (!distinctWorkingDatas.Any(d => d.Representation.Code == nwd.Representation.Code))
+                if (!distinctWorkingDatas.Any(d => d.Representation.Code == factoredDefinition.WorkingData.Representation.Code))
                 {
-                    distinctWorkingDatas.Add(nwd);
+                    distinctWorkingDatas.Add(factoredDefinition.WorkingData);
                 }
             }
             return distinctWorkingDatas;

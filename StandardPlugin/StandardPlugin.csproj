@@ -19,7 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Update="ADAPTStandard/adapt-data-type-definitions.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="ADAPTStandard/framework-to-standard-type-mappings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TypeMappings/framework-to-standard-type-mappings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

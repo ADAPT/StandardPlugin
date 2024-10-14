@@ -57,7 +57,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                         }
                         foreach (var doubleColumn in ColumnData.Columns)
                         {
-                            //TODO Convert here or elsewhere
                             await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], doubleColumn.Values.ToArray()));
                         }
                         await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], ColumnData.Geometries.ToArray()));
@@ -100,7 +99,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             SrcObject = numericWorkingData;
             SrcName = numericWorkingData.Representation.Code;
             SrcUOMCode = numericWorkingData.UnitOfMeasure.Code;
-            TargetName = commonExporters.TypeMappings[numericWorkingData.Representation.Code];
+            TargetName = commonExporters.TypeMappings.First(m => m.Source == numericWorkingData.Representation.Code).Target;
             TargetUOMCode = commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == TargetName).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
             Values = new List<double?>();
         }

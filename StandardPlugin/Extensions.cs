@@ -21,7 +21,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly static Dictionary<string, UnitCodeRemap> UnitOfMeasureMapping = new Dictionary<string, UnitCodeRemap>
         {
             // vrSeedRateSeeds... are mapped to AppliedCountPerArea... variables that use a different UoM domain.
-            // Here we switch target unit of measure to correct one.
+            //TODO not sure this works
             { "vrSeedRateSeedsTarget", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
             { "vrSeedRateSeedsActual", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
             { "vrSeedRateSeedsSetPoint", new UnitCodeRemap { TargetUnitCode = "seeds1ha-1" } },
@@ -97,6 +97,19 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             RepresentationUnitSystem.UnitOfMeasureConverter converter = new RepresentationUnitSystem.UnitOfMeasureConverter();
             return converter.Convert(sourceUOM, targetUOM, n);
+        }
+
+        public static double WidthM(this DeviceElementConfiguration deviceElementConfiguration)
+        {
+            if (deviceElementConfiguration is SectionConfiguration sectionConfiguration)
+            {
+               return sectionConfiguration.SectionWidth?.AsConvertedDouble("m") ?? 0d;
+            }
+            else if (deviceElementConfiguration is ImplementConfiguration implementConfiguration)
+            {
+                return implementConfiguration.PhysicalWidth.AsConvertedDouble("m") ?? implementConfiguration.Width?.AsConvertedDouble("m") ?? 0d;
+            }
+            return 0d;
         }
 
         public static Offset AsOffset(this DeviceElementConfiguration configuration)
