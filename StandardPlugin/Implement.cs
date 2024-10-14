@@ -58,8 +58,9 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                         if (position == SourceGeometryPosition.GPSReceiver)
                         {
-                            MachineConfiguration machineConfiguration = null;
                             //Add any tractor offset
+                            MachineConfiguration machineConfiguration = null;
+                            HitchPoint hitchPoint = null;
                             var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
                             if (equipConfig != null)
                             {
@@ -67,6 +68,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 if (vehicle != null)
                                 {
                                     machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
+                                }
+                                Connector hitch = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
+                                if (hitch != null)
+                                {
+                                    hitchPoint = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == hitch.HitchPointId);
                                 }
                             }
                             else
@@ -76,7 +82,13 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                             if (machineConfiguration != null)
                             {
+                                //Add the GPS receiver offset
                                 section.Offset.Add(machineConfiguration.AsOffset());
+                            }
+                            if (hitchPoint != null)
+                            {
+                                //Add the hitch point offset
+                                section.Offset.Add(hitchPoint.ReferencePoint.AsOffset());
                             }
                         }
                         Sections.Add(section);

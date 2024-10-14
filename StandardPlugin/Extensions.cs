@@ -112,6 +112,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             return 0d;
         }
 
+        public static Offset AsOffset(this List<NumericRepresentationValue> offsets)
+        {
+            return new Offset(offsets.FirstOrDefault(x => x.Representation.Code == "vrInlineOffset")?.AsConvertedDouble("m") ?? 0d,
+                offsets.FirstOrDefault(x => x.Representation.Code == "vrLateralOffset")?.AsConvertedDouble("m") ?? 0d,
+                offsets.FirstOrDefault(x => x.Representation.Code == "vrVerticalOffset")?.AsConvertedDouble("m") ?? 0d);
+        }
+
+        public static Offset AsOffset(this ReferencePoint referencePoint)
+        {
+            return new Offset(referencePoint.XOffset?.AsConvertedDouble("m") ?? 0d,
+                referencePoint.YOffset?.AsConvertedDouble("m") ?? 0d,
+                referencePoint.ZOffset?.AsConvertedDouble("m") ?? 0d);
+        }
+
         public static Offset AsOffset(this DeviceElementConfiguration configuration)
         {
             if (configuration is SectionConfiguration sectionConfiguration)
@@ -122,9 +136,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
             else if (configuration is ImplementConfiguration implementConfiguration)
             {
-                return new Offset(implementConfiguration.ControlPoint?.XOffset?.AsConvertedDouble("m") ?? 0d,
-                    implementConfiguration.ControlPoint?.YOffset?.AsConvertedDouble("m") ?? 0d,
-                    implementConfiguration.ControlPoint?.ZOffset?.AsConvertedDouble("m") ?? 0d);
+                if (implementConfiguration.ControlPoint != null)
+                {
+                    return implementConfiguration.ControlPoint.AsOffset();
+                }
+                else if (implementConfiguration.Offsets.Any())
+                {
+                    return implementConfiguration.Offsets.AsOffset();
+                }
             }
             else if (configuration is MachineConfiguration machineConfiguration)
             {
