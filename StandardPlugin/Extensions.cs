@@ -184,6 +184,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
             else
             {
+                //We only consider distance when we don't have a prior point to map from
                 double distance = 1; //1m as default without any other information (at start of data)
                 if (reportedDistance != null)
                 {

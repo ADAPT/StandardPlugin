@@ -67,7 +67,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 Dictionary<string, ADAPTParquetColumnData> columnDataByOutputKey = new Dictionary<string, ADAPTParquetColumnData>();
                 Dictionary<string, List<OperationData>> sourceOperationsByOutputKey = new Dictionary<string, List<OperationData>>();
-                Dictionary<string, List<VariableElement>> variablesByOutputKey = new Dictionary<string, List<VariableElement>>();
+                Dictionary<string, Dictionary<string, VariableElement>> variablesBySourceNameByOutputKey = new Dictionary<string, Dictionary<string, VariableElement>>();
                 Dictionary<string, LoggedData> loggedDataByOutputKey = new Dictionary<string, LoggedData>();
                 foreach (var fieldLoggedData in fieldIdGroupBy)
                 {
@@ -94,11 +94,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                             columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData(implement.GetDistinctWorkingDatas(), _commonExporters));
                         }
 
-                        if (!variablesByOutputKey.ContainsKey(outputOperationKey))
+                        if (!variablesBySourceNameByOutputKey.ContainsKey(outputOperationKey))
                         {
-                            variablesByOutputKey.Add(outputOperationKey, new List<VariableElement>());
+                            variablesBySourceNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
                         }
-                        ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesByOutputKey[outputOperationKey]);
+                        ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesBySourceNameByOutputKey[outputOperationKey]);
                         if (!columnDataByOutputKey[outputOperationKey].Timestamps.Any() || !columnDataByOutputKey[outputOperationKey].Geometries.Any())
                         {
                             columnDataByOutputKey.Remove(outputOperationKey);
@@ -136,7 +136,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     var loggedData = loggedDataByOutputKey[kvp.Key];
                     var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
                     var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
-                    var variables = variablesByOutputKey[kvp.Key];
+                    var variables = variablesBySourceNameByOutputKey[kvp.Key].Values.ToList();
 
                     Standard.OperationElement outputOperation = new OperationElement()
                     {
@@ -291,7 +291,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             operationElement.HarvestLoadIdentifier = srcLoad?.LoadNumber;
         }
 
-        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData, List<VariableElement> variables)
+        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData, Dictionary<string, VariableElement> variablesBySourceCode)
         {
             SpatialRecord priorSpatialRecord = null;
             foreach (var record in operationData.GetSpatialRecords())
@@ -316,7 +316,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             //If only one product on the operation, we can just set it on the relevant variables (rate, depth, etc.)
                             //If more than one, we need to create an additional variable per product during the record iteration as vrProductIndex changes
                             //The product that is set on a section gets the rate, the other products get a 0
-                            if (!variables.Any(v => v.Name == dataColumn.SrcName)) //TODO improve on doing this conditional every time
+                            if (!variablesBySourceCode.ContainsKey(dataColumn.SrcName))
                             {
                                 VariableElement variable = new VariableElement()
                                 {
@@ -328,7 +328,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     //TODO rest.  
                                     //Rate properties are only relevant for Work Order variables, not here
                                 };
-                                variables.Add(variable);
+                                variablesBySourceCode.Add(dataColumn.SrcName, variable);
                             }
                         }
                     }
