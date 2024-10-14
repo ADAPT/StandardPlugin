@@ -16,18 +16,19 @@ namespace AgGateway.ADAPT.StandardPlugin
             DeviceElement = deviceElement;
             
             WorkstateDefinition = deviceElementUse.GetWorkingDatas().OfType<EnumeratedWorkingData>().FirstOrDefault(x => x.Representation.Code == "dtRecordingStatus");
-            FactoredDefinitions = new List<FactoredWorkingData>();
+            FactoredDefinitionsBySourceCode = new Dictionary<string, FactoredWorkingData>();
 
             //Add only the variables we can map to a standard type
             var numericWorkingDatas = deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>().Where(nwd => typeMappings.Any(m => m.Source == nwd.Representation.Code));
             WidthM = deviceElementConfiguration.WidthM();
-            FactoredDefinitions.AddRange(numericWorkingDatas.Select(nwd => new FactoredWorkingData(nwd, WidthM, WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code))));
+            var definitions = numericWorkingDatas.Select(nwd => new FactoredWorkingData(nwd, WidthM, WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
+            FactoredDefinitionsBySourceCode = definitions.ToDictionary(d => d.WorkingData.Representation.Code);
             Offset = deviceElementConfiguration.AsOffset();
         }
         public Offset Offset { get; set; }
         public DeviceElement DeviceElement { get; set; }
         public EnumeratedWorkingData WorkstateDefinition { get; set; }
-        public List<FactoredWorkingData> FactoredDefinitions { get; set; }
+        public Dictionary<string, FactoredWorkingData> FactoredDefinitionsBySourceCode { get; set; }
 
         public double WidthM { get; set; }
 
@@ -38,7 +39,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             builder.Append(Offset.X?.ToString() ?? string.Empty);
             builder.Append(Offset.Y?.ToString() ?? string.Empty);
             builder.Append(WidthM.ToString());
-            foreach(var factoredDefinition in FactoredDefinitions)
+            foreach(var factoredDefinition in FactoredDefinitionsBySourceCode.Values)
             {
                 builder.Append(factoredDefinition.WorkingData.Representation.Code);
             }
@@ -57,9 +58,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 else if (workingData is NumericWorkingData nwd &&
                     typeMappings.Any(m => m.Source == nwd.Representation.Code) &&
-                    !FactoredDefinitions.Any(x => x.WorkingData.Representation.Code == nwd.Representation.Code))
+                    !FactoredDefinitionsBySourceCode.ContainsKey(nwd.Representation.Code))
                 {
-                    FactoredDefinitions.Add(new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
+                    FactoredDefinitionsBySourceCode.Add(nwd.Representation.Code, new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
                 }
             }
         }
@@ -94,10 +95,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             double bearing = 0;
-            var headingData = FactoredDefinitions.FirstOrDefault(d => d.WorkingData.Representation.Code == "vrHeading");
-            if (headingData != null)
+            if (FactoredDefinitionsBySourceCode.ContainsKey("vrHeading"))
             {
-                bearing = ((NumericRepresentationValue)record.GetMeterValue(headingData.WorkingData)).Value.Value;
+                bearing = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCode["vrHeading"].WorkingData)).Value.Value;
             }
             else if (priorPoint != null)
             {
@@ -107,10 +107,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             var x = point.Destination(Offset.X ?? 0d, bearing % 360d);
             var xy = x.Destination(Offset.Y ?? 0d, bearing + 90d % 360d);
             double? reportedDistance = null;
-            var distanceData = FactoredDefinitions.FirstOrDefault(d => d.WorkingData.Representation.Code == "vrDistanceTraveled");
-            if (distanceData != null)
+            if (FactoredDefinitionsBySourceCode.ContainsKey("vrDistanceTraveled"))
             {
-                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(distanceData.WorkingData)).Value.Value;
+                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCode["vrDistanceTraveled"].WorkingData)).Value.Value;
             }
             polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
             if (polygon.IsEmpty || !polygon.IsValid)

@@ -162,7 +162,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<NumericWorkingData>  GetDistinctWorkingDatas()
         {
             List<NumericWorkingData> distinctWorkingDatas = new List<NumericWorkingData>();
-            foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitions))
+            foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitionsBySourceCode.Values))
             {
                 if (!distinctWorkingDatas.Any(d => d.Representation.Code == factoredDefinition.WorkingData.Representation.Code))
                 {

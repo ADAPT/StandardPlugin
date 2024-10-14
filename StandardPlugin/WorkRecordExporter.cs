@@ -307,13 +307,9 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                         foreach (var dataColumn in runningOutput.Columns)
                         {
-                            var factoredDefinition = section.FactoredDefinitions.FirstOrDefault(x => x.WorkingData.Representation.Code == dataColumn.SrcName);
-                            double? doubleVal = null;
-                            if (factoredDefinition != null)
-                            {
-                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                                doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;  
-                            }
+                            var factoredDefinition = section.FactoredDefinitionsBySourceCode[dataColumn.SrcName];
+                            NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                            var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;  
                             dataColumn.Values.Add(doubleVal);
 
                             //TODO Multivariety - see left/right example https://adaptstandard.org/docs/scenario-001/
