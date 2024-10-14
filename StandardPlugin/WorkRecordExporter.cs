@@ -98,8 +98,12 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             variablesBySourceNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
                         }
+
                         ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesBySourceNameByOutputKey[outputOperationKey]);
-                        if (!columnDataByOutputKey[outputOperationKey].Timestamps.Any() || !columnDataByOutputKey[outputOperationKey].Geometries.Any())
+
+                        //Remove any operations that have no spatial data and no summary data
+                        if ((!columnDataByOutputKey[outputOperationKey].Timestamps.Any() || !columnDataByOutputKey[outputOperationKey].Geometries.Any()) &&
+                            (!loggedDataByOutputKey.ContainsKey(outputOperationKey) || loggedDataByOutputKey[outputOperationKey].SummaryId == null))
                         {
                             columnDataByOutputKey.Remove(outputOperationKey);
                             loggedDataByOutputKey.Remove(outputOperationKey);
