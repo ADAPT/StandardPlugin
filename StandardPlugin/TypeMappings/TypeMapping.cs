@@ -11,4 +11,7 @@ public class TypeMapping
    [JsonProperty("factor")]    
     public bool ShouldFactor { get; set; }
 
+    [JsonProperty("multiproduct")]    
+    public bool IsMultiProductCapable { get; set; }
+
 }

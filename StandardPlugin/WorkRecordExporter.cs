@@ -67,7 +67,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 Dictionary<string, ADAPTParquetColumnData> columnDataByOutputKey = new Dictionary<string, ADAPTParquetColumnData>();
                 Dictionary<string, List<OperationData>> sourceOperationsByOutputKey = new Dictionary<string, List<OperationData>>();
-                Dictionary<string, Dictionary<string, VariableElement>> variablesBySourceNameByOutputKey = new Dictionary<string, Dictionary<string, VariableElement>>();
+                Dictionary<string, Dictionary<string, VariableElement>> variablesByTargetNameByOutputKey = new Dictionary<string, Dictionary<string, VariableElement>>();
                 Dictionary<string, LoggedData> loggedDataByOutputKey = new Dictionary<string, LoggedData>();
                 foreach (var fieldLoggedData in fieldIdGroupBy)
                 {
@@ -93,16 +93,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData());
                         }
-                        columnDataByOutputKey[outputOperationKey].AddOperationData(implement, _commonExporters);
-
-
-                             //TODO Multivariety - see left/right example https://adaptstandard.org/docs/scenario-001/
-                            //If only one product on the operation, we can just set it on the relevant variables (rate, depth, etc.)
-                            //If more than one, we need to create an additional variable per product during the record iteration as vrProductIndex changes
-                            //The product that is set on a section gets the rate, the other products get a 0
+                        columnDataByOutputKey[outputOperationKey].AddOperationData(operationData, model.Catalog, implement, _commonExporters);
 
                         //Variables
-                        if (!variablesBySourceNameByOutputKey.ContainsKey(outputOperationKey))
+                        if (!variablesByTargetNameByOutputKey.ContainsKey(outputOperationKey))
                         {
                              VariableElement timestamp = new VariableElement()
                             {
@@ -111,24 +105,24 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 Id = new Id(){ ReferenceId =string.Concat(outputOperationKey, "-timestamp")},
                                 FileDataIndex = 1
                             };
-                            variablesBySourceNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
-                            variablesBySourceNameByOutputKey[outputOperationKey].Add("Timestamp", timestamp);
+                            variablesByTargetNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
+                            variablesByTargetNameByOutputKey[outputOperationKey].Add("Timestamp", timestamp);
                         }
                         foreach (var dataColumn in columnDataByOutputKey[outputOperationKey].Columns)
                         {
-                            if (!variablesBySourceNameByOutputKey[outputOperationKey].ContainsKey(dataColumn.SrcName))
+                            if (!variablesByTargetNameByOutputKey[outputOperationKey].ContainsKey(dataColumn.TargetName))
                             {
                                 VariableElement variable = new VariableElement()
                                 {
                                     Name = dataColumn.SrcName,
                                     DefinitionCode = dataColumn.TargetName,
-                                    //ProductId =  TODO multivariety etc.
+                                    ProductId =  dataColumn.ProductId,
                                     Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
                                     FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
                                     //TODO rest.  
                                     //Rate properties are only relevant for Work Order variables, not here
                                 };
-                                variablesBySourceNameByOutputKey[outputOperationKey].Add(dataColumn.SrcName, variable);
+                                variablesByTargetNameByOutputKey[outputOperationKey].Add(dataColumn.TargetName, variable);
                             }
                         }
 
@@ -173,7 +167,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     var loggedData = loggedDataByOutputKey[kvp.Key];
                     var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
                     var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
-                    var variables = variablesBySourceNameByOutputKey[kvp.Key].Values.ToList();
+                    var variables = variablesByTargetNameByOutputKey[kvp.Key].Values.ToList();
 
                     Standard.OperationElement outputOperation = new OperationElement()
                     {
@@ -328,7 +322,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             operationElement.HarvestLoadIdentifier = srcLoad?.LoadNumber;
         }
 
-        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData)//, Dictionary<string, VariableElement> variablesBySourceCode)
+        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData)
         {
             SpatialRecord priorSpatialRecord = null;
             foreach (var record in operationData.GetSpatialRecords())
@@ -344,10 +338,29 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                         foreach (var dataColumn in runningOutput.Columns)
                         {
-                            var factoredDefinition = section.FactoredDefinitionsBySourceCode[dataColumn.SrcName];
-                            NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                            var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;  
-                            dataColumn.Values.Add(doubleVal);
+                            if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
+                            {
+                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName]; 
+                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+
+                                NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
+                                if (dataColumn.ProductId == ((int)productValue.Value.Value).ToString())
+                                {
+                                    dataColumn.Values.Add(doubleVal);
+                                }
+                                else
+                                {
+                                    dataColumn.Values.Add(0d); //We're not applying this product to this section
+                                }
+                            }
+                            else
+                            {
+                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[string.Empty][dataColumn.SrcName];
+                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+                                dataColumn.Values.Add(doubleVal);
+                            }
                         }
                     }
                     else

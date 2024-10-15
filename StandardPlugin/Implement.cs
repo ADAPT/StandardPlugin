@@ -27,7 +27,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     if (sectionDeviceElementConfig != null)
                     {
                         var sectionDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElementConfig.DeviceElementId);
-                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, sectionDeviceElementConfig, sectionDeviceElement, typeMappings);
+                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, sectionDeviceElementConfig, sectionDeviceElement, operation, catalog, typeMappings);
                         DeviceElement parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElement.ParentDeviceId);
                         while (parent != null)
                         {
@@ -43,7 +43,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                                 foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
                                 {
-                                    section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, typeMappings);
+                                    section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, operation, typeMappings);
                                 }
                             }
 
@@ -111,15 +111,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                             {
                                 //TODO log error
                             }
-                            SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, typeMappings);
-                            section.AddAncestorWorkingDatas(implementUse, implementConfiguration, typeMappings);
+                            SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, operation, catalog, typeMappings);
+                            section.AddAncestorWorkingDatas(implementUse, implementConfiguration, operation, typeMappings);
                             Sections.Add(section);
                         }
                     }
                 }
                 else
                 {
-                    Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null, typeMappings));
+                    Sections.Add(new SectionDefinition(implementUse, implementConfiguration, null, operation, catalog, typeMappings));
                 }
                 TopDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == implementConfiguration?.DeviceElementId);
                 DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement?.DeviceModelId);
@@ -162,13 +162,17 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<NumericWorkingData> GetDistinctWorkingDatas()
         {
             List<NumericWorkingData> distinctWorkingDatas = new List<NumericWorkingData>();
-            foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitionsBySourceCode.Values))
+            foreach (string productId in Sections.SelectMany(s => s.FactoredDefinitionsBySourceCodeByProduct.Keys).Distinct())
             {
-                if (!distinctWorkingDatas.Any(d => d.Representation.Code == factoredDefinition.WorkingData.Representation.Code))
+                foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitionsBySourceCodeByProduct[productId].Values))
                 {
-                    distinctWorkingDatas.Add(factoredDefinition.WorkingData);
+                    if (!distinctWorkingDatas.Any(d => d.Representation.Code == factoredDefinition.WorkingData.Representation.Code))
+                    {
+                        distinctWorkingDatas.Add(factoredDefinition.WorkingData);
+                    }
                 }
             }
+
             return distinctWorkingDatas;
         }
     }

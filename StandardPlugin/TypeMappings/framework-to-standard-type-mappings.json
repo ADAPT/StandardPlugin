@@ -2,87 +2,104 @@
     {
         "source": "vrSeedRateSeedsTarget",
         "target": "AppliedCountPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrSeedRateSeedsActual",
         "target": "AppliedCountPerAreaActual",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrSeedRateSeedsSetPoint",
         "target": "AppliedCountPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrCountPerArea",
         "target": "AppliedCountPerAreaActual",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateVolumeActual",
         "target": "AppliedVolumePerAreaActual",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateVolumeTarget",
         "target": "AppliedVolumePerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateVolumnSetPoint",
         "target": "AppliedVolumePerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateMassActual",
         "target": "AppliedMassPerAreaActual",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateMassTarget",
         "target": "AppliedMassPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrAppRateMassSetPoint",
         "target": "AppliedMassPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrSeedRateMassActual",
         "target": "AppliedMassPerAreaActual",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrSeedRateMassTarget",
         "target": "AppliedMassPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrSeedRateMassSetPoint",
         "target": "AppliedMassPerAreaTarget",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrTotalSeedQuantityAppliedSeed",
         "target": "AppliedTotalCount",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrTotalSeedQuantityAppliedMass",
         "target": "AppliedTotalMass",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrTotalQuantityAppliedMass",
         "target": "AppliedTotalMass",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrTotalQuantityAppliedVolume",
         "target": "AppliedTotalVolume",
-        "factor": false
+        "factor": false,
+        "multiproduct": true
     },
     {
         "source": "vrYieldWetMassPerArea",

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AgGateway.ADAPT.ApplicationDataModel.ADM;
+using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
@@ -11,26 +13,58 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class SectionDefinition
     {
-        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement, List<TypeMapping> typeMappings)
+        public SectionDefinition(DeviceElementUse deviceElementUse, DeviceElementConfiguration deviceElementConfiguration, DeviceElement deviceElement, OperationData operationData, Catalog catalog, List<TypeMapping> typeMappings)
         {
             DeviceElement = deviceElement;
             
             WorkstateDefinition = deviceElementUse.GetWorkingDatas().OfType<EnumeratedWorkingData>().FirstOrDefault(x => x.Representation.Code == "dtRecordingStatus");
-            FactoredDefinitionsBySourceCode = new Dictionary<string, FactoredWorkingData>();
+            FactoredDefinitionsBySourceCodeByProduct = new Dictionary<string, Dictionary<string, FactoredWorkingData>>();
+
+            WidthM = deviceElementConfiguration.WidthM();
+            Offset = deviceElementConfiguration.AsOffset();
 
             //Add only the variables we can map to a standard type
             var numericWorkingDatas = deviceElementUse.GetWorkingDatas().OfType<NumericWorkingData>().Where(nwd => typeMappings.Any(m => m.Source == nwd.Representation.Code));
-            WidthM = deviceElementConfiguration.WidthM();
             var definitions = numericWorkingDatas.Select(nwd => new FactoredWorkingData(nwd, WidthM, WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
-            FactoredDefinitionsBySourceCode = definitions.ToDictionary(d => d.WorkingData.Representation.Code);
-            Offset = deviceElementConfiguration.AsOffset();
+
+             //Track any variable product
+            ProductIndexWorkingData = deviceElementUse.GetWorkingDatas().FirstOrDefault(wd => wd.Representation.Code == "vrProductIndex") as NumericWorkingData;
+            
+            if (ProductIndexWorkingData == null)
+            {
+                FactoredDefinitionsBySourceCodeByProduct.Add(string.Empty, definitions.ToDictionary(d => d.WorkingData.Representation.Code));
+            }
+            else 
+            {
+                FactoredDefinitionsBySourceCodeByProduct.Add(string.Empty, new Dictionary<string, FactoredWorkingData>());
+                foreach (var productId in operationData.ProductIds)
+                {
+                    FactoredDefinitionsBySourceCodeByProduct.Add(productId.ToString(), new Dictionary<string, FactoredWorkingData>());
+                }
+                foreach (var definition in definitions)
+                {
+                    if (typeMappings.First(m => m.Source == definition.WorkingData.Representation.Code).IsMultiProductCapable)
+                    {
+                        foreach (var id in operationData.ProductIds)
+                        {
+                            FactoredDefinitionsBySourceCodeByProduct[id.ToString()].Add(definition.WorkingData.Representation.Code, definition);
+                        }
+                    }  
+                    else
+                    {
+                        FactoredDefinitionsBySourceCodeByProduct[string.Empty].Add(definition.WorkingData.Representation.Code, definition);
+                    }
+                }
+            }
         }
         public Offset Offset { get; set; }
         public DeviceElement DeviceElement { get; set; }
         public EnumeratedWorkingData WorkstateDefinition { get; set; }
-        public Dictionary<string, FactoredWorkingData> FactoredDefinitionsBySourceCode { get; set; }
+        public Dictionary<string, Dictionary<string, FactoredWorkingData>> FactoredDefinitionsBySourceCodeByProduct { get; set; }
 
         public double WidthM { get; set; }
+
+        public NumericWorkingData ProductIndexWorkingData { get; set; }
 
         public string GetDefinitionKey()
         {
@@ -39,15 +73,45 @@ namespace AgGateway.ADAPT.StandardPlugin
             builder.Append(Offset.X?.ToString() ?? string.Empty);
             builder.Append(Offset.Y?.ToString() ?? string.Empty);
             builder.Append(WidthM.ToString());
-            foreach(var factoredDefinition in FactoredDefinitionsBySourceCode.Values)
+            foreach(string productId in FactoredDefinitionsBySourceCodeByProduct.Keys)
             {
-                builder.Append(factoredDefinition.WorkingData.Representation.Code);
+                foreach(var factoredDefinition in FactoredDefinitionsBySourceCodeByProduct[productId].Values)
+                {
+                    builder.Append(factoredDefinition.WorkingData.Representation.Code);
+                }
             }
+
             return builder.ToString().AsMD5Hash();
         }
 
-        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse, DeviceElementConfiguration ancestorConfig, List<TypeMapping> typeMappings)
+        public void AddAncestorWorkingDatas(DeviceElementUse ancestorUse, DeviceElementConfiguration ancestorConfig, OperationData operationData, List<TypeMapping> typeMappings)
         {
+            var productIndex = ancestorUse.GetWorkingDatas().FirstOrDefault(wd => wd.Representation.Code == "vrProductIndex") as NumericWorkingData;
+            if (productIndex != null && ProductIndexWorkingData == null)
+            {   
+                ProductIndexWorkingData = productIndex;
+                foreach (var productId in operationData.ProductIds)
+                {
+                    if (!FactoredDefinitionsBySourceCodeByProduct.ContainsKey(productId.ToString()))
+                    {
+                        FactoredDefinitionsBySourceCodeByProduct.Add(productId.ToString(), new Dictionary<string, FactoredWorkingData>());
+                    }
+                }
+                List<FactoredWorkingData> definitionMoved = new List<FactoredWorkingData>();
+                foreach (var definition in FactoredDefinitionsBySourceCodeByProduct[string.Empty].Values.Where(d => typeMappings.First(m => m.Source == d.WorkingData.Representation.Code).IsMultiProductCapable))
+                {
+                    definitionMoved.Add(definition);
+                    foreach (var productId in operationData.ProductIds)
+                    {
+                        FactoredDefinitionsBySourceCodeByProduct[productId.ToString()].Add(definition.WorkingData.Representation.Code, definition);
+                    }
+                }
+                foreach (var definition in definitionMoved)
+                {
+                    FactoredDefinitionsBySourceCodeByProduct[string.Empty].Remove(definition.WorkingData.Representation.Code);
+                }
+            }
+
             foreach (var workingData in ancestorUse.GetWorkingDatas())
             {
                 if (WorkstateDefinition == null &&
@@ -57,10 +121,25 @@ namespace AgGateway.ADAPT.StandardPlugin
                     WorkstateDefinition = ewd;
                 }
                 else if (workingData is NumericWorkingData nwd &&
-                    typeMappings.Any(m => m.Source == nwd.Representation.Code) &&
-                    !FactoredDefinitionsBySourceCode.ContainsKey(nwd.Representation.Code))
+                        typeMappings.Any(m => m.Source == nwd.Representation.Code))
                 {
-                    FactoredDefinitionsBySourceCode.Add(nwd.Representation.Code, new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
+                    if (typeMappings.First(m => m.Source == nwd.Representation.Code).IsMultiProductCapable)
+                    {
+                        foreach (var productId in FactoredDefinitionsBySourceCodeByProduct.Keys)
+                        {
+                            if (!FactoredDefinitionsBySourceCodeByProduct[productId].ContainsKey(nwd.Representation.Code))
+                            {
+                                FactoredDefinitionsBySourceCodeByProduct[productId].Add(nwd.Representation.Code, new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey(nwd.Representation.Code))
+                        {
+                            FactoredDefinitionsBySourceCodeByProduct[string.Empty].Add(nwd.Representation.Code, new FactoredWorkingData(nwd, ancestorConfig.WidthM(), WidthM, typeMappings.First(m => m.Source == nwd.Representation.Code)));
+                        }
+                    }
                 }
             }
         }
@@ -95,9 +174,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             double bearing = 0;
-            if (FactoredDefinitionsBySourceCode.ContainsKey("vrHeading"))
+            if (FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey("vrHeading"))
             {
-                bearing = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCode["vrHeading"].WorkingData)).Value.Value;
+                bearing = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrHeading"].WorkingData)).Value.Value;
             }
             else if (priorPoint != null)
             {
@@ -107,9 +186,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             var x = point.Destination(Offset.X ?? 0d, bearing % 360d);
             var xy = x.Destination(Offset.Y ?? 0d, bearing + 90d % 360d);
             double? reportedDistance = null;
-            if (FactoredDefinitionsBySourceCode.ContainsKey("vrDistanceTraveled"))
+            if (FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey("vrDistanceTraveled"))
             {
-                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCode["vrDistanceTraveled"].WorkingData)).Value.Value;
+                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrDistanceTraveled"].WorkingData)).Value.Value;
             }
             polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
             if (polygon.IsEmpty || !polygon.IsValid)
