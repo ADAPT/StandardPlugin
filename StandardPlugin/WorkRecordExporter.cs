@@ -74,7 +74,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     foreach (var operationData in fieldLoggedData.OperationData)
                     {
                         Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings);
-                        string outputOperationKey = implement.GetOperationDefinitionKey(operationData);
+                        string outputOperationKey = operationData.Id.ReferenceId.ToString(); //TODO //implement.GetOperationDefinitionKey(operationData);  //Commented out pending completion of the below grouping logic to avoid any potential issues.  OperationData taken as is for now.
 
                         //TODO write an algorithm so that if the OperationData has the same implement operation key
                         //on this same field within 3 days of another OperationData, they are grouped into the 
@@ -88,18 +88,51 @@ namespace AgGateway.ADAPT.StandardPlugin
                         }
                         sourceOperationsByOutputKey[outputOperationKey].Add(operationData);
 
-                        //Spatial data in same 
+                        //Spatial data in same
                         if (!columnDataByOutputKey.ContainsKey(outputOperationKey))
                         {
-                            columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData(implement.GetDistinctWorkingDatas(), _commonExporters));
+                            columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData());
                         }
+                        columnDataByOutputKey[outputOperationKey].AddOperationData(implement, _commonExporters);
 
+
+                             //TODO Multivariety - see left/right example https://adaptstandard.org/docs/scenario-001/
+                            //If only one product on the operation, we can just set it on the relevant variables (rate, depth, etc.)
+                            //If more than one, we need to create an additional variable per product during the record iteration as vrProductIndex changes
+                            //The product that is set on a section gets the rate, the other products get a 0
+
+                        //Variables
                         if (!variablesBySourceNameByOutputKey.ContainsKey(outputOperationKey))
                         {
+                             VariableElement timestamp = new VariableElement()
+                            {
+                                Name = "Timestamp",
+                                DefinitionCode = "Timestamp",
+                                Id = new Id(){ ReferenceId =string.Concat(outputOperationKey, "-timestamp")},
+                                FileDataIndex = 1
+                            };
                             variablesBySourceNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
+                            variablesBySourceNameByOutputKey[outputOperationKey].Add("Timestamp", timestamp);
+                        }
+                        foreach (var dataColumn in columnDataByOutputKey[outputOperationKey].Columns)
+                        {
+                            if (!variablesBySourceNameByOutputKey[outputOperationKey].ContainsKey(dataColumn.SrcName))
+                            {
+                                VariableElement variable = new VariableElement()
+                                {
+                                    Name = dataColumn.SrcName,
+                                    DefinitionCode = dataColumn.TargetName,
+                                    //ProductId =  TODO multivariety etc.
+                                    Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
+                                    FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
+                                    //TODO rest.  
+                                    //Rate properties are only relevant for Work Order variables, not here
+                                };
+                                variablesBySourceNameByOutputKey[outputOperationKey].Add(dataColumn.SrcName, variable);
+                            }
                         }
 
-                        ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData, variablesBySourceNameByOutputKey[outputOperationKey]);
+                        ExportOperationSpatialRecords(columnDataByOutputKey[outputOperationKey], implement, operationData);
 
                         //Remove any operations that have no spatial data and no summary data
                         if ((!columnDataByOutputKey[outputOperationKey].Timestamps.Any() || !columnDataByOutputKey[outputOperationKey].Geometries.Any()) &&
@@ -295,7 +328,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             operationElement.HarvestLoadIdentifier = srcLoad?.LoadNumber;
         }
 
-        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData, Dictionary<string, VariableElement> variablesBySourceCode)
+        private void ExportOperationSpatialRecords(ADAPTParquetColumnData runningOutput, Implement implement, OperationData operationData)//, Dictionary<string, VariableElement> variablesBySourceCode)
         {
             SpatialRecord priorSpatialRecord = null;
             foreach (var record in operationData.GetSpatialRecords())
@@ -315,25 +348,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                             NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
                             var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;  
                             dataColumn.Values.Add(doubleVal);
-
-                            //TODO Multivariety - see left/right example https://adaptstandard.org/docs/scenario-001/
-                            //If only one product on the operation, we can just set it on the relevant variables (rate, depth, etc.)
-                            //If more than one, we need to create an additional variable per product during the record iteration as vrProductIndex changes
-                            //The product that is set on a section gets the rate, the other products get a 0
-                            if (!variablesBySourceCode.ContainsKey(dataColumn.SrcName))
-                            {
-                                VariableElement variable = new VariableElement()
-                                {
-                                    Name = dataColumn.SrcName,
-                                    DefinitionCode = dataColumn.TargetName,
-                                    //ProductId =  TODO multivariety etc.
-                                    Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
-                                    FileDataIndex = runningOutput.GetDataColumnIndex(dataColumn),
-                                    //TODO rest.  
-                                    //Rate properties are only relevant for Work Order variables, not here
-                                };
-                                variablesBySourceCode.Add(dataColumn.SrcName, variable);
-                            }
                         }
                     }
                     else

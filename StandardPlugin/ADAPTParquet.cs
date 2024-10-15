@@ -68,12 +68,24 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     internal class ADAPTParquetColumnData
     {
-        public ADAPTParquetColumnData(IEnumerable<NumericWorkingData> distinctNumericColumns, CommonExporters commonExporters)
+        public ADAPTParquetColumnData()
         {
             Timestamps = new List<DateTime>();
-            Columns = distinctNumericColumns.Select(x => new ADAPTDataColumn(x, commonExporters)).ToList();
+            Columns = new List<ADAPTDataColumn>();
             Geometries = new List<byte[]>();
         }
+
+        public void AddOperationData(Implement implement, CommonExporters commonExporters)
+        {
+            foreach (NumericWorkingData nwd in implement.GetDistinctWorkingDatas())
+            {
+                if (!Columns.Any(c => c.SrcName == nwd.Representation.Code))
+                {
+                    Columns.Add(new ADAPTDataColumn(nwd, commonExporters));
+                }
+            }
+        }
+
         public List<DateTime> Timestamps { get; set; }
 
         public List<ADAPTDataColumn> Columns { get; set; }
@@ -85,7 +97,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             var columnIndex = Columns.IndexOf(dataColumn);
             if (columnIndex != -1)
             {
-                columnIndex += Timestamps.Any() ? 1 : 0;
+                columnIndex += 2; //Index is 1-based
             }
 
             return columnIndex;

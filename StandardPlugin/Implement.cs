@@ -159,7 +159,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return builder.ToString().AsMD5Hash();
         }
 
-        public List<NumericWorkingData>  GetDistinctWorkingDatas()
+        public List<NumericWorkingData> GetDistinctWorkingDatas()
         {
             List<NumericWorkingData> distinctWorkingDatas = new List<NumericWorkingData>();
             foreach (var factoredDefinition in Sections.SelectMany(s => s.FactoredDefinitionsBySourceCode.Values))
