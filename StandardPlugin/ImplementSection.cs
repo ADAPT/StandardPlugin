@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
-using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Equipment;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
@@ -206,22 +205,45 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     internal class LeadingEdge
     {
-        public LeadingEdge(Point leftPoint, Point centerPoint, Point rightPoint)
+        public LeadingEdge(Point leadingPoint, double width, LeadingEdge priorLeadingEdge, double bearing, double? reportedDistance)
         {
-            Left = leftPoint;
-            Center = centerPoint;
-            Right = rightPoint;
-        }
-        public LeadingEdge(Point leadingPoint, double bearing, double width)
-        {
-            Left = leadingPoint.Destination(width / 2d, bearing - 90d % 360d);
+            Bearing = bearing;
+            double wh = width / 2d;
+            Left = leadingPoint.Destination(wh, Extensions.BearingLeft(bearing));
             Center = leadingPoint;
-            Right = leadingPoint.Destination(width / 2d, bearing + 90d % 360d);
+            Right = leadingPoint.Destination(wh, Extensions.BearingRight(bearing));
+
+            if (priorLeadingEdge != null && this.AsLineString().Intersects(priorLeadingEdge.AsLineString()))
+            {
+                //Implement is turning significantly
+                bool turningLeft = priorLeadingEdge.Bearing < bearing;
+                if (Math.Abs(priorLeadingEdge.Bearing - bearing) > 300d)
+                {
+                    //Bearings are on either side of zero
+                    if (priorLeadingEdge.Bearing - 360d > bearing)
+                    {
+                        turningLeft = false;
+                    }
+                    else if (priorLeadingEdge.Bearing - 360d < bearing)
+                    {
+                        turningLeft = true;
+                    }
+                }
+                if (turningLeft)
+                {
+                    Left = priorLeadingEdge.Left;
+                }
+                else
+                {
+                    Right = priorLeadingEdge.Right;
+                }
+            }
         }
 
         public Point Left { get; set; }
         public Point Center { get; set; }
         public Point Right { get; set; }    
+        public double Bearing { get; set; }
 
         public double GetBearing(Point nextPoint)
         {
@@ -230,6 +252,11 @@ namespace AgGateway.ADAPT.StandardPlugin
         public double GetDistance(Point nextPoint)
         {
             return GeometryExporter.HaversineDistance(Center, nextPoint);
+        }
+
+        public LineString AsLineString()
+        {
+            return new LineString(new Coordinate[]{Left.AsCoordinate(), Right.AsCoordinate()});
         }
     }
 

@@ -165,22 +165,31 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new Coordinate(point.X, point.Y);
         }
 
+        public static double BearingBack(this double bearing)
+        {
+            return bearing - 180 % 360d;
+        }
+
+        public static double BearingLeft(this double bearing)
+        {
+            return bearing - 90 % 360d;
+        }
+
+        public static double BearingRight(this double bearing)
+        {
+            return bearing + 90 % 360d;
+        }
+
         public static Polygon AsCoveragePolygon(this Point leadingPoint, double width, ref LeadingEdge latestLeadingEdge, double bearing, double? reportedDistance)
         {
-            double left = bearing - 90d % 360d;
-            double right = bearing + 90d % 360d;
-            double back = bearing - 180 % 360d;
-
-
-            double wh = width / 2d;
-            Point frontLeft = leadingPoint.Destination(wh, left);
-            Point frontRight = leadingPoint.Destination(wh, right);
+            LeadingEdge priorLeadingEdge = latestLeadingEdge;
+            latestLeadingEdge = new LeadingEdge(leadingPoint, width, priorLeadingEdge, bearing, reportedDistance);
             Point backRight;
             Point backLeft;
-            if (latestLeadingEdge != null)
+            if (priorLeadingEdge != null)
             {
-                backRight = latestLeadingEdge.Right;
-                backLeft = latestLeadingEdge.Left;
+                backRight = priorLeadingEdge.Right;
+                backLeft = priorLeadingEdge.Left;
             }
             else
             {
@@ -192,17 +201,17 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 distance = distance > 4 ? 4 : distance; //keep distances sane
 
-                backRight = frontRight.Destination(distance, back);
-                backLeft = backRight.Destination(width, left);
+                backRight = latestLeadingEdge.Right.Destination(distance, BearingBack(bearing));
+                backLeft = backRight.Destination(width, BearingLeft(bearing));
             }
-            latestLeadingEdge = new LeadingEdge(frontLeft, leadingPoint, frontRight);
+            
             List<Coordinate> ringCoordinates = new List<Coordinate>()
             {
-                frontLeft.AsCoordinate(),
-                frontRight.AsCoordinate(),
+                latestLeadingEdge.Left.AsCoordinate(),
+                latestLeadingEdge.Right.AsCoordinate(),
                 backRight.AsCoordinate(),
                 backLeft.AsCoordinate(),
-                frontLeft.AsCoordinate()
+                latestLeadingEdge.Left.AsCoordinate()
             };
             LinearRing exterior = new LinearRing(ringCoordinates.ToArray());
             return new Polygon(exterior);
