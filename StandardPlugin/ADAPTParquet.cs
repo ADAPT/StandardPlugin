@@ -14,6 +14,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class ADAPTParquetWriter
     {
+        const int RowGroupSize = 65535;
         public static Dictionary<string, string> GeoParquetMetadata
         {
             get
@@ -49,18 +50,32 @@ namespace AgGateway.ADAPT.StandardPlugin
                 using (ParquetWriter writer = await ParquetWriter.CreateAsync(Schema, fs))
                 {
                     writer.CustomMetadata = GeoParquetMetadata;
-                    using (ParquetRowGroupWriter rg = writer.CreateRowGroup())
+                    int startIndex = 0;
+                    int remainingRowGroups = ColumnData.Geometries.Count / RowGroupSize;
+                    if (ColumnData.Geometries.Count % RowGroupSize > 0)
                     {
-                        int index = 0;
-                        if (ColumnData.Timestamps.Any())
+                        remainingRowGroups++;
+                    }
+                    while (remainingRowGroups > 0)
+                    {
+                        using (ParquetRowGroupWriter rg = writer.CreateRowGroup())
                         {
-                            await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[index], ColumnData.Timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()));
+                            int index = 0;
+                            if (ColumnData.Timestamps.Any())
+                            {
+                                var timestamps = ColumnData.Timestamps.Skip(startIndex).Skip(startIndex).Take(RowGroupSize);
+                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[index], timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()));
+                            }
+                            foreach (var doubleColumn in ColumnData.Columns)
+                            {
+                                var values = doubleColumn.Values.Skip(startIndex).Take(RowGroupSize);
+                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], values.ToArray()));
+                            }
+                            var geometries = ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize);
+                            await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], geometries.ToArray()));
                         }
-                        foreach (var doubleColumn in ColumnData.Columns)
-                        {
-                            await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], doubleColumn.Values.ToArray()));
-                        }
-                        await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], ColumnData.Geometries.ToArray()));
+                        startIndex += RowGroupSize;
+                        remainingRowGroups--;
                     }
                 }
             }
