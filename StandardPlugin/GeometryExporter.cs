@@ -9,6 +9,8 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal static class GeometryExporter
     {
+        internal const double EarthRadiusM = 6378137;
+
         private static LinearRing ConvertToLinearRing(AdaptShapes.LinearRing srcRing)
         {
             if (srcRing == null || srcRing.Points.IsNullOrEmpty())
@@ -167,6 +169,62 @@ namespace AgGateway.ADAPT.StandardPlugin
                 X = x1 + dx12 * t1,
                 Y = y1 + dy12 * t1
             };
+        }
+
+        internal static Point HaversineDestination(Point startPoint, double distanceM, double bearingDeg)
+        {
+            double latRad = DegreesToRads(startPoint.Y);
+            double lonRad = DegreesToRads(startPoint.X);
+            double bearingRad = DegreesToRads(bearingDeg);
+            double length = distanceM / EarthRadiusM;
+            double otherLat = Math.Asin(Math.Sin(latRad) *
+                                        Math.Cos(length) +
+                                        Math.Cos(latRad) *
+                                        Math.Sin(length) *
+                                        Math.Cos(bearingRad));
+            double otherLon = lonRad +
+                              Math.Atan2(
+                                   Math.Sin(bearingRad) *
+                                   Math.Sin(length) *
+                                   Math.Cos(latRad),
+                                   Math.Cos(length) -
+                                   Math.Sin(latRad) *
+                                   Math.Sin(otherLat)
+                                  );
+            return new Point(RadsToDegrees(otherLon), RadsToDegrees(otherLat));
+        }
+
+        internal static double DegreesToRads(double d)
+        {
+            return d * (Math.PI / 180d);
+        }
+
+        internal static double RadsToDegrees(double r)
+        {
+            return r * (180d / Math.PI);
+        }
+
+        internal static double HaversineDistance(Point point1, Point point2)
+        {
+            double latRad1 = DegreesToRads(point1.Y);
+            double latRad2 = DegreesToRads(point2.Y);
+            double deltaLat = DegreesToRads(point2.Y - point1.Y);
+            double deltaLon = DegreesToRads(point2.X - point1.X);
+            double a = Math.Pow(Math.Sin(deltaLat / 2d), 2) + Math.Cos(latRad1) * Math.Cos(latRad2) * Math.Pow(Math.Sin(deltaLon / 2d), 2);
+            double c = 2d * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return c * EarthRadiusM;
+        }
+
+        internal static double HaversineBearing(Point point1, Point point2)
+        {
+            double latRad1 = DegreesToRads(point1.Y);
+            double latRad2 = DegreesToRads(point2.Y);
+            double lonRad1 = DegreesToRads(point1.X);
+            double lonRad2 = DegreesToRads(point2.X);
+            double a = Math.Sin(lonRad2 - lonRad1) * Math.Cos(latRad2);
+            double b = Math.Cos(latRad1) * Math.Sin(latRad2) - Math.Sin(latRad1) * Math.Cos(latRad2) * Math.Cos(lonRad2 - lonRad1);
+            double rad = Math.Atan2(a, b);
+            return RadsToDegrees(rad);
         }
     }
 }

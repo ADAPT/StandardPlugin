@@ -1,29 +1,42 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Common;
+using AgGateway.ADAPT.ApplicationDataModel.Guidance;
 using AgGateway.ADAPT.ApplicationDataModel.Logistics;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
+using Newtonsoft.Json;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class CommonExporters
     {
-        private readonly List<IError> _errors;
         private readonly Standard.Catalog _catalog;
+
+        public List<TypeMapping> TypeMappings { get; private set; }
+
+        public AgGateway.ADAPT.DataTypeDefinitions.DataTypeDefinitions StandardDataTypes { get; private set; }
 
         public CommonExporters(Standard.Root root)
         {
             _catalog = root.Catalog;
-            _errors = new List<IError>();
+            Errors = new List<IError>();
+
+            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TypeMappings/framework-to-standard-type-mappings.json");
+            string mappingData = File.ReadAllText(mappingFile);
+            TypeMappings = JsonConvert.DeserializeObject<List<TypeMapping>>(mappingData);
+
+            var standardTypesFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/adapt-data-type-definitions.json");
+            string typesJson = File.ReadAllText(standardTypesFile);
+            StandardDataTypes = JsonConvert.DeserializeObject<DataTypeDefinitions.DataTypeDefinitions>(typesJson);
         }
 
-        public List<IError> Errors
-        {
-            get { return _errors; }
-        }
+        public List<IError> Errors { get; }
 
         public Id ExportID(CompoundIdentifier srcId)
         {
@@ -35,7 +48,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 var uniqueId = new UniqueIdElement
                 {
                     IdText = srcUniqueId.Id,
-                    IdSource = string.IsNullOrEmpty(srcUniqueId.Source) ? srcUniqueId.Source : null,
+                    IdSource = srcUniqueId.Source,
                 };
                 switch (srcUniqueId.IdType)
                 {
@@ -58,19 +71,24 @@ namespace AgGateway.ADAPT.StandardPlugin
             return id;
         }
 
-        public List<TimeScopeElement> ExportTimeScopes(List<TimeScope> srcTimeScopes)
+        public List<TimeScopeElement> ExportTimeScopes(List<TimeScope> srcTimeScopes, out List<string> seasonIds)
         {
+            seasonIds = null;
             if (srcTimeScopes.IsNullOrEmpty())
             {
                 return null;
             }
 
             List<TimeScopeElement> output = new List<TimeScopeElement>();
+            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ActualStart, DateContextEnum.ActualEnd));
+            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ProposedStart, DateContextEnum.ProposedEnd));
+            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.RequestedStart, DateContextEnum.RequestedEnd));
+
             foreach (var frameworkTimeScope in srcTimeScopes)
             {
                 if (frameworkTimeScope.DateContext == DateContextEnum.TimingEvent)
                 {
-                    _errors.Add(new Error
+                    Errors.Add(new Error
                     {
                         Description = "Discarding TimingEvent TimeScope",
                         Id = frameworkTimeScope.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
@@ -78,26 +96,64 @@ namespace AgGateway.ADAPT.StandardPlugin
                     continue;
                 }
 
-                var timeScope = new TimeScopeElement
-                {
-                    DateContextCode = ExportDateContext(frameworkTimeScope.DateContext),
-                    Duration = frameworkTimeScope.Duration?.TotalSeconds,
-                    Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
-                    End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
-                };
-                output.Add(timeScope);
-
                 if (frameworkTimeScope.DateContext == DateContextEnum.CropSeason)
                 {
-                    _catalog.Seasons.Add(new SeasonElement
+                    var season = new SeasonElement
                     {
                         Id = ExportID(frameworkTimeScope.Id),
                         Description = frameworkTimeScope.Description,
-                        Start = timeScope.Start,
-                        End = timeScope.End,
-                    });
+                        Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
+                        End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
+                    };
+                    _catalog.Seasons.Add(season);
+
+                    seasonIds = seasonIds ?? new List<string>();
+                    seasonIds.Add(season.Id.ReferenceId);
+                    continue;
+                }
+
+                var timeScope = ExportTimeScope(frameworkTimeScope);
+                output.Add(timeScope);
+
+            }
+            return output;
+        }
+
+        private TimeScopeElement ExportTimeScope(TimeScope frameworkTimeScope)
+        {
+            return new TimeScopeElement
+            {
+                DateContextCode = ExportDateContext(frameworkTimeScope.DateContext),
+                Duration = frameworkTimeScope.Duration?.TotalSeconds,
+                Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
+                End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
+            };
+        }
+
+        private IEnumerable<TimeScopeElement> HandleStartEndTimeScopes(List<TimeScope> srcTimeScopes, DateContextEnum startConext, DateContextEnum endContext)
+        {
+            List<TimeScopeElement> output = new List<TimeScopeElement>();
+            var startEndTimeScopes = srcTimeScopes.Where(x => x.DateContext == startConext || x.DateContext == endContext).ToList();
+
+            TimeScope startTimeScope = null;
+            TimeScopeElement startTimeScopeElement = null;
+            foreach (var srcTimeScope in startEndTimeScopes.OrderBy(x => x.DateContext))
+            {
+                srcTimeScopes.Remove(srcTimeScope);
+
+                if (srcTimeScope.DateContext == startConext)
+                {
+                    startTimeScope = srcTimeScope;
+                    startTimeScopeElement = ExportTimeScope(srcTimeScope);
+
+                    output.Add(startTimeScopeElement);
+                }
+                else
+                {
+                    startTimeScopeElement.End = srcTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture);
                 }
             }
+
             return output;
         }
 
@@ -109,7 +165,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
             if (level > 2)
             {
-                _errors.Add(new Error
+                Errors.Add(new Error
                 {
                     Description = "Discarding nested context items",
                 });
@@ -129,6 +185,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     contextItem.DefinitionCode = "US-EPA-RegistrationNumber";
                 }
+                else if (TypeMappings.Any(x => x.Source.EqualsIgnoreCase(frameworkContextItem.Code)))
+                {
+                    contextItem.DefinitionCode = TypeMappings.First(x => x.Source.EqualsIgnoreCase(frameworkContextItem.Code)).Target;
+                }
                 else
                 {
                     contextItem.DefinitionCode = frameworkContextItem.Code;
@@ -144,7 +204,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         {
             if (role.Representation.Code != "dtPersonRole")
             {
-                _errors.Add(new Error
+                Errors.Add(new Error
                 {
                     Description = $"Found unsupported Role - {role.Representation.Code}",
                 });
@@ -174,6 +234,35 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
         }
 
+        internal List<GuidanceAllocationElement> ExportGuidanceAllocations(List<int> srcGuidanceAllocationIds, ApplicationDataModel.ADM.ApplicationDataModel model)
+        {
+            if (srcGuidanceAllocationIds.IsNullOrEmpty())
+            {
+                return null;
+            }
+
+            List<GuidanceAllocationElement> output = new List<GuidanceAllocationElement>();
+            foreach (var frameworkGuidanceAllocationId in srcGuidanceAllocationIds)
+            {
+                var frmeworkGuidanceAllocation = model.Documents.GuidanceAllocations.FirstOrDefault(x => x.Id.ReferenceId == frameworkGuidanceAllocationId);
+                if (frmeworkGuidanceAllocation == null)
+                {
+                    continue;
+                }
+
+                var guidanceAllocation = new GuidanceAllocationElement
+                {
+                    Id = ExportID(frmeworkGuidanceAllocation.Id),
+                    GuidanceGroupId = frmeworkGuidanceAllocation.GuidanceGroupId.ToString(CultureInfo.InvariantCulture),
+                    GuidanceShift = ExportGuidanceShift(frmeworkGuidanceAllocation.GuidanceShift, model.Catalog),
+                    TimeScopes = ExportTimeScopes(frmeworkGuidanceAllocation.TimeScopes, out _),
+                    Name = "GuidanceAllocation"
+                };
+            }
+
+            return output;
+        }
+
         public List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
         {
             if (srcPersonRoles.IsNullOrEmpty())
@@ -188,11 +277,103 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     PartyId = frmeworkPersonRole.PersonId.ToString(CultureInfo.InvariantCulture),
                     RoleCode = ExportRole(frmeworkPersonRole.Role),
-                    TimeScopes = ExportTimeScopes(frmeworkPersonRole.TimeScopes)
+                    TimeScopes = ExportTimeScopes(frmeworkPersonRole.TimeScopes, out _),
                 };
                 output.Add(partyRole);
             }
             return output;
+        }
+
+        public T ExportAsNumericValue<T>(NumericRepresentationValue srcRepresentationValue)
+            where T : class
+        {
+            if (srcRepresentationValue == null)
+            {
+                return default(T);
+            }
+
+            var numericValue = srcRepresentationValue.Value.Value;
+            var unitOfMeasureCode = srcRepresentationValue.Value.UnitOfMeasure?.Code ?? "unitless";
+
+            var output = Activator.CreateInstance(typeof(T));
+
+            switch (output)
+            {
+                case Density density:
+                    density.NumericValue = numericValue;
+                    density.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case MixTotalQuantity mixTotalQuantity:
+                    mixTotalQuantity.NumericValue = numericValue;
+                    mixTotalQuantity.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case Quantity quantity:
+                    quantity.NumericValue = numericValue;
+                    quantity.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case SwathWidth swathWidth:
+                    swathWidth.NumericValue = numericValue;
+                    swathWidth.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case Radius radius:
+                    radius.NumericValue = numericValue;
+                    radius.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case ArableArea arableArea:
+                    arableArea.NumericValue = numericValue;
+                    arableArea.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case ReferenceWeight referenceWeight:
+                    referenceWeight.NumericValue = numericValue;
+                    referenceWeight.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case StandardPayableMoisture standardPayableMoisture:
+                    standardPayableMoisture.NumericValue = numericValue;
+                    standardPayableMoisture.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case EstimatedPrecision estimatedPrecision:
+                    estimatedPrecision.NumericValue = numericValue;
+                    estimatedPrecision.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case HorizontalAccuracy horizontalAccuracy:
+                    horizontalAccuracy.NumericValue = numericValue;
+                    horizontalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case VerticalAccuracy verticalAccuracy:
+                    verticalAccuracy.NumericValue = numericValue;
+                    verticalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case EastShift eastShift:
+                    eastShift.NumericValue = numericValue;
+                    eastShift.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case NorthShift northShift:
+                    northShift.NumericValue = numericValue;
+                    northShift.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                case PropagationOffset propagationOffset:
+                    propagationOffset.NumericValue = numericValue;
+                    propagationOffset.UnitOfMeasureCode = unitOfMeasureCode;
+                    break;
+
+                default:
+                    throw new ApplicationException($"Unsupported numeric value - {typeof(T).Name}");
+            }
+
+            return (T)output;
         }
 
         public string ExportOperationType(OperationTypeEnum operationType)
@@ -298,5 +479,26 @@ namespace AgGateway.ADAPT.StandardPlugin
                 DataDefinitionStatusCode = statusCode,
             });
         }
+
+        private Standard.GuidanceShift ExportGuidanceShift(ApplicationDataModel.Guidance.GuidanceShift guidanceShift, ApplicationDataModel.ADM.Catalog catalog)
+        {
+            if (guidanceShift == null)
+            {
+                return null;
+            }
+
+            return new Standard.GuidanceShift
+            {
+                GuidanceGroupId = guidanceShift.GuidanceGroupId.ToString(CultureInfo.InvariantCulture),
+                EastShift = ExportAsNumericValue<EastShift>(guidanceShift.EastShift),
+                GuidancePatternId = guidanceShift.GuidancePatterId.ToString(CultureInfo.InvariantCulture),
+                NorthShift = ExportAsNumericValue<NorthShift>(guidanceShift.NorthShift),
+                PropagationOffset = ExportAsNumericValue<PropagationOffset>(guidanceShift.PropagationOffset),
+                TimeScopes = guidanceShift.TimeScopeIds.IsNullOrEmpty() 
+                    ? null 
+                    : ExportTimeScopes(catalog.TimeScopes.Where(x => guidanceShift.TimeScopeIds.Contains(x.Id.ReferenceId)).ToList(), out _)
+            };
+        }
+
     }
 }

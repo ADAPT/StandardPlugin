@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StandardPlugin", "StandardP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardPluginTests", "StandardPluginTests\StandardPluginTests.csproj", "{73427AF6-21E1-4D30-BF1B-236CABE41EA5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardPluginHarness", "StandardPluginHarness\StandardPluginHarness.csproj", "{C9FCE328-DF65-49FF-BF88-F3C81E7F0308}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{73427AF6-21E1-4D30-BF1B-236CABE41EA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{73427AF6-21E1-4D30-BF1B-236CABE41EA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{73427AF6-21E1-4D30-BF1B-236CABE41EA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9FCE328-DF65-49FF-BF88-F3C81E7F0308}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9FCE328-DF65-49FF-BF88-F3C81E7F0308}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9FCE328-DF65-49FF-BF88-F3C81E7F0308}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9FCE328-DF65-49FF-BF88-F3C81E7F0308}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

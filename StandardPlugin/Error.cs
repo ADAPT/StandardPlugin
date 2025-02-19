@@ -3,7 +3,7 @@ using AgGateway.ADAPT.ApplicationDataModel.ADM;
 namespace AgGateway.ADAPT.StandardPlugin
 {
 
-    public class Error : IError
+    internal class Error : IError
     {
         public Error()
         {

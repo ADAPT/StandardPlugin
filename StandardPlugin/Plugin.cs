@@ -1,15 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
+using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.Standard;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
 
+    public enum SourceGeometryPosition
+    {
+        GPSReceiver = 0, 
+        ImplementReferencePoint = 1,   
+    }
+
+    public enum SourceDeviceDefinition
+    {
+        DeviceElementHierarchy = 0, 
+        Machine0Implement1Section2 = 1, 
+    }
+
     public class Plugin : IPlugin
     {
-
+        private Properties _properties;
+        private const string Property_FileName = "FileName";
         public Plugin()
         {
             Errors = new List<IError>();
@@ -33,16 +48,29 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             var catalogErrors = CatalogExporter.Export(dataModel, root, properties);
             var prescriptionErrors = PrescriptionExporter.Export(dataModel, root, exportPath, properties);
+            var workRecordErrors = WorkRecordExporter.Export(dataModel, root, exportPath, properties);
 
             var errors = Errors as List<IError>;
             errors.AddRange(catalogErrors);
             errors.AddRange(prescriptionErrors);
+            errors.AddRange(workRecordErrors);
+            var json = Serialize.ToJson(root);
+
+            Directory.CreateDirectory(exportPath);
+            var outputFileName = Path.Combine(exportPath, "adapt.json");
+            File.WriteAllText(outputFileName, json, Encoding.UTF8);
         }
+
 
         public Properties GetProperties(string dataPath)
         {
-            throw new NotImplementedException("This plugin only supports exporting from the ADAPT Fraemwork to the ADAPT Standard.");
+            if (_properties == null)
+            {
+                _properties = new Properties();
+            }
+            return _properties;
         }
+
 
         public IList<ApplicationDataModel.ADM.ApplicationDataModel> Import(string dataPath, Properties properties = null)
         {
