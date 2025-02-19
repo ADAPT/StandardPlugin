@@ -28,7 +28,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _variableCounter = 0;
             _exportPath = exportPath;
             _root = root;
-            _root.Documents.WorkOrders = new List<WorkOrderElement>();
+            _root.Documents.WorkRecords = new List<WorkRecordElement>();
             _errors = new List<IError>();
             _commonExporters = new CommonExporters(root);
 
@@ -42,7 +42,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     _geometryPositition = position;
                 }
-                if (dvcString != null && Enum.TryParse(geomString, out SourceDeviceDefinition definition))
+                if (dvcString != null && Enum.TryParse(dvcString, out SourceDeviceDefinition definition))
                 {
                     _deviceDefinition = definition;
                 }
@@ -190,10 +190,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                     AsyncContext.Run(async () => await writer.Write(outputFile));
 
                     var loggedDataIdAsString = loggedData.Id.ReferenceId.ToString(CultureInfo.InvariantCulture);
-                    var workOrder = _root.Documents.WorkOrders.FirstOrDefault(x => x.Id.ReferenceId == loggedDataIdAsString);
-                    if (workOrder == null)
+                    var workRecord = _root.Documents.WorkRecords.FirstOrDefault(x => x.Id.ReferenceId == loggedDataIdAsString);
+                    if (workRecord == null)
                     {
-                        workOrder = new WorkOrderElement
+                        workRecord = new WorkRecordElement
                         {
                             Operations = new List<OperationElement>(),
                             FieldId = loggedData.FieldId?.ToString(CultureInfo.InvariantCulture),
@@ -204,9 +204,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                             TimeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds),
                             SeasonId = seasonIds?.FirstOrDefault()
                         };
-                        _root.Documents.WorkOrders.Add(workOrder);
+                        _root.Documents.WorkRecords.Add(workRecord);
                     }
-                    workOrder.Operations.Add(outputOperation);
+                    workRecord.Operations.Add(outputOperation);
                 }
             }
 

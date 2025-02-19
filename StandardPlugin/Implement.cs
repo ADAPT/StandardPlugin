@@ -97,7 +97,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
             else if (definition == SourceDeviceDefinition.Machine0Implement1Section2)
             {
-                var vehicleUses = operation.GetDeviceElementUses(0); 
+                var vehicleUse = operation.GetDeviceElementUses(0).FirstOrDefault();
                 var implementUse = operation.GetDeviceElementUses(1).FirstOrDefault();
                 ImplementConfiguration implementConfiguration = catalog.DeviceElementConfigurations.FirstOrDefault(c => c.Id.ReferenceId == implementUse.DeviceConfigurationId) as ImplementConfiguration;
                 if (operation.MaxDepth == 2)
@@ -113,6 +113,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             }
                             SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, operation, catalog, typeMappings);
                             section.AddAncestorWorkingDatas(implementUse, implementConfiguration, operation, typeMappings);
+                            section.AddAncestorWorkingDatas(vehicleUse, implementConfiguration, operation, typeMappings);
                             Sections.Add(section);
                         }
                     }

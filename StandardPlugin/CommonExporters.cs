@@ -185,6 +185,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     contextItem.DefinitionCode = "US-EPA-RegistrationNumber";
                 }
+                else if (TypeMappings.Any(x => x.Source.EqualsIgnoreCase(frameworkContextItem.Code)))
+                {
+                    contextItem.DefinitionCode = TypeMappings.First(x => x.Source.EqualsIgnoreCase(frameworkContextItem.Code)).Target;
+                }
                 else
                 {
                     contextItem.DefinitionCode = frameworkContextItem.Code;

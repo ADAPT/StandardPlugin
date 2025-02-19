@@ -115,7 +115,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     ManufacturerId = frameworkProduct.ManufacturerId?.ToString(CultureInfo.InvariantCulture),
                     ProductFormCode = ExportProductForm(frameworkProduct.Form),
                     ProductStatusCode = ExportProductStatus(frameworkProduct.Status),
-                    ProductTypeCode = ExportProductType(frameworkProduct.Category),
+                    ProductTypeCode = ExportProductType(frameworkProduct),
                     SpecificGravity = frameworkProduct.SpecificGravity,
                     ContextItems = _commonExporters.ExportContextItems(frameworkProduct.ContextItems)
                 };
@@ -135,9 +135,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     case CropProtectionProduct protectionProduct:
                         product.CropProtectionProductAttributes = new CropProtectionProductAttributes
                         {
-                            HasBiological = protectionProduct.Biological,
-                            HasCarbamate = protectionProduct.Carbamate,
-                            HasOrganophosphate = protectionProduct.Organophosphate,
+                            //The framework didn't have nullable bools and defaulted to false
+                            //As such we will treat false as null and only convert true.
+                            HasBiological = protectionProduct.Biological ? true : (bool?)null,
+                            HasCarbamate = protectionProduct.Carbamate? true : (bool?)null,
+                            HasOrganophosphate = protectionProduct.Organophosphate ? true : (bool?)null,
                             Ingredients = ExportIngredients(protectionProduct.ProductComponents, srcIngredients)
                         };
                         break;
@@ -145,7 +147,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         product.CropVarietyProductAttributes = new CropVarietyProductAttributes
                         {
                             CropId = varietyProduct.CropId.ToString(CultureInfo.InvariantCulture),
-                            VarietyIsGeneticallyEnhanced = varietyProduct.GeneticallyEnhanced
+                            VarietyIsGeneticallyEnhanced = varietyProduct.GeneticallyEnhanced ? true : (bool?)null,
                         };
                         break;
                     case HarvestedCommodityProduct commodityProduct:
@@ -284,8 +286,16 @@ namespace AgGateway.ADAPT.StandardPlugin
             return null;
         }
 
-        private string ExportProductType(CategoryEnum category)
+        private string ExportProductType(Product srcProduct)
         {
+            var category = srcProduct.Category;
+            var srcType = srcProduct.ProductType;
+            bool isManure = false;
+            if (srcProduct is CropNutritionProduct fertilizer)
+            {
+                isManure = fertilizer.IsManure;
+            }
+            
             switch (category)
             {
                 case CategoryEnum.Additive:
@@ -297,7 +307,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case CategoryEnum.Defoliant:
                     return "DEFOLIANT";
                 case CategoryEnum.Fertilizer:
-                    break;
+                    return "FERTILIZER_CHEMICAL";
                 case CategoryEnum.Fungicide:
                     return "FUNGICIDE";
                 case CategoryEnum.GrowthRegulator:
@@ -315,9 +325,25 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case CategoryEnum.Unknown:
                     return "NOT_SPECIFIED";
                 case CategoryEnum.Variety:
-                    break;
+                    return "SEED";
             }
-            return null;
+            switch (srcType)
+            {
+                case ProductTypeEnum.Fertilizer:
+                    if (isManure)
+                    {
+                        return "FERTILIZER_ORGANIC";
+                    }
+                    else
+                    {
+                        return "FERTILIZER_CHEMICAL";
+                    }
+                case ProductTypeEnum.Mix:
+                    return "MIX";
+                case ProductTypeEnum.Variety:
+                    return "SEED";
+            }
+            return "NOT_SPECIFIED"; 
         }
 
         private string ExportProductStatus(ProductStatusEnum status)
