@@ -73,6 +73,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     foreach (var operationData in fieldLoggedData.OperationData)
                     {
+                        if (!operationData.GetSpatialRecords().Any())
+                        {
+                            continue;
+                        }
+
                         Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings);
                         string outputOperationKey = operationData.Id.ReferenceId.ToString(); //TODO //implement.GetOperationDefinitionKey(operationData);  //Commented out pending completion of the below grouping logic to avoid any potential issues.  OperationData taken as is for now.
 
@@ -98,11 +103,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                         //Variables
                         if (!variablesByTargetNameByOutputKey.ContainsKey(outputOperationKey))
                         {
-                             VariableElement timestamp = new VariableElement()
+                            VariableElement timestamp = new VariableElement()
                             {
                                 Name = "Timestamp",
                                 DefinitionCode = "Timestamp",
-                                Id = new Id(){ ReferenceId =string.Concat(outputOperationKey, "-timestamp")},
+                                Id = new Id() { ReferenceId = string.Concat(outputOperationKey, "-timestamp") },
                                 FileDataIndex = 1
                             };
                             variablesByTargetNameByOutputKey.Add(outputOperationKey, new Dictionary<string, VariableElement>());
@@ -116,7 +121,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 {
                                     Name = dataColumn.SrcName,
                                     DefinitionCode = dataColumn.TargetName,
-                                    ProductId =  dataColumn.ProductId,
+                                    ProductId = dataColumn.ProductId,
                                     Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
                                     FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
                                     //TODO rest.  
@@ -137,10 +142,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                             sourceOperationsByOutputKey.Remove(outputOperationKey);
                         }
                         else
-                        {  
+                        {
                             loggedDataByOutputKey[outputOperationKey] = fieldLoggedData;
                         }
                     }
+                    fieldLoggedData.ReleaseSpatialData();
                 }
 
                 Directory.CreateDirectory(_exportPath);
@@ -148,16 +154,19 @@ namespace AgGateway.ADAPT.StandardPlugin
                 foreach (var kvp in sourceOperationsByOutputKey)
                 {
                     //Give the parquet file a meaningful name
-                    string outputFileName = string.Concat(Enum.GetName(typeof(AgGateway.ADAPT.ApplicationDataModel.Common.OperationTypeEnum), kvp.Value.First().OperationType),
-                                "_", 
-                                kvp.Value.SelectMany(x => 
+                    string operationType = Enum.GetName(typeof(AgGateway.ADAPT.ApplicationDataModel.Common.OperationTypeEnum), kvp.Value.First().OperationType);
+                    string products = "";
+                    if (kvp.Value.SelectMany(od => od.ProductIds).Any())
+                    {
+                        products = "_" + kvp.Value.SelectMany(x =>
                                     x.ProductIds)
                                     .Distinct()
-                                    .Select(r => 
-                                        model.Catalog.Products.First(p => 
+                                    .Select(r =>
+                                        model.Catalog.Products.First(p =>
                                             p.Id.ReferenceId == r).Description)
-                                    .Aggregate((i, j) => i + "_" + j),
-                                 ".parquet");
+                                    .Aggregate((i, j) => i + "_" + j);
+                    }
+                    string outputFileName = string.Concat(operationType, products, ".parquet");
                     outputFileName = new string(outputFileName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
                     if (outputFileName.Length > 255)
                     {
@@ -186,6 +195,12 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                     //Output any spatial data
                     string outputFile = Path.Combine(_exportPath, outputFileName);
+                    int duplicateIndex = 1;
+                    while (File.Exists(outputFile))
+                    {
+                        outputFileName = string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
+                        outputFile = Path.Combine(_exportPath, outputFileName);
+                    }
                     ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByOutputKey[kvp.Key]);
                     AsyncContext.Run(async () => await writer.Write(outputFile));
 
@@ -345,7 +360,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
 
                                 NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
-                                if (dataColumn.ProductId == ((int)productValue.Value.Value).ToString())
+                                var productValueData = productValue?.Value?.Value;
+                                if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
                                 {
                                     dataColumn.Values.Add(doubleVal);
                                 }

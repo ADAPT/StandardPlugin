@@ -180,7 +180,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return bearing + 90 % 360d;
         }
 
-        public static Polygon AsCoveragePolygon(this Point leadingPoint, double width, ref LeadingEdge latestLeadingEdge, double bearing, double? reportedDistance)
+        public static Polygon AsCoveragePolygon(this Point leadingPoint, double width, ref LeadingEdge latestLeadingEdge, double bearing, double? reportedDistance, double? calculatedDistance)
         {
             LeadingEdge priorLeadingEdge = latestLeadingEdge;
             latestLeadingEdge = new LeadingEdge(leadingPoint, width, priorLeadingEdge, bearing, reportedDistance);
@@ -198,6 +198,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                 if (reportedDistance != null)
                 {
                     distance = reportedDistance.Value;
+                }
+                else if (calculatedDistance != null)
+                {
+                    distance = calculatedDistance.Value;
                 }
                 distance = distance > 4 ? 4 : distance; //keep distances sane
 

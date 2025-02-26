@@ -27,71 +27,74 @@ namespace AgGateway.ADAPT.StandardPlugin
                     if (sectionDeviceElementConfig != null)
                     {
                         var sectionDeviceElement = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElementConfig.DeviceElementId);
-                        SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, sectionDeviceElementConfig, sectionDeviceElement, operation, catalog, typeMappings);
-                        DeviceElement parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElement.ParentDeviceId);
-                        while (parent != null)
+                        if (sectionDeviceElement != null)
                         {
-                            TopDeviceElement = parent; //Keep overwriting this until we get the top Device Element
-                            var ancestorConfig = catalog.DeviceElementConfigurations.SingleOrDefault(x => x.DeviceElementId == parent.Id.ReferenceId);
-                            if (ancestorConfig != null)
+                            SectionDefinition section = new SectionDefinition(lowestDeviceElementUse, sectionDeviceElementConfig, sectionDeviceElement, operation, catalog, typeMappings);
+                            DeviceElement parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == sectionDeviceElement.ParentDeviceId);
+                            while (parent != null)
                             {
-                                if (ancestorConfig is ImplementConfiguration)
+                                TopDeviceElement = parent; //Keep overwriting this until we get the top Device Element
+                                var ancestorConfig = catalog.DeviceElementConfigurations.SingleOrDefault(x => x.DeviceElementId == parent.Id.ReferenceId);
+                                if (ancestorConfig != null)
                                 {
-                                    //Intermediate sections are all relative to the implement and not one another.
-                                    section.Offset.Add(ancestorConfig.AsOffset());
+                                    if (ancestorConfig is ImplementConfiguration)
+                                    {
+                                        //Intermediate sections are all relative to the implement and not one another.
+                                        section.Offset.Add(ancestorConfig.AsOffset());
+                                    }
+
+                                    foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
+                                    {
+                                        section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, operation, typeMappings);
+                                    }
                                 }
 
-                                foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
+                                parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == parent.ParentDeviceId);
+
+                                //At the top level, the parent id often maps to the device model
+                                if (sectionDeviceElement == null)
                                 {
-                                    section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, operation, typeMappings);
+                                    DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement.DeviceModelId);
                                 }
                             }
 
-                            parent = catalog.DeviceElements.FirstOrDefault(d => d.Id.ReferenceId == parent.ParentDeviceId);
-
-                            //At the top level, the parent id often maps to the device model
-                            if (sectionDeviceElement == null)
+                            if (position == SourceGeometryPosition.GPSReceiver)
                             {
-                                DeviceModel = catalog.DeviceModels.FirstOrDefault(d => d.Id.ReferenceId == TopDeviceElement.DeviceModelId);
+                                //Add any tractor offset
+                                MachineConfiguration machineConfiguration = null;
+                                HitchPoint hitchPoint = null;
+                                var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
+                                if (equipConfig != null)
+                                {
+                                    Connector vehicle = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
+                                    if (vehicle != null)
+                                    {
+                                        machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
+                                    }
+                                    Connector hitch = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
+                                    if (hitch != null)
+                                    {
+                                        hitchPoint = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == hitch.HitchPointId);
+                                    }
+                                }
+                                else
+                                {
+                                    machineConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault() as MachineConfiguration;
+                                }
+
+                                if (machineConfiguration != null)
+                                {
+                                    //Add the GPS receiver offset
+                                    section.Offset.Add(machineConfiguration.AsOffset());
+                                }
+                                if (hitchPoint != null)
+                                {
+                                    //Add the hitch point offset
+                                    section.Offset.Add(hitchPoint.ReferencePoint.AsOffset());
+                                }
                             }
+                            Sections.Add(section);
                         }
-
-                        if (position == SourceGeometryPosition.GPSReceiver)
-                        {
-                            //Add any tractor offset
-                            MachineConfiguration machineConfiguration = null;
-                            HitchPoint hitchPoint = null;
-                            var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
-                            if (equipConfig != null)
-                            {
-                                Connector vehicle = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
-                                if (vehicle != null)
-                                {
-                                    machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
-                                }
-                                Connector hitch = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
-                                if (hitch != null)
-                                {
-                                    hitchPoint = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == hitch.HitchPointId);
-                                }
-                            }
-                            else
-                            {
-                                machineConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault() as MachineConfiguration;
-                            }
-
-                            if (machineConfiguration != null)
-                            {
-                                //Add the GPS receiver offset
-                                section.Offset.Add(machineConfiguration.AsOffset());
-                            }
-                            if (hitchPoint != null)
-                            {
-                                //Add the hitch point offset
-                                section.Offset.Add(hitchPoint.ReferencePoint.AsOffset());
-                            }
-                        }
-                        Sections.Add(section);
                     }
                 }
             }
@@ -134,7 +137,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         public DeviceElement TopDeviceElement { get; set; }
-        public DeviceModel  DeviceModel { get; set; }
+        public DeviceModel DeviceModel { get; set; }
         public List<SectionDefinition> Sections { get; set; }
 
         public string GetOperationDefinitionKey(OperationData srcOperation)
@@ -153,7 +156,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             builder.Append(TopDeviceElement?.Description ?? string.Empty);
             builder.Append("_");
             builder.Append(TopDeviceElement?.SerialNumber ?? string.Empty);
-            foreach(var section in Sections)
+            foreach (var section in Sections)
             {
                 builder.Append(section.GetDefinitionKey());
             }

@@ -93,23 +93,15 @@ namespace AgGateway.ADAPT.StandardPlugin
                         Description = "Discarding TimingEvent TimeScope",
                         Id = frameworkTimeScope.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
                     });
-                    continue;
+                    continue; //Not in the ADAPT Standard
                 }
 
                 if (frameworkTimeScope.DateContext == DateContextEnum.CropSeason)
                 {
-                    var season = new SeasonElement
-                    {
-                        Id = ExportID(frameworkTimeScope.Id),
-                        Description = frameworkTimeScope.Description,
-                        Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
-                        End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
-                    };
-                    _catalog.Seasons.Add(season);
-
+                    var season = GetOrAddSeason(frameworkTimeScope);
                     seasonIds = seasonIds ?? new List<string>();
                     seasonIds.Add(season.Id.ReferenceId);
-                    continue;
+                    continue; //Not a timescope in the ADAPT Standard
                 }
 
                 var timeScope = ExportTimeScope(frameworkTimeScope);
@@ -117,6 +109,27 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             }
             return output;
+        }
+
+        internal SeasonElement GetOrAddSeason(TimeScope timeScope)
+        {
+            var start = timeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture);
+            var end = timeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture);
+            var description = !timeScope.Description.IsNullOrEmpty() ? timeScope.Description : timeScope.TimeStamp1?.ToString("yyyy", CultureInfo.InvariantCulture) ?? string.Empty;
+
+            var season = _catalog.Seasons.FirstOrDefault(x => x.Start == start && x.End == end && x.Description == description);
+            if (season == null)
+            {
+                season = new SeasonElement
+                {
+                    Id = ExportID(timeScope.Id),
+                    Start = start,
+                    End = end,
+                    Description = description
+                };
+                _catalog.Seasons.Add(season);
+            }
+            return season;
         }
 
         private TimeScopeElement ExportTimeScope(TimeScope frameworkTimeScope)

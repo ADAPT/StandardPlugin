@@ -172,10 +172,18 @@ namespace AgGateway.ADAPT.StandardPlugin
                 priorPoint = new Point(priorADAPTPoint.X, priorADAPTPoint.Y);
             }
 
-            double bearing = 0;
+            double bearing = 0d;
             if (FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey("vrHeading"))
             {
-                bearing = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrHeading"].WorkingData)).Value.Value;
+                var headingValue = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrHeading"].WorkingData))?.Value?.Value;
+                if (headingValue != null)
+                {
+                    bearing = headingValue.Value;
+                }
+                else if (priorPoint != null)
+                {
+                    bearing = GeometryExporter.HaversineBearing(priorPoint, point);
+                }
             }
             else if (priorPoint != null)
             {
@@ -184,12 +192,19 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             var x = point.Destination(Offset.X ?? 0d, bearing % 360d);
             var xy = x.Destination(Offset.Y ?? 0d, bearing + 90d % 360d);
+
             double? reportedDistance = null;
-            if (FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey("vrDistanceTraveled"))
+            if (FactoredDefinitionsBySourceCodeByProduct[string.Empty].ContainsKey("vrDistanceTraveled") &&
+                record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrDistanceTraveled"].WorkingData) is NumericRepresentationValue distanceData)
             {
-                reportedDistance = ((NumericRepresentationValue)record.GetMeterValue(FactoredDefinitionsBySourceCodeByProduct[string.Empty]["vrDistanceTraveled"].WorkingData)).Value.Value;
+                reportedDistance = distanceData?.Value?.Value;
             }
-            polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance);
+            double? calculatedDistance = null;  
+            if (reportedDistance == null && priorPoint != null)
+            {
+                calculatedDistance = GeometryExporter.HaversineDistance(priorPoint, point);
+            }
+            polygon = xy.AsCoveragePolygon(WidthM, ref _latestLeadingEdge, bearing, reportedDistance, calculatedDistance);
             if (polygon.IsEmpty || !polygon.IsValid)
             {
                 return false;

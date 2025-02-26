@@ -172,6 +172,10 @@ namespace AgGateway.ADAPT.StandardPlugin
         private List<IngredientElement> ExportIngredients(List<ProductComponent> srcProductComponents, List<Ingredient> srcIngredients)
         {
             var output = new List<IngredientElement>();
+            if (srcProductComponents.IsNullOrEmpty())
+            {
+                return output;
+            }
             foreach (var frameworkComponent in srcProductComponents)
             {
                 var frameworkIngredient = srcIngredients.FirstOrDefault(x => x.Id.ReferenceId == frameworkComponent.IngredientId);
@@ -748,20 +752,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             List<SeasonElement> output = new List<SeasonElement>();
-            foreach (var frameworkTimeScope in srcTimeScopes)
+            foreach (var frameworkTimeScope in srcTimeScopes.Where(x => x.DateContext == DateContextEnum.CropSeason))
             {
-                if (frameworkTimeScope.DateContext != DateContextEnum.CropSeason)
-                {
-                    continue;
-                }
-
-                _catalog.Seasons.Add(new SeasonElement
-                {
-                    Id = _commonExporters.ExportID(frameworkTimeScope.Id),
-                    Description = frameworkTimeScope.Description,
-                    Start = frameworkTimeScope.TimeStamp1?.ToString("O", CultureInfo.InvariantCulture),
-                    End = frameworkTimeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture),
-               });
+                output.Add(_commonExporters.GetOrAddSeason(frameworkTimeScope));
             }
             return output;
         }
@@ -905,6 +898,11 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         private Standard.ContactInfo ExportContactInfo(ApplicationDataModel.Logistics.ContactInfo srcContactInfo)
         {
+            if (srcContactInfo == null)
+            {
+                return null;
+            }
+            
             var addressLines = Extensions.FilterEmptyValues(srcContactInfo.AddressLine1, srcContactInfo.AddressLine2, srcContactInfo.PoBoxNumber);
             var contactInfo = new Standard.ContactInfo
             {
