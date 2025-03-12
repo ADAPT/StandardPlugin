@@ -198,8 +198,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                     int duplicateIndex = 1;
                     while (File.Exists(outputFile))
                     {
-                        outputFileName = string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
-                        outputFile = Path.Combine(_exportPath, outputFileName);
+                        var newName= string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
+                        outputFile = Path.Combine(_exportPath, newName);
                     }
                     ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByOutputKey[kvp.Key]);
                     AsyncContext.Run(async () => await writer.Write(outputFile));
