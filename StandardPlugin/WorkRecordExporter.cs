@@ -198,8 +198,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                     int duplicateIndex = 1;
                     while (File.Exists(outputFile))
                     {
-                        var newName= string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
+                        var newName = string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
                         outputFile = Path.Combine(_exportPath, newName);
+                        outputOperation.SpatialRecordsFile = newName;
                     }
                     ADAPTParquetWriter writer = new ADAPTParquetWriter(columnDataByOutputKey[kvp.Key]);
                     AsyncContext.Run(async () => await writer.Write(outputFile));
