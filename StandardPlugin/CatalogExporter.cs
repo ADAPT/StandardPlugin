@@ -8,7 +8,6 @@ using AgGateway.ADAPT.ApplicationDataModel.Notes;
 using AgGateway.ADAPT.ApplicationDataModel.Products;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -42,20 +41,20 @@ namespace AgGateway.ADAPT.StandardPlugin
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel)
         {
             ExportGrowers(dataModel.Catalog.Growers);
-            ExportFarms(dataModel.Catalog.Farms);
-            ExportFields(dataModel.Catalog.Fields);
-            ExportFieldBoundaries(dataModel.Catalog.FieldBoundaries);
-            ExportCrops(dataModel.Catalog.Crops);
-            ExportCropZones(dataModel.Catalog.CropZones);
+            ExportFarms(dataModel.Catalog);
+            ExportFields(dataModel.Catalog);
+            ExportFieldBoundaries(dataModel.Catalog);
+            ExportCrops(dataModel.Catalog);
+            ExportCropZones(dataModel.Catalog);
             ExportCompanies(dataModel.Catalog.Companies, dataModel.Catalog.ContactInfo);
             ExportPersons(dataModel.Catalog.Persons, dataModel.Catalog.ContactInfo);
-            ExportBrands(dataModel.Catalog.Brands);
-            ExportDeviceModels(dataModel.Catalog.DeviceModels, dataModel.Catalog.DeviceSeries);
+            ExportBrands(dataModel.Catalog);
+            ExportDeviceModels(dataModel.Catalog);
             ExportDevices(dataModel.Catalog.DeviceElements, dataModel.Catalog.DeviceModels);
             ExportGuidanceGroups(dataModel.Catalog.GuidanceGroups);
             ExportGuidancePatterns(dataModel.Catalog.GuidancePatterns);
             ExportManufacturers(dataModel.Catalog.Manufacturers);
-            ExportProducts(dataModel.Catalog.Products, dataModel.Catalog.Ingredients);
+            ExportProducts(dataModel.Catalog);
 
             _catalog.Description = dataModel.Catalog.Description;
 
@@ -96,30 +95,30 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.Devices = output.Any() ? output : null;
         }
 
-        private void ExportProducts(List<Product> srcProducts, List<Ingredient> srcIngredients)
+        private void ExportProducts(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcProducts.IsNullOrEmpty())
+            if (srcCatalog.Products.IsNullOrEmpty())
             {
                 return;
             }
 
             List<ProductElement> output = new List<ProductElement>();
-            foreach (var frameworkProduct in srcProducts)
+            foreach (var frameworkProduct in srcCatalog.Products)
             {
                 ProductElement product = new ProductElement()
                 {
                     Id = _commonExporters.ExportID(frameworkProduct.Id),
                     Name = frameworkProduct.Description,
-                    BrandId = frameworkProduct.BrandId?.ToString(CultureInfo.InvariantCulture),
+                    BrandId = srcCatalog.Brands.Any(x => x.Id.ReferenceId == frameworkProduct.BrandId) ? frameworkProduct.BrandId?.ToString(CultureInfo.InvariantCulture) : null,
                     Density = _commonExporters.ExportAsNumericValue<Density>(frameworkProduct.Density),
-                    ManufacturerId = frameworkProduct.ManufacturerId?.ToString(CultureInfo.InvariantCulture),
+                    ManufacturerId = srcCatalog.Manufacturers.Any(x => x.Id.ReferenceId == frameworkProduct.ManufacturerId) ? frameworkProduct.ManufacturerId?.ToString(CultureInfo.InvariantCulture) : null,
                     ProductFormCode = ExportProductForm(frameworkProduct.Form),
                     ProductStatusCode = ExportProductStatus(frameworkProduct.Status),
                     ProductTypeCode = ExportProductType(frameworkProduct),
                     SpecificGravity = frameworkProduct.SpecificGravity,
                     ContextItems = _commonExporters.ExportContextItems(frameworkProduct.ContextItems)
                 };
-                product.ProductComponents = ExportProductComponents(frameworkProduct.ProductComponents, srcIngredients);
+                product.ProductComponents = ExportProductComponents(frameworkProduct.ProductComponents, srcCatalog.Ingredients);
 
                 switch (frameworkProduct)
                 {
@@ -128,7 +127,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     case CropNutritionProduct nutritionProduct:
                         product.CropNutritionProductAttributes = new CropNutritionProductAttributes
                         {
-                            Ingredients = ExportIngredients(nutritionProduct.ProductComponents, srcIngredients),
+                            Ingredients = ExportIngredients(nutritionProduct.ProductComponents, srcCatalog.Ingredients),
                             IsManure = nutritionProduct.IsManure
                         };
                         break;
@@ -140,7 +139,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             HasBiological = protectionProduct.Biological ? true : (bool?)null,
                             HasCarbamate = protectionProduct.Carbamate? true : (bool?)null,
                             HasOrganophosphate = protectionProduct.Organophosphate ? true : (bool?)null,
-                            Ingredients = ExportIngredients(protectionProduct.ProductComponents, srcIngredients)
+                            Ingredients = ExportIngredients(protectionProduct.ProductComponents, srcCatalog.Ingredients)
                         };
                         break;
                     case CropVarietyProduct varietyProduct:
@@ -552,22 +551,22 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.GuidanceGroups = output;
         }
 
-        private void ExportDeviceModels(List<DeviceModel> srcDeviceModels, List<DeviceSeries> srcDeviceSeries)
+        private void ExportDeviceModels(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcDeviceModels.IsNullOrEmpty())
+            if (srcCatalog.DeviceModels.IsNullOrEmpty())
             {
                 return;
             }
 
             List<DeviceModelElement> output = new List<DeviceModelElement>();
-            foreach (var frameworkDeviceModel in srcDeviceModels)
+            foreach (var frameworkDeviceModel in srcCatalog.DeviceModels)
             {
-                var series = srcDeviceSeries.FirstOrDefault(x => x.Id.ReferenceId == frameworkDeviceModel.SeriesId);
+                var series = srcCatalog.DeviceSeries.FirstOrDefault(x => x.Id.ReferenceId == frameworkDeviceModel.SeriesId);
                 DeviceModelElement deviceModel = new DeviceModelElement()
                 {
                     Id = _commonExporters.ExportID(frameworkDeviceModel.Id),
                     Name = frameworkDeviceModel.Description,
-                    BrandId = frameworkDeviceModel.BrandId.ToString(CultureInfo.InvariantCulture),
+                    BrandId = GetIdWithReferentialIntegrity(srcCatalog.Brands, frameworkDeviceModel.BrandId),
                     DeviceSeries = series?.Description,
                     ContextItems = _commonExporters.ExportContextItems(frameworkDeviceModel.ContextItems)
                 };
@@ -576,26 +575,42 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.DeviceModels = output;
         }
 
-        private void ExportBrands(List<Brand> srcBrands)
+        private void ExportBrands(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcBrands.IsNullOrEmpty())
+            if (srcCatalog.Brands.IsNullOrEmpty())
             {
                 return;
             }
 
             List<BrandElement> output = new List<BrandElement>();
-            foreach (var frameworkBrand in srcBrands)
+            foreach (var frameworkBrand in srcCatalog.Brands)
             {
                 BrandElement brand = new BrandElement()
                 {
                     Id = _commonExporters.ExportID(frameworkBrand.Id),
                     Name = frameworkBrand.Description,
-                    ManufacturerId = frameworkBrand.ManufacturerId.ToString(CultureInfo.InvariantCulture),
+                    ManufacturerId = GetIdWithReferentialIntegrity(srcCatalog.Manufacturers, frameworkBrand.ManufacturerId),
                     ContextItems = _commonExporters.ExportContextItems(frameworkBrand.ContextItems)
                 };
                 output.Add(brand);
             }
             _catalog.Brands = output;
+        }
+
+        private string GetIdWithReferentialIntegrity<T>(List<T> values, int? id)
+        {
+            if (id == null)
+            {
+                return null;
+            }
+            foreach (dynamic item in values)
+            {
+                if (item.Id.ReferenceId == id)
+                {
+                    return item.Id.ReferenceId.ToString(CultureInfo.InvariantCulture);
+                }
+            }
+            return null;
         }
 
         private void ExportPersons(List<Person> srcPersons, List<ADAPT.ApplicationDataModel.Logistics.ContactInfo> srcContactInfos)
@@ -648,23 +663,23 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.Parties.AddRange(output);
         }
 
-        private void ExportCropZones(List<CropZone> srcCropZones)
+        private void ExportCropZones(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcCropZones.IsNullOrEmpty())
+            if (srcCatalog.CropZones.IsNullOrEmpty())
             {
                 return;
             }
 
             List<CropZoneElement> output = new List<CropZoneElement>();
-            foreach (var frameworkCropZone in srcCropZones)
+            foreach (var frameworkCropZone in srcCatalog.CropZones)
             {
                 CropZoneElement cropZone = new CropZoneElement()
                 {
                     Id = _commonExporters.ExportID(frameworkCropZone.Id),
                     Name = frameworkCropZone.Description,
                     ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
-                    CropId = frameworkCropZone.CropId?.ToString(CultureInfo.InvariantCulture),
-                    FieldId = frameworkCropZone.FieldId.ToString(CultureInfo.InvariantCulture),
+                    CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
+                    FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
                     GNssSource = ExportGpsSource(frameworkCropZone.BoundarySource),
                     GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
                     Notes = ExportNotes(frameworkCropZone.Notes),
@@ -694,21 +709,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        private void ExportCrops(List<Crop> srcCrops)
+        private void ExportCrops(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcCrops.IsNullOrEmpty())
+            if (srcCatalog.Crops.IsNullOrEmpty())
             {
                 return;
             }
 
             List<CropElement> output = new List<CropElement>();
-            foreach (var frameworkCrop in srcCrops)
+            foreach (var frameworkCrop in srcCatalog.Crops)
             {
                 CropElement crop = new CropElement()
                 {
                     Id = _commonExporters.ExportID(frameworkCrop.Id),
                     Name = frameworkCrop.Name,
-                    ParentId = frameworkCrop.ParentId?.ToString(CultureInfo.InvariantCulture),
+                    ParentId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCrop.ParentId),
                     ReferenceWeight = _commonExporters.ExportAsNumericValue<ReferenceWeight>(frameworkCrop.ReferenceWeight),
                     StandardPayableMoisture = _commonExporters.ExportAsNumericValue<StandardPayableMoisture>(frameworkCrop.StandardPayableMoisture),
                     ContextItems = _commonExporters.ExportContextItems(frameworkCrop.ContextItems)
@@ -718,21 +733,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.Crops = output;
         }
 
-        private void ExportFieldBoundaries(List<FieldBoundary> srcFieldBoundaries)
+        private void ExportFieldBoundaries(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcFieldBoundaries.IsNullOrEmpty())
+            if (srcCatalog.FieldBoundaries.IsNullOrEmpty())
             {
                 return;
             }
 
             List<FieldBoundaryElement> output = new List<FieldBoundaryElement>();
-            foreach (var frameworkFieldBoundary in srcFieldBoundaries)
+            foreach (var frameworkFieldBoundary in srcCatalog.FieldBoundaries)
             {
                 FieldBoundaryElement fieldBoundary = new FieldBoundaryElement()
                 {
                     Id = _commonExporters.ExportID(frameworkFieldBoundary.Id),
                     Name = frameworkFieldBoundary.Description,
-                    FieldId = frameworkFieldBoundary.FieldId.ToString(CultureInfo.InvariantCulture),
+                    FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkFieldBoundary.FieldId),
                     GNssSource = ExportGpsSource(frameworkFieldBoundary.GpsSource),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
                     Geometry = GeometryExporter.ExportMultiPolygon(frameworkFieldBoundary.SpatialData, frameworkFieldBoundary.InteriorBoundaryAttributes?.Select(x => x.Shape)),
@@ -759,23 +774,23 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        private void ExportFields(List<Field> srcFields)
+        private void ExportFields(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcFields.IsNullOrEmpty())
+            if (srcCatalog.Fields.IsNullOrEmpty())
             {
                 return;
             }
 
             List<FieldElement> output = new List<FieldElement>();
-            foreach (var frameworkField in srcFields)
+            foreach (var frameworkField in srcCatalog.Fields)
             {
                 FieldElement grower = new FieldElement()
                 {
                     Id = _commonExporters.ExportID(frameworkField.Id),
                     Name = frameworkField.Description,
-                    FarmId = frameworkField.FarmId?.ToString(CultureInfo.InvariantCulture),
+                    FarmId = GetIdWithReferentialIntegrity(srcCatalog.Farms, frameworkField.FarmId),
                     ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
-                    ActiveBoundaryId = frameworkField.ActiveBoundaryId?.ToString(CultureInfo.InvariantCulture),
+                    ActiveBoundaryId = GetIdWithReferentialIntegrity(srcCatalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
                     GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
                     ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
                 };
@@ -784,21 +799,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog.Fields = output;
         }
 
-        private void ExportFarms(List<Farm> srcFarms)
+        private void ExportFarms(ApplicationDataModel.ADM.Catalog srcCatalog)
         {
-            if (srcFarms.IsNullOrEmpty())
+            if (srcCatalog.Farms.IsNullOrEmpty())
             {
                 return;
             }
 
             List<FarmElement> output = new List<FarmElement>();
-            foreach (var frameworkFarm in srcFarms)
+            foreach (var frameworkFarm in srcCatalog.Farms)
             {
                 FarmElement grower = new FarmElement()
                 {
                     Id = _commonExporters.ExportID(frameworkFarm.Id),
                     Name = frameworkFarm.Description,
-                    GrowerId = frameworkFarm.GrowerId?.ToString(CultureInfo.InvariantCulture),
+                    GrowerId = GetIdWithReferentialIntegrity(srcCatalog.Growers, frameworkFarm.GrowerId),
                     ContextItems = _commonExporters.ExportContextItems(frameworkFarm.ContextItems),
                     PartyId = ExportContactInfo(frameworkFarm.ContactInfo, frameworkFarm.Description)
                 };
