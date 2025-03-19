@@ -27,6 +27,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                 };
                 coordinates.Add(coordinate);
             }
+            if (coordinates.First() != coordinates.Last())
+            {
+                coordinates.Add(coordinates.First());
+            }
             return new LinearRing(coordinates.ToArray());
         }
 

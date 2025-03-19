@@ -91,11 +91,22 @@ namespace AgGateway.ADAPT.StandardPlugin
             Geometries = new List<byte[]>();
         }
 
-        public void AddOperationData(OperationData operationData, Catalog catalog, Implement implement, CommonExporters commonExporters)
+        public List<IError> AddOperationData(OperationData operationData, Catalog catalog, Implement implement, CommonExporters commonExporters)
         {
+            List<IError> errors = new List<IError>();
             bool hasMultipleProducts = implement.Sections.Any(x => x.ProductIndexWorkingData != null);
             foreach (NumericWorkingData nwd in implement.GetDistinctWorkingDatas())
             {
+                string targetName = commonExporters.TypeMappings.First(m => m.Source == nwd.Representation.Code).Target;
+                string targetUOMCode = commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == targetName).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
+                if (!nwd.CanConvertInto(targetUOMCode))
+                {
+                    errors.Add(new Error
+                    {
+                        Description = $"Omitting {nwd.Representation.Code} in {nwd.UnitOfMeasure.Code} because it cannot be converted to {targetUOMCode}",
+                    });
+                    continue;
+                }
                 if (hasMultipleProducts &&
                     (commonExporters.TypeMappings.FirstOrDefault(m => m.Source == nwd.Representation.Code)?.IsMultiProductCapable ?? false))
                 {
@@ -104,7 +115,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         string productName = catalog.Products.First(p => p.Id.ReferenceId == productId).Description;
                         if (!Columns.Any(c => c.SrcName == nwd.Representation.Code && c.ProductId == productId.ToString()))
                         {
-                            Columns.Add(new ADAPTDataColumn(nwd, commonExporters, productId.ToString(), productName));
+                            Columns.Add(new ADAPTDataColumn(nwd, targetName, targetUOMCode, productId.ToString(), productName));
                         }
                     }
                 }
@@ -112,10 +123,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     if (!Columns.Any(c => c.SrcName == nwd.Representation.Code))
                     {
-                        Columns.Add(new ADAPTDataColumn(nwd, commonExporters));
+                        Columns.Add(new ADAPTDataColumn(nwd, targetName, targetUOMCode));
                     }
                 }
             }
+            return errors;
         }
 
         public List<DateTime> Timestamps { get; set; }
@@ -138,13 +150,13 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     internal class ADAPTDataColumn
     {
-        public ADAPTDataColumn(NumericWorkingData numericWorkingData, CommonExporters commonExporters, string productId = null, string productName = null)
+        public ADAPTDataColumn(NumericWorkingData numericWorkingData, string targetName, string targetUOM, string productId = null, string productName = null)
         {
             SrcObject = numericWorkingData;
             SrcName = numericWorkingData.Representation.Code;
             SrcUOMCode = numericWorkingData.UnitOfMeasure.Code;
-            TargetName = commonExporters.TypeMappings.First(m => m.Source == numericWorkingData.Representation.Code).Target;
-            TargetUOMCode = commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == TargetName).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
+            TargetName = targetName;
+            TargetUOMCode = targetUOM;
             Values = new List<double?>();
             ProductId = productId;
             if (productName != null)

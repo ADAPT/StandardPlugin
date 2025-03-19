@@ -98,7 +98,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             columnDataByOutputKey.Add(outputOperationKey, new ADAPTParquetColumnData());
                         }
-                        columnDataByOutputKey[outputOperationKey].AddOperationData(operationData, model.Catalog, implement, _commonExporters);
+                        _errors.AddRange(columnDataByOutputKey[outputOperationKey].AddOperationData(operationData, model.Catalog, implement, _commonExporters));
 
                         //Variables
                         if (!variablesByTargetNameByOutputKey.ContainsKey(outputOperationKey))
@@ -124,8 +124,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     ProductId = dataColumn.ProductId,
                                     Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
                                     FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
-                                    //TODO rest.  
-                                    //Rate properties are only relevant for Work Order variables, not here
                                 };
                                 variablesByTargetNameByOutputKey[outputOperationKey].Add(dataColumn.TargetName, variable);
                             }
@@ -146,7 +144,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                             loggedDataByOutputKey[outputOperationKey] = fieldLoggedData;
                         }
                     }
-                    fieldLoggedData.ReleaseSpatialData();
+                    if (fieldLoggedData.ReleaseSpatialData != null)
+                    {
+                        fieldLoggedData.ReleaseSpatialData();
+                    }
                 }
 
                 Directory.CreateDirectory(_exportPath);

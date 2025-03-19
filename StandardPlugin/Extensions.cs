@@ -7,6 +7,8 @@ using RepresentationUnitSystem = AgGateway.ADAPT.Representation.UnitSystem;
 using NetTopologySuite.Geometries;
 using System.Security.Cryptography;
 using System.Text;
+using AgGateway.ADAPT.ApplicationDataModel.Common;
+using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -60,6 +62,43 @@ namespace AgGateway.ADAPT.StandardPlugin
                         .Select(g => g.Select(x => x.item));
         }
 
+        public static bool CanConvert(string srcUnitCode, string targetUnitCode)
+        {
+            var targetUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(targetUnitCode);
+            var sourceUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(srcUnitCode);
+            return sourceUOM.Dimension == targetUOM.Dimension;
+        }
+
+        public static bool CanConvertInto(this UnitOfMeasure srcUOM, string targetUnitCode)
+        {
+            return CanConvert(srcUOM.Code, targetUnitCode);
+        }
+
+        public static bool CanConvertInto(this NumericWorkingData nwd, string targetUnitCode)
+        {
+            if (!nwd.UnitOfMeasure.CanConvertInto(targetUnitCode))
+            {
+                if (UnitOfMeasureMapping.TryGetValue(nwd.Representation.Code, out var unitCodeRemap))
+                {
+                    var srcUnitCode = nwd.UnitOfMeasure.Code;
+                    if (!string.IsNullOrEmpty(unitCodeRemap.NewSourceUnitCode) && unitCodeRemap.SourceUnitCode == srcUnitCode)
+                    {
+                        srcUnitCode = unitCodeRemap.NewSourceUnitCode;
+                    }
+                    if (!string.IsNullOrEmpty(unitCodeRemap.TargetUnitCode))
+                    {
+                        targetUnitCode = unitCodeRemap.TargetUnitCode;
+                    }
+                    return CanConvert(srcUnitCode, targetUnitCode);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         public static double? AsConvertedDouble(this NumericRepresentationValue value, string targetUnitCode)
         {
             if (value == null)
@@ -72,17 +111,26 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             var srcUnitCode = value.Value.UnitOfMeasure.Code;
-            if (UnitOfMeasureMapping.TryGetValue(value.Representation.Code, out var unitCodeRemap))
+            if (!value.Value.UnitOfMeasure.CanConvertInto(targetUnitCode))
             {
-                if (!string.IsNullOrEmpty(unitCodeRemap.NewSourceUnitCode) && unitCodeRemap.SourceUnitCode == srcUnitCode)
+                //First try to remap the unit codes
+                if (UnitOfMeasureMapping.TryGetValue(value.Representation.Code, out var unitCodeRemap))
                 {
-                    srcUnitCode = unitCodeRemap.NewSourceUnitCode;
+                    if (!string.IsNullOrEmpty(unitCodeRemap.NewSourceUnitCode) && unitCodeRemap.SourceUnitCode == srcUnitCode)
+                    {
+                        srcUnitCode = unitCodeRemap.NewSourceUnitCode;
+                    }
+                    if (!string.IsNullOrEmpty(unitCodeRemap.TargetUnitCode))
+                    {
+                        targetUnitCode = unitCodeRemap.TargetUnitCode;
+                    }
                 }
-                if (!string.IsNullOrEmpty(unitCodeRemap.TargetUnitCode))
+                else
                 {
-                    targetUnitCode = unitCodeRemap.TargetUnitCode;
+                    return null; //Cannot convert
                 }
             }
+
 
             return value.Value.Value.ConvertValue(srcUnitCode, targetUnitCode);
         }
