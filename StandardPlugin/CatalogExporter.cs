@@ -20,6 +20,10 @@ namespace AgGateway.ADAPT.StandardPlugin
         private List<IError> _errors;
         private readonly CommonExporters _commonExporters;
 
+        internal const string UnknownFarmID = "UnknownFarm";
+        internal const string UnknownGrowerId = "UnknownGrower";   
+        internal const string UnknownFieldId = "UnknownField";
+
         private CatalogExporter(Root root)
         {
             _catalog = root.Catalog;
@@ -40,9 +44,9 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel)
         {
-            ExportGrowers(dataModel.Catalog.Growers);
-            ExportFarms(dataModel.Catalog);
-            ExportFields(dataModel.Catalog);
+            ExportGrowers(dataModel);
+            ExportFarms(dataModel);
+            ExportFields(dataModel);
             ExportFieldBoundaries(dataModel.Catalog);
             ExportCrops(dataModel.Catalog);
             ExportCropZones(dataModel.Catalog);
@@ -774,73 +778,109 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        private void ExportFields(ApplicationDataModel.ADM.Catalog srcCatalog)
+        private bool SrcModelHasLoggedData(ApplicationDataModel.ADM.ApplicationDataModel srcModel)
         {
-            if (srcCatalog.Fields.IsNullOrEmpty())
+            if (srcModel.Documents?.LoggedData == null)
             {
-                return;
+                return false;
             }
-
-            List<FieldElement> output = new List<FieldElement>();
-            foreach (var frameworkField in srcCatalog.Fields)
+            else
             {
-                FieldElement grower = new FieldElement()
+                return srcModel.Documents.LoggedData.Any();
+            }
+        }
+
+        private void ExportFields(ApplicationDataModel.ADM.ApplicationDataModel srcModel)
+        {
+            List<FieldElement> output = new List<FieldElement>();
+            if (srcModel.Catalog.Fields != null)
+            {
+                foreach (var frameworkField in srcModel.Catalog.Fields)
                 {
-                    Id = _commonExporters.ExportID(frameworkField.Id),
-                    Name = frameworkField.Description,
-                    FarmId = GetIdWithReferentialIntegrity(srcCatalog.Farms, frameworkField.FarmId),
-                    ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
-                    ActiveBoundaryId = GetIdWithReferentialIntegrity(srcCatalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
-                    GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                    ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
+                    FieldElement field = new FieldElement()
+                    {
+                        Id = _commonExporters.ExportID(frameworkField.Id),
+                        Name = frameworkField.Description,
+                        FarmId = GetIdWithReferentialIntegrity(srcModel.Catalog.Farms, frameworkField.FarmId),
+                        ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
+                        ActiveBoundaryId = GetIdWithReferentialIntegrity(srcModel.Catalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
+                        GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                        ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
+                    };
+                    output.Add(field);
+                }
+            }
+            if (!output.Any() && SrcModelHasLoggedData(srcModel))
+            {
+                FieldElement field = new FieldElement()
+                {
+                    Name = "Unknown Field",
+                    FarmId = UnknownFarmID,
+                    Id = new Id() { ReferenceId = UnknownFieldId },
                 };
-                output.Add(grower);
+                output.Add(field);
             }
             _catalog.Fields = output;
         }
 
-        private void ExportFarms(ApplicationDataModel.ADM.Catalog srcCatalog)
+        private void ExportFarms(ApplicationDataModel.ADM.ApplicationDataModel srcModel)
         {
-            if (srcCatalog.Farms.IsNullOrEmpty())
-            {
-                return;
-            }
-
             List<FarmElement> output = new List<FarmElement>();
-            foreach (var frameworkFarm in srcCatalog.Farms)
+            if (srcModel.Catalog.Farms != null)
             {
-                FarmElement grower = new FarmElement()
+                foreach (var frameworkFarm in srcModel.Catalog.Farms)
                 {
-                    Id = _commonExporters.ExportID(frameworkFarm.Id),
-                    Name = frameworkFarm.Description,
-                    GrowerId = GetIdWithReferentialIntegrity(srcCatalog.Growers, frameworkFarm.GrowerId),
-                    ContextItems = _commonExporters.ExportContextItems(frameworkFarm.ContextItems),
-                    PartyId = ExportContactInfo(frameworkFarm.ContactInfo, frameworkFarm.Description)
-                };
-                output.Add(grower);
+                    FarmElement farm = new FarmElement()
+                    {
+                        Id = _commonExporters.ExportID(frameworkFarm.Id),
+                        Name = frameworkFarm.Description,
+                        GrowerId = GetIdWithReferentialIntegrity(srcModel.Catalog.Growers, frameworkFarm.GrowerId),
+                        ContextItems = _commonExporters.ExportContextItems(frameworkFarm.ContextItems),
+                        PartyId = ExportContactInfo(frameworkFarm.ContactInfo, frameworkFarm.Description)
+                    };
+                    output.Add(farm);
+                }
+            }
+            if (!output.Any() && SrcModelHasLoggedData(srcModel))
+            {
+                 FarmElement farm = new FarmElement()
+                    {
+                        Name = "Unknown Farm",
+                        GrowerId = UnknownGrowerId,
+                         Id = new Id() { ReferenceId = UnknownFarmID },
+                    };
+                    output.Add(farm);
             }
             _catalog.Farms = output;
         }
 
-        private void ExportGrowers(IEnumerable<Grower> srcGrowers)
+        private void ExportGrowers(ApplicationDataModel.ADM.ApplicationDataModel srcModel)
         {
-            if (srcGrowers.IsNullOrEmpty())
+            List<GrowerElement> output = new List<GrowerElement>();
+            if (srcModel.Catalog.Growers != null)
             {
-                return;
+                foreach (var frameworkGrower in srcModel.Catalog.Growers)
+                {
+                    GrowerElement grower = new GrowerElement()
+                    {
+                        Name = frameworkGrower.Name,
+                        Id = _commonExporters.ExportID(frameworkGrower.Id),
+                        ContextItems = _commonExporters.ExportContextItems(frameworkGrower.ContextItems),
+                        PartyId = ExportContactInfo(frameworkGrower.ContactInfo, frameworkGrower.Name)
+                    };
+                    output.Add(grower);
+                }
+            }
+            if (!output.Any() && SrcModelHasLoggedData(srcModel))
+            {
+                 GrowerElement grower = new GrowerElement()
+                    {
+                        Name = "Unknown Grower",
+                        Id = new Id() { ReferenceId = UnknownGrowerId },
+                    };
+                    output.Add(grower);
             }
 
-            List<GrowerElement> output = new List<GrowerElement>();
-            foreach (var frameworkGrower in srcGrowers)
-            {
-                GrowerElement grower = new GrowerElement()
-                {
-                    Name = frameworkGrower.Name,
-                    Id = _commonExporters.ExportID(frameworkGrower.Id),
-                    ContextItems = _commonExporters.ExportContextItems(frameworkGrower.ContextItems),
-                    PartyId = ExportContactInfo(frameworkGrower.ContactInfo, frameworkGrower.Name)
-                };
-                output.Add(grower);
-            }
             _catalog.Growers = output;
         }
 

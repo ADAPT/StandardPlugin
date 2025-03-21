@@ -21,6 +21,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             if (definition == SourceDeviceDefinition.DeviceElementHierarchy)
             {
+                List<int> allDeviceElementConfigurationsReportingData = null;
                 foreach (var lowestDeviceElementUse in operation.GetDeviceElementUses(operation.MaxDepth))
                 {
                     var sectionDeviceElementConfig = catalog.DeviceElementConfigurations.FirstOrDefault(d => d.Id.ReferenceId == lowestDeviceElementUse.DeviceConfigurationId);
@@ -34,7 +35,20 @@ namespace AgGateway.ADAPT.StandardPlugin
                             while (parent != null)
                             {
                                 TopDeviceElement = parent; //Keep overwriting this until we get the top Device Element
-                                var ancestorConfig = catalog.DeviceElementConfigurations.SingleOrDefault(x => x.DeviceElementId == parent.Id.ReferenceId);
+                                var ancestorConfigs = catalog.DeviceElementConfigurations.Where(x => x.DeviceElementId == parent.Id.ReferenceId);
+                                var ancestorCount = ancestorConfigs.Count();
+                                DeviceElementConfiguration ancestorConfig = ancestorConfigs.FirstOrDefault();
+                                if (ancestorCount > 1)
+                                {
+                                    //Some plugins have chosen to reuse the same device element for multiple device element configurations
+                                    //Determine which ancestor configuration to use
+                                    if (allDeviceElementConfigurationsReportingData == null)
+                                    {
+                                        allDeviceElementConfigurationsReportingData = GetAllDeviceElementConfiguirationsReportingData(operation);
+                                    }
+                                    ancestorConfig = ancestorConfigs.SingleOrDefault(x => allDeviceElementConfigurationsReportingData.Contains(x.Id.ReferenceId));
+                                }
+
                                 if (ancestorConfig != null)
                                 {
                                     if (ancestorConfig is ImplementConfiguration)
@@ -134,6 +148,16 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 sectionWithoutWidth.WidthM = 5d / Sections.Count;
             }
+        }
+
+        private List<int> GetAllDeviceElementConfiguirationsReportingData(OperationData operationData)
+        {
+            List<int> allDeviceElementConfigurationsReportingData = new List<int>();
+            for (int depth = 0; depth < operationData.MaxDepth; depth++)
+            {
+                allDeviceElementConfigurationsReportingData.AddRange(operationData.GetDeviceElementUses(depth).Select(x => x.DeviceConfigurationId));
+            }
+            return allDeviceElementConfigurationsReportingData;
         }
 
         public DeviceElement TopDeviceElement { get; set; }

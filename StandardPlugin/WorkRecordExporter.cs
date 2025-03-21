@@ -208,12 +208,13 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                     var loggedDataIdAsString = loggedData.Id.ReferenceId.ToString(CultureInfo.InvariantCulture);
                     var workRecord = _root.Documents.WorkRecords.FirstOrDefault(x => x.Id.ReferenceId == loggedDataIdAsString);
+                    string fieldId = loggedData.FieldId?.ToString(CultureInfo.InvariantCulture) ?? CatalogExporter.UnknownFieldId;
                     if (workRecord == null)
                     {
                         workRecord = new WorkRecordElement
                         {
                             Operations = new List<OperationElement>(),
-                            FieldId = loggedData.FieldId?.ToString(CultureInfo.InvariantCulture),
+                            FieldId = fieldId,
                             Id = _commonExporters.ExportID(loggedData.Id),
                             CropZoneId = loggedData.CropZoneId?.ToString(CultureInfo.InvariantCulture),
                             Name = loggedData.Description,
@@ -346,8 +347,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 foreach (var section in implement.Sections)
                 {
+                    double timeDelta = 0d;
+                    if (priorSpatialRecord != null)
+                    {
+                        timeDelta = (record.Timestamp - priorSpatialRecord.Timestamp).TotalSeconds;
+                    }
                     if (section.IsEngaged(record) &&
-                        section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
+                            timeDelta < 5d &&
+                            section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
                     {
                         runningOutput.Geometries.Add(polygon.ToBinary());
 
@@ -357,7 +364,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
                             {
-                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName]; 
+                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
                                 NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
                                 var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
 
