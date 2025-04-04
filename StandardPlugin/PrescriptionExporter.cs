@@ -126,7 +126,8 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             _parentTagExtender = Tiff.SetTagExtender(TagExtender);
 
-            var fileName = $"{srcRxPrescription.Description}{srcRxPrescription.Id.ReferenceId}.tiff";
+            var fileName = $"{srcRxPrescription.Description ?? ""}{srcRxPrescription.Id.ReferenceId}.tiff";
+            Directory.CreateDirectory(_exportPath);
             string outputPath = Path.Combine(_exportPath, fileName);
             using (var tiff = Tiff.Open(outputPath, "w"))
             {
