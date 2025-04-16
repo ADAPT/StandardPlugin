@@ -51,12 +51,6 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                                 if (ancestorConfig != null)
                                 {
-                                    if (ancestorConfig is ImplementConfiguration)
-                                    {
-                                        //Intermediate sections are all relative to the implement and not one another.
-                                        section.Offset.Add(ancestorConfig.AsOffset());
-                                    }
-
                                     foreach (var ancestorUse in allDeviceElementUses.Where(x => x.DeviceConfigurationId == ancestorConfig.Id.ReferenceId))
                                     {
                                         section.AddAncestorWorkingDatas(ancestorUse, ancestorConfig, operation, typeMappings);
@@ -76,7 +70,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                             {
                                 //Add any tractor offset
                                 MachineConfiguration machineConfiguration = null;
-                                HitchPoint hitchPoint = null;
+                                HitchPoint vehicleHitch = null;
+                                ImplementConfiguration implementConfiguration = null;
+                                HitchPoint implementHitch = null;
                                 var equipConfig = operation.EquipmentConfigurationIds.Select(x => catalog.EquipmentConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
                                 if (equipConfig != null)
                                 {
@@ -84,16 +80,20 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     if (vehicle != null)
                                     {
                                         machineConfiguration = catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == vehicle.DeviceElementConfigurationId);
+                                        vehicleHitch = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == vehicle.HitchPointId);
                                     }
-                                    Connector hitch = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector1Id);
-                                    if (hitch != null)
+
+                                    Connector implement = catalog.Connectors.FirstOrDefault(c => c.Id.ReferenceId == equipConfig.Connector2Id);
+                                    if (implement != null)
                                     {
-                                        hitchPoint = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == hitch.HitchPointId);
+                                        implementConfiguration = catalog.DeviceElementConfigurations.OfType<ImplementConfiguration>().FirstOrDefault(m => m.Id.ReferenceId == implement.DeviceElementConfigurationId);
+                                        implementHitch = catalog.HitchPoints.FirstOrDefault(m => m.Id.ReferenceId == implement.HitchPointId);
                                     }
                                 }
                                 else
                                 {
-                                    machineConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault() as MachineConfiguration;
+                                    machineConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.OfType<MachineConfiguration>().FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
+                                    implementConfiguration = operation.EquipmentConfigurationIds.Select(x => catalog.DeviceElementConfigurations.OfType<ImplementConfiguration>().FirstOrDefault(e => e.Id.ReferenceId == x)).Where(x => x != null).FirstOrDefault();
                                 }
 
                                 if (machineConfiguration != null)
@@ -101,10 +101,20 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     //Add the GPS receiver offset
                                     section.Offset.Add(machineConfiguration.AsOffset());
                                 }
-                                if (hitchPoint != null)
+                                if (vehicleHitch != null)
                                 {
                                     //Add the hitch point offset
-                                    section.Offset.Add(hitchPoint.ReferencePoint.AsOffset());
+                                    section.Offset.Add(vehicleHitch.ReferencePoint.AsOffset());
+                                }
+                                if (implementConfiguration != null)
+                                {
+                                    //Add the implement offset
+                                    section.Offset.Add(implementConfiguration.AsOffset());
+                                }
+                                if (implementHitch != null)
+                                {
+                                    //Add the implement hitch offset in the opposite inline direction
+                                    section.Offset.Add(implementHitch.ReferencePoint.AsOffsetInlineReversed());
                                 }
                             }
                             Sections.Add(section);

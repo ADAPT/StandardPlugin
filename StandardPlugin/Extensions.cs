@@ -175,6 +175,13 @@ namespace AgGateway.ADAPT.StandardPlugin
                 referencePoint.ZOffset?.AsConvertedDouble("m") ?? 0d);
         }
 
+        public static Offset AsOffsetInlineReversed(this ReferencePoint referencePoint)
+        {
+            return new Offset(-referencePoint.XOffset?.AsConvertedDouble("m") ?? 0d,
+                referencePoint.YOffset?.AsConvertedDouble("m") ?? 0d,
+                referencePoint.ZOffset?.AsConvertedDouble("m") ?? 0d);
+        }
+
         public static Offset AsOffset(this DeviceElementConfiguration configuration)
         {
             if (configuration is SectionConfiguration sectionConfiguration)
@@ -185,11 +192,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
             else if (configuration is ImplementConfiguration implementConfiguration)
             {
-                if (implementConfiguration.ControlPoint != null)
-                {
-                    return implementConfiguration.ControlPoint.AsOffset();
-                }
-                else if (implementConfiguration.Offsets.Any())
+                if (implementConfiguration.Offsets.Any())
                 {
                     return implementConfiguration.Offsets.AsOffset();
                 }
