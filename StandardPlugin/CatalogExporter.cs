@@ -8,6 +8,7 @@ using AgGateway.ADAPT.ApplicationDataModel.Notes;
 using AgGateway.ADAPT.ApplicationDataModel.Products;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -466,11 +467,12 @@ namespace AgGateway.ADAPT.StandardPlugin
                             Radius = _commonExporters.ExportAsNumericValue<Radius>(pivotGuidance.Radius)
                         };
 
-                        GeometryExporter.ThreePointsToCenterRadius(pivotGuidance.Point1, pivotGuidance.Point2, pivotGuidance.Point3, out var centerPoint, out var radius);
-                        if (centerPoint != null)
+                        if(pivotGuidance.Center == null &&
+                           pivotGuidance.Point1 != null &&
+                           pivotGuidance.Point2 != null &&
+                           pivotGuidance.Point3 != null)
                         {
-                            guidancePattern.PivotAttributes.CenterPoint = centerPoint;
-                            guidancePattern.PivotAttributes.Radius = radius;
+                            throw new NotImplementedException("PivotGuidancePattern with three points is not implemented.");
                         }
                         break;
                     case Spiral spiral:
