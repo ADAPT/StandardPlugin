@@ -215,6 +215,10 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public string ExportRole(EnumeratedValue role)
         {
+            if (role?.Representation?.Code == null)
+            {
+                return "UNKNOWN";
+            }
             if (role.Representation.Code != "dtPersonRole")
             {
                 Errors.Add(new Error
@@ -242,6 +246,32 @@ namespace AgGateway.ADAPT.StandardPlugin
                     return "FARM_MANAGER";
                 case "dtiPersonRoleFinancier":
                     return "FINANCIER";
+                case "dtiPersonRoleFixedAssetSupplier":
+                    return "STATIONARY_ASSET_SUPPLIER";
+                case "dtiPersonRoleGovernmentAgency":
+                    return "GOVERNMENT_AGENCY";
+                case "dtiPersonRoleGrower":
+                    return "GROWER";
+                case "dtiPersonRoleInputSupplier":
+                    return "INPUT_SUPPLIER";
+                case "dtiPersonRoleInsuranceAgent":
+                    return "INSURANCE_AGENT";
+                case "dtiPersonRoleIrrigationManager":
+                    return "IRRIGATION_MANAGER";
+                case "dtiPersonRoleLaborer":    
+                    return "LABORER";  
+                case "dtiPersonRoleMarketAdvisor":
+                    return "MARKET_ADVISOR";    
+                case "dtiPersonRoleMarketProvider":
+                    return "MARKET_PROVIDER";
+                case "dtiPersonRoleMobileAssetSupplier":
+                    return "MOBILE_ASSET_SUPPLIER";
+                case "dtiPersonRoleOperator":
+                    return "OPERATOR";
+                case "dtiPersonRoleOwner":
+                    return "OWNER";
+                case "dtiPersonRoleTransporter":
+                    return "TRANSPORTER";   
                 default:
                     return "UNKNOWN";
             }
