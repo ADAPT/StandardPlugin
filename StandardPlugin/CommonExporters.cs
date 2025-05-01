@@ -45,6 +45,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             var ids = new List<UniqueIdElement>();
             foreach (var srcUniqueId in srcId.UniqueIds)
             {
+                if (srcUniqueId.Source == "http://dictionary.isobus.net/isobus/")
+                {
+                    //Suppress the "DET-1" etc. ids that the ISO Plugin creates
+                    //These are instance and not persistent ids.
+                    continue;
+                }
                 var uniqueId = new UniqueIdElement
                 {
                     IdText = srcUniqueId.Id,

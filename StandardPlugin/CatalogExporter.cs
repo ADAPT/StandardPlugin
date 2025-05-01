@@ -959,11 +959,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return null;
             }
-            
+
+            Standard.ContactInfo contactInfo = new Standard.ContactInfo();
             var addressLines = Extensions.FilterEmptyValues(srcContactInfo.AddressLine1, srcContactInfo.AddressLine2, srcContactInfo.PoBoxNumber);
-            var contactInfo = new Standard.ContactInfo
+            if (addressLines.Any())
             {
-                AddressContactMethods = new List<AddressContactMethodElement>
+                contactInfo.AddressContactMethods = new List<AddressContactMethodElement>
                     {
                         new AddressContactMethodElement
                         {
@@ -974,9 +975,9 @@ namespace AgGateway.ADAPT.StandardPlugin
                             CountryCode = srcContactInfo.CountryCode,
                             PostalCode =  srcContactInfo.PostalCode,
                         }
-                    },
-                ContextItems = _commonExporters.ExportContextItems(srcContactInfo.ContextItems)
-            };
+                    };
+                contactInfo.ContextItems = _commonExporters.ExportContextItems(srcContactInfo.ContextItems);
+            }
 
             if (!srcContactInfo.Contacts.IsNullOrEmpty())
             {
@@ -990,8 +991,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     });
                 }
             }
-
-            return contactInfo;
+            return null;
         }
 
         private string ExportContactType(ContactTypeEnum contactType)
