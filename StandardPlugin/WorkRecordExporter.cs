@@ -149,8 +149,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                         fieldLoggedData.ReleaseSpatialData();
                     }
                 }
-
                 Directory.CreateDirectory(_exportPath);
+
 
                 foreach (var kvp in sourceOperationsByOutputKey)
                 {
@@ -173,19 +173,20 @@ namespace AgGateway.ADAPT.StandardPlugin
                     {
                         outputFileName = outputFileName.Substring(0, 255);
                     }
-                   
+
                     var loggedData = loggedDataByOutputKey[kvp.Key];
                     var summary = model.Documents.Summaries.FirstOrDefault(x => x.Id.ReferenceId == loggedData.SummaryId);
                     var productIds = kvp.Value.SelectMany(x => x.ProductIds).Distinct();
                     var variables = variablesByTargetNameByOutputKey[kvp.Key].Values.ToList();
+                    string name = kvp.Value.Any() ? string.Join(";", kvp.Value.Select(x => x.Description)) : loggedData.Description + "_" + operationType;
 
                     Standard.OperationElement outputOperation = new OperationElement()
                     {
                         OperationTypeCode = _commonExporters.ExportOperationType(kvp.Value.First().OperationType),
                         ContextItems = _commonExporters.ExportContextItems(kvp.Value.First().ContextItems),
-                        Name = string.Join(";", kvp.Value.Select(x => x.Description)),
+                        Name = name,
                         Variables = variables,
-                        ProductIds = productIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                        ProductIds = productIds.Any() ? productIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                         SpatialRecordsFile = outputFileName,
                         GuidanceAllocations = _commonExporters.ExportGuidanceAllocations(loggedData.GuidanceAllocationIds, model),
                         PartyRoles = _commonExporters.ExportPersonRoles(model.Catalog.PersonRoles.Where(x => loggedData.PersonRoleIds.Contains(x.Id.ReferenceId)).ToList()),
@@ -218,7 +219,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             Id = _commonExporters.ExportID(loggedData.Id),
                             CropZoneId = loggedData.CropZoneId?.ToString(CultureInfo.InvariantCulture),
                             Name = loggedData.Description,
-                            Notes = loggedData.Notes.Select(x => x.Description).ToList(),
+                            Notes = loggedData.Notes.Any() ? loggedData.Notes.Select(x => x.Description).ToList() : null,
                             TimeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds),
                             SeasonId = seasonIds?.FirstOrDefault()
                         };
@@ -228,6 +229,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
             }
 
+            if (!_root.Documents.WorkRecords.Any())
+            {
+                _root.Documents.WorkRecords = null;
+            }
+            
             _errors.AddRange(_commonExporters.Errors);
             return _errors;
         }
@@ -282,20 +288,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             return (unitOfMeasure is Representation.UnitSystem.CompositeUnitOfMeasure compUoM) && compUoM.Components.Any(x => x.Power < 0);
         }
 
-        private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string variableName)
+        private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string srcVariableName)
         {
-            var variableElement = variables.FirstOrDefault(x => x.Name == variableName);
+            var variableElement = variables.FirstOrDefault(x => x.Name == srcVariableName);
             if (variableElement == null)
             {
-                if (!_commonExporters.TypeMappings.Any(m => m.Source == variableName))
+                if (!_commonExporters.TypeMappings.Any(m => m.Source == srcVariableName))
                 {
                     return null;
                 }
 
                 variableElement = new VariableElement
                 {
-                    DefinitionCode = _commonExporters.TypeMappings.First(m => m.Source == variableName).Target,
-                    Name = variableName,
+                    DefinitionCode = _commonExporters.TypeMappings.First(m => m.Source == srcVariableName).Target,
+                    Name = srcVariableName,
                     Id = new Id { ReferenceId = string.Format(CultureInfo.InvariantCulture, "total-{0}", ++_variableCounter) }
                 };
                 variables.Add(variableElement);

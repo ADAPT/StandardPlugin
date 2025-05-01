@@ -11,7 +11,7 @@ using BitMiracle.LibTiff.Classic;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
-    internal class PrescriptionExporter
+    internal class WorkOrderExporter
     {
         private readonly string _exportPath;
         private readonly Standard.Documents _documents;
@@ -20,7 +20,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly CommonExporters _commonExporters;
         private Tiff.TiffExtendProc _parentTagExtender;
 
-        private PrescriptionExporter(Root root, string exportPath)
+        private WorkOrderExporter(Root root, string exportPath)
         {
             _exportPath = exportPath;
             _documents = root.Documents;
@@ -34,13 +34,18 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         internal static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel, Root root, string exportPath, Properties properties = null)
         {
-            var exporter = new PrescriptionExporter(root, exportPath);
+            var exporter = new WorkOrderExporter(root, exportPath);
             return exporter.Export(dataModel);
         }
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel dataModel)
         {
             ExportRasterGridPrescriptions(dataModel.Catalog.Prescriptions);
+
+            if (!_documents.WorkOrders.Any())
+            {
+                _documents.WorkOrders = null;
+            }
 
             _errors.AddRange(_commonExporters.Errors);
             return _errors;

@@ -63,10 +63,20 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             _catalog.Description = dataModel.Catalog.Description;
 
+            //Null these out if empty to avoid empty lists in the output
             if (!_catalog.Parties.Any())
             {
                 _catalog.Parties = null;
             }
+            if (!_catalog.CustomDataTypeDefinitions.Any())
+            {
+                _catalog.CustomDataTypeDefinitions = null;
+            }
+            if (!_catalog.Seasons.Any())
+            {
+                _catalog.Seasons = null;
+            }
+            
             _errors.AddRange(_commonExporters.Errors);
             return _errors;
         }

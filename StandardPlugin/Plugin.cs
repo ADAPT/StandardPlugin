@@ -47,7 +47,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
 
             var catalogErrors = CatalogExporter.Export(dataModel, root, properties);
-            var prescriptionErrors = PrescriptionExporter.Export(dataModel, root, exportPath, properties);
+            var prescriptionErrors = WorkOrderExporter.Export(dataModel, root, exportPath, properties);
             var workRecordErrors = WorkRecordExporter.Export(dataModel, root, exportPath, properties);
 
             var errors = Errors as List<IError>;
