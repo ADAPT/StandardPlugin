@@ -114,6 +114,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 output.Add(timeScope);
 
             }
+
+            if (!output.Any())
+            {
+                output = null;
+            }
             return output;
         }
 
