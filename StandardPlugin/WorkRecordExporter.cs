@@ -65,14 +65,6 @@ namespace AgGateway.ADAPT.StandardPlugin
             Directory.CreateDirectory(_exportPath);
             foreach (var fieldIdGroupBy in model.Documents.LoggedData.GroupBy(ld => ld.FieldId))
             {
-                //TODO Summaries
-                //If a one-to-one mapping between source and destination operations, then we can just create SummaryValues on the Operation from the OperationSummaries src data (OperationSummaries mapped to src OperationDatas)
-                //If many-to-one, OperationSummaries should be summed or averaged (depending on presence of unit denominator)
-                //For the Sumamaries at the LoggedData level, LoggedData generates only one OperationData, then we can copy those summary values onto the operation
-                //If LoggedDatas get split in such a way that we cannot logically map them to the output, omit them.
-
-
-                //Dictionary<string, LoggedData> loggedDataByOutputKey = new Dictionary<string, LoggedData>();
                 List<OperationDefinition> groupedOperations = new List<OperationDefinition>();
                 foreach (var fieldLoggedData in fieldIdGroupBy)
                 {
@@ -169,7 +161,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                           groupedOperations.First().IsMatchingSummary(sourceSummary))
                     {
                         //There is a single operation so we can match the summary
-                        groupedOperations.First().SourceSummaryValuesWihthoutProduct.AddRange(sourceSummary.SummaryData);
+                        groupedOperations.First().SourceSummaryValuesWithoutProduct.AddRange(sourceSummary.SummaryData);
                     }
                     else if (!groupedOperations.Any())
                     {
@@ -220,7 +212,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                             ExportOperationSpatialRecords(operationDefinition.ColumnData, constituentSpatialOperation.Implement, constituentSpatialOperation.OperationData);
                         }
                         //Export the header & write out the parquet for this operation
-                        ExportOperation(operationDefinition, model, fieldWorkRecord);
+                        if (operationDefinition.ColumnData.Geometries.Count > 0 || operationDefinition.SourceSummaryValuesByProductId.Any() || operationDefinition.SourceSummaryValuesWithoutProduct.Any())
+                        {
+                            ExportOperation(operationDefinition, model, fieldWorkRecord);
+                        }
                     }
                 }
 
@@ -308,36 +303,19 @@ namespace AgGateway.ADAPT.StandardPlugin
             ExportLoad(operationDefinition.SourceOperations.Select(x => x.OperationData), model.Documents.Loads, outputOperation);
 
             //Output any spatial data
-            string outputFile = Path.Combine(_exportPath, outputFileName);
-            int duplicateIndex = 1;
-            while (File.Exists(outputFile))
+            if (operationDefinition.ColumnData.Geometries.Any())
             {
-                var newName = string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
-                outputFile = Path.Combine(_exportPath, newName);
-                outputOperation.SpatialRecordsFile = newName;
+                string outputFile = Path.Combine(_exportPath, outputFileName);
+                int duplicateIndex = 1;
+                while (File.Exists(outputFile))
+                {
+                    var newName = string.Concat(Path.GetFileNameWithoutExtension(outputFileName), "_", duplicateIndex++.ToString(), Path.GetExtension(outputFileName));
+                    outputFile = Path.Combine(_exportPath, newName);
+                    outputOperation.SpatialRecordsFile = newName;
+                }
+                ADAPTParquetWriter writer = new ADAPTParquetWriter(operationDefinition.ColumnData);
+                AsyncContext.Run(async () => await writer.Write(outputFile));
             }
-            ADAPTParquetWriter writer = new ADAPTParquetWriter(operationDefinition.ColumnData);
-            AsyncContext.Run(async () => await writer.Write(outputFile));
-
-            // var loggedDataIdAsString = srcLoggedData.Id.ReferenceId.ToString(CultureInfo.InvariantCulture);
-            // var workRecord = _root.Documents.WorkRecords.FirstOrDefault(x => x.Id.ReferenceId == loggedDataIdAsString);
-            // string fieldId = srcLoggedData.FieldId?.ToString(CultureInfo.InvariantCulture) ?? CatalogExporter.UnknownFieldId;
-            // if (workRecord == null)
-            // {
-            //     //Create a work record if not one yet for this source LoggedData
-            //     // workRecord = new WorkRecordElement
-            //     // {
-            //     //     Operations = new List<OperationElement>(),
-            //     //     FieldId = fieldId,
-            //     //     Id = _commonExporters.ExportID(srcLoggedData.Id),
-            //     //     CropZoneId = srcLoggedData.CropZoneId?.ToString(CultureInfo.InvariantCulture),
-            //     //     Name = srcLoggedData.Description,
-            //     //     Notes = srcLoggedData.Notes.Any() ? srcLoggedData.Notes.Select(x => x.Description).ToList() : null,
-            //     //     TimeScopes = _commonExporters.ExportTimeScopes(srcLoggedData.TimeScopes, out var seasonIds),
-            //     //     SeasonId = seasonIds?.FirstOrDefault()
-            //     // };
-            //     // _root.Documents.WorkRecords.Add(workRecord);
-            // }
             workRecord.Operations.Add(outputOperation);
         }
 
@@ -362,7 +340,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                     else
                     {
-                        //TODO log failed summary value
+                        //TODO log failed summary value or product not represented in spatial data
                     }
                 }
                 else
@@ -382,63 +360,13 @@ namespace AgGateway.ADAPT.StandardPlugin
                     AppendSummaryValue(srcValue, variables, output, summaryKvp.Key);
                 }
             }
-            foreach (var generalSummary in operationDefinition.SourceSummaryValuesWihthoutProduct)
+            foreach (var generalSummary in operationDefinition.SourceSummaryValuesWithoutProduct)
             {
                 AppendSummaryValue(generalSummary, variables, output);
             }
 
             return output;
         }
-
-        // private List<SummaryValueElement> ExportSummaryValuesFix(Summary srcSummary, List<VariableElement> variables, IEnumerable<int> productIds)
-        // {
-        //     if (srcSummary == null ||
-        //         (srcSummary.OperationSummaries.IsNullOrEmpty() && srcSummary.SummaryData.IsNullOrEmpty()))
-        //     {
-        //         return null;
-        //     }
-
-        //     List<SummaryValueElement> output = new List<SummaryValueElement>();
-        //     var operationSummaries = srcSummary.OperationSummaries?.Where(x => productIds.Contains(x.ProductId));
-        //     var stampedMeteredValues = operationSummaries.IsNullOrEmpty()
-        //         ? srcSummary.SummaryData
-        //         : operationSummaries.SelectMany(x => x.Data);
-
-        //     var groupedByCode = stampedMeteredValues
-        //         .SelectMany(x => x.Values.Select(y => new { MeteredValue = y.Value as NumericRepresentationValue, StampedVaue = x }))
-        //         .Where(x => x.MeteredValue != null)
-        //         .GroupBy(x => x.MeteredValue.Representation.Code)
-        //         .ToList();
-        //     foreach (var kvp in groupedByCode)
-        //     {
-        //         var timeScopes = _commonExporters.ExportTimeScopes(kvp.Select(x => x.StampedVaue.Stamp).Where(x => x != null).Distinct().ToList(), out _);
-        //         var variableElement = GetOrCreateVariableElement(variables, kvp.Key);
-        //         if (variableElement == null)
-        //         {
-        //             continue;
-        //         }
-
-        //         var targetUoM = _commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == variableElement.DefinitionCode).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
-        //         var summaryValues = kvp.Select(x => x.MeteredValue.AsConvertedDouble(targetUoM)).Where(x => x.HasValue);
-        //         var summaryValue = HasDenominator(targetUoM) ? summaryValues.Average() : summaryValues.Sum();
-        //         var summary = new SummaryValueElement
-        //         {
-        //             TimeScopes = timeScopes,
-        //             VariableId = variableElement.Id.ReferenceId,
-        //             ValueText = summaryValue?.ToString(CultureInfo.InvariantCulture)
-        //         };
-
-        //         output.Add(summary);
-        //     }
-
-        //     return output;
-        // }
-
-        // private bool HasDenominator(string unitCode)
-        // {
-        //     var unitOfMeasure = Representation.UnitSystem.InternalUnitSystemManager.Instance.UnitOfMeasures[unitCode];
-        //     return (unitOfMeasure is Representation.UnitSystem.CompositeUnitOfMeasure compUoM) && compUoM.Components.Any(x => x.Power < 0);
-        // }
 
         private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string srcVariableName, int? productId = null)
         {
@@ -579,29 +507,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             SourceLoggedDatas = new HashSet<LoggedData>() { loggedData };
             FieldId = loggedData.FieldId?.ToString(CultureInfo.InvariantCulture) ?? CatalogExporter.UnknownFieldId;
             SourceSummaryValuesByProductId = new Dictionary<int, List<StampedMeteredValues>>();
-            SourceSummaryValuesWihthoutProduct = new List<StampedMeteredValues>();
-            // SourceOperationSummaries = new List<OperationSummary>();
-            // SourceSummaries = new HashSet<Summary>();
+            SourceSummaryValuesWithoutProduct = new List<StampedMeteredValues>();
         }
 
-        // internal OperationDefinition(OperationSummary operationSummary, OperationData operationData)
-        // {
-        //     SourceOperations = new List<ConsitutentOperation>() { new ConsitutentOperation(operationData, operationSummary.Data.First().Stamp) };
-        //     LoadId = operationData.LoadId ?? 0;
-        //     PrescriptionId = operationData.PrescriptionId ?? 0;
-        //     WorkItemOperationId = operationData.WorkItemOperationId ?? 0;
-        //     ProductIds = string.Join("|", operationData.ProductIds);
-        //     OperationType = operationData.OperationType;
-        //     VariablesByOutputName = new Dictionary<string, VariableElement>();
-        //     ColumnData = new ADAPTParquetColumnData();
-        //     SourceSummaries = new List<Summary>();
-        //     SourceOperationSummaries = new List<OperationSummary>()
-        // }
         internal string ImplementKey { get; private set; }
         internal List<ConstituentSpatialOperation> SourceOperations { get; set; }
-        //internal HashSet<Summary> SourceSummaries { get; set; }
         internal Dictionary<int, List<StampedMeteredValues>> SourceSummaryValuesByProductId { get; set; }
-        internal List<StampedMeteredValues> SourceSummaryValuesWihthoutProduct { get; set; }
+        internal List<StampedMeteredValues> SourceSummaryValuesWithoutProduct { get; set; }
         internal HashSet<LoggedData> SourceLoggedDatas { get; set; }
         internal int LoadId { get; set; }
         internal string FieldId { get; set; }
