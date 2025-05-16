@@ -114,20 +114,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new MultiLineString(srcLineStrings.Select(ConvertToLineString).ToArray()).ToText();
         }
 
-        internal static Point HaversineDestination(Point startPoint, double distanceM, double bearingDeg)
+        internal static Point HaversineDestination(Point startPoint, double distanceM, double headingDeg)
         {
             double latRad = DegreesToRads(startPoint.Y);
             double lonRad = DegreesToRads(startPoint.X);
-            double bearingRad = DegreesToRads(bearingDeg);
+            double headingRad = DegreesToRads(headingDeg);
             double length = distanceM / EarthRadiusM;
             double otherLat = Math.Asin(Math.Sin(latRad) *
                                         Math.Cos(length) +
                                         Math.Cos(latRad) *
                                         Math.Sin(length) *
-                                        Math.Cos(bearingRad));
+                                        Math.Cos(headingRad));
             double otherLon = lonRad +
                               Math.Atan2(
-                                   Math.Sin(bearingRad) *
+                                   Math.Sin(headingRad) *
                                    Math.Sin(length) *
                                    Math.Cos(latRad),
                                    Math.Cos(length) -

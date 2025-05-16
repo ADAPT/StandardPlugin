@@ -206,9 +206,9 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new Offset(0d, 0d, 0d);
         }
 
-        public static Point Destination(this Point point, double distanceM, double bearingDeg)
+        public static Point Destination(this Point point, double distanceM, double headingDeg)
         {
-            return GeometryExporter.HaversineDestination(point, distanceM, bearingDeg);
+            return GeometryExporter.HaversineDestination(point, distanceM, headingDeg);
         }
 
         public static Coordinate AsCoordinate(this Point point)
@@ -216,25 +216,25 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new Coordinate(point.X, point.Y);
         }
 
-        public static double BearingBack(this double bearing)
+        public static double HeadingBack(this double heading)
         {
-            return bearing - 180 % 360d;
+            return heading - 180;
         }
 
-        public static double BearingLeft(this double bearing)
+        public static double HeadingLeft(this double heading)
         {
-            return bearing - 90 % 360d;
+            return heading - 90;
         }
 
-        public static double BearingRight(this double bearing)
+        public static double HeadingRight(this double heading)
         {
-            return bearing + 90 % 360d;
+            return heading + 90;
         }
 
-        public static Polygon AsCoveragePolygon(this Point leadingPoint, double width, ref LeadingEdge latestLeadingEdge, double bearing, double? reportedDistance, double? calculatedDistance)
+        public static Polygon AsCoveragePolygon(this Point leadingPoint, double width, ref LeadingEdge latestLeadingEdge, double heading, double? reportedDistance, double? calculatedDistance)
         {
             LeadingEdge priorLeadingEdge = latestLeadingEdge;
-            latestLeadingEdge = new LeadingEdge(leadingPoint, width, priorLeadingEdge, bearing, reportedDistance);
+            latestLeadingEdge = new LeadingEdge(leadingPoint, width, priorLeadingEdge, heading, reportedDistance);
             Point backRight;
             Point backLeft;
             if (priorLeadingEdge != null)
@@ -256,8 +256,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 distance = distance > 4 ? 4 : distance; //keep distances sane
 
-                backRight = latestLeadingEdge.Right.Destination(distance, BearingBack(bearing));
-                backLeft = backRight.Destination(width, BearingLeft(bearing));
+                backRight = latestLeadingEdge.Right.Destination(distance, HeadingBack(heading));
+                backLeft = backRight.Destination(width, HeadingLeft(heading));
             }
             
             List<Coordinate> ringCoordinates = new List<Coordinate>()

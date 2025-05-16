@@ -220,26 +220,26 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     internal class LeadingEdge
     {
-        public LeadingEdge(Point leadingPoint, double width, LeadingEdge priorLeadingEdge, double bearing, double? reportedDistance)
+        public LeadingEdge(Point leadingPoint, double width, LeadingEdge priorLeadingEdge, double heading, double? reportedDistance)
         {
-            Bearing = bearing;
+            Heading = heading;
             double wh = width / 2d;
-            Left = leadingPoint.Destination(wh, Extensions.BearingLeft(bearing));
+            Left = leadingPoint.Destination(wh, Extensions.HeadingLeft(heading));
             Center = leadingPoint;
-            Right = leadingPoint.Destination(wh, Extensions.BearingRight(bearing));
+            Right = leadingPoint.Destination(wh, Extensions.HeadingRight(heading));
 
             if (priorLeadingEdge != null && this.AsLineString().Intersects(priorLeadingEdge.AsLineString()))
             {
                 //Implement is turning significantly
-                bool turningLeft = priorLeadingEdge.Bearing < bearing;
-                if (Math.Abs(priorLeadingEdge.Bearing - bearing) > 300d)
+                bool turningLeft = priorLeadingEdge.Heading < heading;
+                if (Math.Abs(priorLeadingEdge.Heading - heading) > 300d)
                 {
                     //Bearings are on either side of zero
-                    if (priorLeadingEdge.Bearing - 360d > bearing)
+                    if (priorLeadingEdge.Heading - 360d > heading)
                     {
                         turningLeft = false;
                     }
-                    else if (priorLeadingEdge.Bearing - 360d < bearing)
+                    else if (priorLeadingEdge.Heading - 360d < heading)
                     {
                         turningLeft = true;
                     }
@@ -258,7 +258,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         public Point Left { get; set; }
         public Point Center { get; set; }
         public Point Right { get; set; }    
-        public double Bearing { get; set; }
+        public double Heading { get; set; }
 
         public double GetBearing(Point nextPoint)
         {
