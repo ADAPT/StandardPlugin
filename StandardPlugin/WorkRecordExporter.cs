@@ -370,19 +370,26 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
                             {
-                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
-                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                                var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
-
-                                NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
-                                var productValueData = productValue?.Value?.Value;
-                                if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
+                                if (section.FactoredDefinitionsBySourceCodeByProduct.ContainsKey(dataColumn.ProductId))
                                 {
-                                    dataColumn.Values.Add(doubleVal);
+                                    var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
+                                    NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                    var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+
+                                    NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
+                                    var productValueData = productValue?.Value?.Value;
+                                    if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
+                                    {
+                                        dataColumn.Values.Add(doubleVal);
+                                    }
+                                    else
+                                    {
+                                        dataColumn.Values.Add(0d); //We're not applying this product to this section
+                                    }
                                 }
                                 else
                                 {
-                                    dataColumn.Values.Add(0d); //We're not applying this product to this section
+                                    dataColumn.Values.Add(0d); //We've grouped operations together and this doesn't apply.
                                 }
                             }
                             else

@@ -697,7 +697,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
                     GNssSource = ExportGpsSource(frameworkCropZone.BoundarySource),
-                    GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                    GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds.Any() ? frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                     Notes = ExportNotes(frameworkCropZone.Notes),
                     TimeScopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes, out var seasonIds),
                     SeasonIds = seasonIds,
@@ -816,7 +816,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         FarmId = GetIdWithReferentialIntegrity(srcModel.Catalog.Farms, frameworkField.FarmId),
                         ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
                         ActiveBoundaryId = GetIdWithReferentialIntegrity(srcModel.Catalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
-                        GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                        GuidanceGroupIds = frameworkField.GuidanceGroupIds.Any() ? frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                         ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
                     };
                     output.Add(field);
