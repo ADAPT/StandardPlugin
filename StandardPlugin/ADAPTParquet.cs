@@ -9,6 +9,7 @@ using System.Linq;
 using System;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
+using AgGateway.ADAPT.ApplicationDataModel.Prescriptions;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -91,6 +92,18 @@ namespace AgGateway.ADAPT.StandardPlugin
             Geometries = new List<byte[]>();
         }
 
+        public void AddVectorPrescription(VectorPrescription rx, List<WorkOrderExportColumn> exportColumns, Catalog catalog, CommonExporters commonExporters)
+        {
+            foreach (var exportColumn in exportColumns)
+            {
+                string targetName = exportColumn.Variable.DefinitionCode;
+                string targetUOMCode = commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == targetName).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
+                string productName = catalog.Products.First(x => x.Id.ReferenceId == Int32.Parse(exportColumn.Variable.ProductId)).Description;
+
+                Columns.Add(new ADAPTDataColumn(exportColumn.ProductLookup, targetName, targetUOMCode, exportColumn.Variable.ProductId, productName));
+            }
+        }
+
         public List<IError> AddOperationData(OperationData operationData, Catalog catalog, Implement implement, CommonExporters commonExporters)
         {
             List<IError> errors = new List<IError>();
@@ -152,7 +165,7 @@ namespace AgGateway.ADAPT.StandardPlugin
     {
         public ADAPTDataColumn(NumericWorkingData numericWorkingData, string targetName, string targetUOM, string productId = null, string productName = null)
         {
-            SrcObject = numericWorkingData;
+            SrcWorkingData = numericWorkingData;
             SrcName = numericWorkingData.Representation.Code;
             SrcUOMCode = numericWorkingData.UnitOfMeasure.Code;
             TargetName = targetName;
@@ -164,6 +177,22 @@ namespace AgGateway.ADAPT.StandardPlugin
                 TargetName = $"{TargetName}_{productName}";
             }
         }
+
+        public ADAPTDataColumn(RxProductLookup lookup, string targetName, string targetUOM, string productId = null, string productName = null)
+        {
+            SrcProductLookup = lookup;
+            SrcName = lookup.Representation.Code;
+            SrcUOMCode = lookup.UnitOfMeasure.Code;
+            TargetName = targetName;
+            TargetUOMCode = targetUOM;
+            Values = new List<double?>();
+            ProductId = productId;
+            if (productName != null)
+            {
+                TargetName = $"{TargetName}_{productName}";
+            }
+        }
+
         public string SrcName { get; set; }
 
         public string SrcUOMCode { get; set; }
@@ -174,7 +203,9 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public string TargetName { get; set; }
 
-        public NumericWorkingData SrcObject { get; set; }
+        public NumericWorkingData SrcWorkingData { get; set; }
+
+        public RxProductLookup SrcProductLookup { get; set; }
 
         public List<double?> Values { get; set; }
     }

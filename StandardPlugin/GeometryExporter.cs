@@ -59,7 +59,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return null;
         }
 
-        internal static string ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon, IEnumerable<AdaptShapes.Shape> srcInteriorAttributes = null)
+        internal static MultiPolygon ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon)
         {
             if (srcMultiPolygon == null || srcMultiPolygon.Polygons.IsNullOrEmpty())
             {
@@ -71,16 +71,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 var outerRing = ConvertToLinearRing(frameworkPolygon.ExteriorRing);
                 var innerRings = frameworkPolygon.InteriorRings.Select(ConvertToLinearRing).ToArray();
-
-                if (polygons.Count == 0 && srcInteriorAttributes != null)
-                {
-                    innerRings = innerRings.Concat(srcInteriorAttributes.Select(ConvertShapeToLinearRing).Where(x => x != null)).ToArray();
-                }
-
                 polygons.Add(new Polygon(outerRing, innerRings));
             }
 
-            return new MultiPolygon(polygons.ToArray()).ToText();
+            return new MultiPolygon(polygons.ToArray());
+        }
+
+        internal static string ExportMultiPolygonWKT(AdaptShapes.MultiPolygon srcMultiPolygon)
+        {
+            return ExportMultiPolygon(srcMultiPolygon).AsText();
+        }
+
+        internal static byte[] ExportMultiPolygonWKB(AdaptShapes.MultiPolygon srcMultiPolygon)
+        {
+            return ExportMultiPolygon(srcMultiPolygon).AsBinary();
         }
 
         internal static string ExportLineString(AdaptShapes.LineString srcLine)

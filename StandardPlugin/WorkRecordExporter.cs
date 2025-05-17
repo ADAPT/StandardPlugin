@@ -52,7 +52,14 @@ namespace AgGateway.ADAPT.StandardPlugin
         public static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model, Root root, string exportPath, Properties properties)
         {
             WorkRecordExporter exporter = new WorkRecordExporter(root, exportPath, properties);
-            return exporter.Export(model);
+            if (model.Documents?.LoggedData != null)
+            {
+                return exporter.Export(model);
+            }
+            else
+            {
+                return new List<IError>();
+            }
         }
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
@@ -122,7 +129,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     Name = dataColumn.SrcName,
                                     DefinitionCode = dataColumn.TargetName,
                                     ProductId = dataColumn.ProductId,
-                                    Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
+                                    Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
                                     FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
                                 };
                                 variablesByTargetNameByOutputKey[outputOperationKey].Add(dataColumn.TargetName, variable);
@@ -389,7 +396,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 }
                                 else
                                 {
-                                    dataColumn.Values.Add(0d); //We've grouped operations together and this doesn't apply.
+                                    dataColumn.Values.Add(0d); 
                                 }
                             }
                             else

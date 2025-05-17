@@ -53,7 +53,7 @@ namespace StandardPluginTests
                 RowCount = 5,
                 OperationType = OperationTypeEnum.SowingAndPlanting,
                 Origin = new Point { X = -87.60, Y = 41.88  },
-                RxProductLookups = _adm.Catalog.Products.Select(x => new RxProductLookup { ProductId = x.Id.ReferenceId, UnitOfMeasure = new UnitOfMeasure { } }).ToList(),
+                RxProductLookups = _adm.Catalog.Products.Select(x => new RxProductLookup { ProductId = x.Id.ReferenceId, UnitOfMeasure = new UnitOfMeasure { Code = "kg1ha-1" }, Representation = new NumericRepresentation() { Code = "vrAppRateMassActual"} }).ToList(),
                 ProductIds = _adm.Catalog.Products.Select(x => x.Id.ReferenceId).ToList(),
                 Rates = new List<RxCellLookup>(),
                 Description = "RasterRx"
