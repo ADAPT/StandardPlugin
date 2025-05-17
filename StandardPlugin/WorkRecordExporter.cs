@@ -52,7 +52,14 @@ namespace AgGateway.ADAPT.StandardPlugin
         public static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model, Root root, string exportPath, Properties properties)
         {
             WorkRecordExporter exporter = new WorkRecordExporter(root, exportPath, properties);
-            return exporter.Export(model);
+            if (model.Documents?.LoggedData != null)
+            {
+                return exporter.Export(model);
+            }
+            else
+            {
+                return new List<IError>();
+            }
         }
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
@@ -122,7 +129,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     Name = dataColumn.SrcName,
                                     DefinitionCode = dataColumn.TargetName,
                                     ProductId = dataColumn.ProductId,
-                                    Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
+                                    Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
                                     FileDataIndex = columnDataByOutputKey[outputOperationKey].GetDataColumnIndex(dataColumn),
                                 };
                                 variablesByTargetNameByOutputKey[outputOperationKey].Add(dataColumn.TargetName, variable);
@@ -370,19 +377,26 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
                             {
-                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
-                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                                var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
-
-                                NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
-                                var productValueData = productValue?.Value?.Value;
-                                if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
+                                if (section.FactoredDefinitionsBySourceCodeByProduct.ContainsKey(dataColumn.ProductId))
                                 {
-                                    dataColumn.Values.Add(doubleVal);
+                                    var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
+                                    NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                    var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+
+                                    NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
+                                    var productValueData = productValue?.Value?.Value;
+                                    if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
+                                    {
+                                        dataColumn.Values.Add(doubleVal);
+                                    }
+                                    else
+                                    {
+                                        dataColumn.Values.Add(0d); //We're not applying this product to this section
+                                    }
                                 }
                                 else
                                 {
-                                    dataColumn.Values.Add(0d); //We're not applying this product to this section
+                                    dataColumn.Values.Add(0d); 
                                 }
                             }
                             else

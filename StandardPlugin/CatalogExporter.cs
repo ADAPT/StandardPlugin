@@ -432,7 +432,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     SwathWidth = _commonExporters.ExportAsNumericValue<SwathWidth>(frameworkGuidancePattern.SwathWidth),
                     NumberOfSwathsLeft = frameworkGuidancePattern.NumbersOfSwathsLeft,
                     NumberOfSwathsRight = frameworkGuidancePattern.NumbersOfSwathsRight,
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygon(frameworkGuidancePattern.BoundingPolygon)
+                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidancePattern.BoundingPolygon)
                 };
 
                 switch (frameworkGuidancePattern)
@@ -560,7 +560,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     Id = _commonExporters.ExportID(frameworkGuidanceGroup.Id),
                     Description = frameworkGuidanceGroup.Description,
                     GuidancePatternIds = frameworkGuidanceGroup.GuidancePatternIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygon(frameworkGuidanceGroup.BoundingPolygon)
+                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidanceGroup.BoundingPolygon)
                 };
                 output.Add(guidanceGroup);
             }
@@ -697,11 +697,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
                     GNssSource = ExportGpsSource(frameworkCropZone.BoundarySource),
-                    GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                    GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds.Any() ? frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                     Notes = ExportNotes(frameworkCropZone.Notes),
                     TimeScopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes, out var seasonIds),
                     SeasonIds = seasonIds,
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygon(frameworkCropZone.BoundingRegion),
+                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkCropZone.BoundingRegion),
                     ContextItems = _commonExporters.ExportContextItems(frameworkCropZone.ContextItems)
                 };
                 output.Add(cropZone);
@@ -766,7 +766,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkFieldBoundary.FieldId),
                     GNssSource = ExportGpsSource(frameworkFieldBoundary.GpsSource),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
-                    Geometry = GeometryExporter.ExportMultiPolygon(frameworkFieldBoundary.SpatialData, frameworkFieldBoundary.InteriorBoundaryAttributes?.Select(x => x.Shape)),
+                    Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkFieldBoundary.SpatialData),
                     SeasonIds = ExportTimeScopesAsSeasons(frameworkFieldBoundary.TimeScopes)?.Select(x => x.Id.ReferenceId).ToList(),
                     ContextItems = _commonExporters.ExportContextItems(frameworkFieldBoundary.ContextItems),
                 };
@@ -816,7 +816,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         FarmId = GetIdWithReferentialIntegrity(srcModel.Catalog.Farms, frameworkField.FarmId),
                         ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
                         ActiveBoundaryId = GetIdWithReferentialIntegrity(srcModel.Catalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
-                        GuidanceGroupIds = frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
+                        GuidanceGroupIds = frameworkField.GuidanceGroupIds.Any() ? frameworkField.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                         ContextItems = _commonExporters.ExportContextItems(frameworkField.ContextItems)
                     };
                     output.Add(field);
@@ -912,7 +912,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 };
                 if (frameworkHeadland is DrivenHeadland drivenHeadland)
                 {
-                    headland.Geometry = GeometryExporter.ExportMultiPolygon(drivenHeadland.SpatialData);
+                    headland.Geometry = GeometryExporter.ExportMultiPolygonWKT(drivenHeadland.SpatialData);
                 }
                 else if (frameworkHeadland is ConstantOffsetHeadland)
                 {

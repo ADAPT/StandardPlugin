@@ -59,7 +59,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             return null;
         }
 
-        internal static string ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon, IEnumerable<AdaptShapes.Shape> srcInteriorAttributes = null)
+        internal static MultiPolygon ExportMultiPolygon(AdaptShapes.MultiPolygon srcMultiPolygon)
         {
             if (srcMultiPolygon == null || srcMultiPolygon.Polygons.IsNullOrEmpty())
             {
@@ -71,16 +71,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 var outerRing = ConvertToLinearRing(frameworkPolygon.ExteriorRing);
                 var innerRings = frameworkPolygon.InteriorRings.Select(ConvertToLinearRing).ToArray();
-
-                if (polygons.Count == 0 && srcInteriorAttributes != null)
-                {
-                    innerRings = innerRings.Concat(srcInteriorAttributes.Select(ConvertShapeToLinearRing).Where(x => x != null)).ToArray();
-                }
-
                 polygons.Add(new Polygon(outerRing, innerRings));
             }
 
-            return new MultiPolygon(polygons.ToArray()).ToText();
+            return new MultiPolygon(polygons.ToArray());
+        }
+
+        internal static string ExportMultiPolygonWKT(AdaptShapes.MultiPolygon srcMultiPolygon)
+        {
+            return ExportMultiPolygon(srcMultiPolygon).AsText();
+        }
+
+        internal static byte[] ExportMultiPolygonWKB(AdaptShapes.MultiPolygon srcMultiPolygon)
+        {
+            return ExportMultiPolygon(srcMultiPolygon).AsBinary();
         }
 
         internal static string ExportLineString(AdaptShapes.LineString srcLine)
@@ -114,20 +118,20 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new MultiLineString(srcLineStrings.Select(ConvertToLineString).ToArray()).ToText();
         }
 
-        internal static Point HaversineDestination(Point startPoint, double distanceM, double bearingDeg)
+        internal static Point HaversineDestination(Point startPoint, double distanceM, double headingDeg)
         {
             double latRad = DegreesToRads(startPoint.Y);
             double lonRad = DegreesToRads(startPoint.X);
-            double bearingRad = DegreesToRads(bearingDeg);
+            double headingRad = DegreesToRads(headingDeg);
             double length = distanceM / EarthRadiusM;
             double otherLat = Math.Asin(Math.Sin(latRad) *
                                         Math.Cos(length) +
                                         Math.Cos(latRad) *
                                         Math.Sin(length) *
-                                        Math.Cos(bearingRad));
+                                        Math.Cos(headingRad));
             double otherLon = lonRad +
                               Math.Atan2(
-                                   Math.Sin(bearingRad) *
+                                   Math.Sin(headingRad) *
                                    Math.Sin(length) *
                                    Math.Cos(latRad),
                                    Math.Cos(length) -
