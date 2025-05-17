@@ -481,10 +481,18 @@ namespace AgGateway.ADAPT.StandardPlugin
                 foreach (var dataColumn in columnData.Columns)
                 {
                     int columnIndex = columnData.GetDataColumnIndex(dataColumn);
-                    var exportColumn = exportColumns.First(x => x.Index == columnIndex);
-                    var rate = shapeLookup.Rates.FirstOrDefault(x => x.RxProductLookupId == exportColumn.ProductLookup.Id.ReferenceId);
-                    dataColumn.Values.Add(rate.Rate * exportColumn.ConversionFactor);
+                    var exportColumn = exportColumns.FirstOrDefault(x => x.Index == columnIndex);
+                    if (exportColumn != null)
+                    {
+                        var rate = shapeLookup.Rates.FirstOrDefault(x => x.RxProductLookupId == exportColumn.ProductLookup.Id.ReferenceId);
+                        dataColumn.Values.Add(rate.Rate * exportColumn.ConversionFactor);
+                    }
+                    else
+                    {
+                        dataColumn.Values.Add(0d);
+                    }
                 }
+                columnData.Geometries.Add(wkb);
             }
 
             ADAPTParquetWriter writer = new ADAPTParquetWriter(columnData);

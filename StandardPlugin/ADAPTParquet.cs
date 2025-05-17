@@ -61,11 +61,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     {
                         using (ParquetRowGroupWriter rg = writer.CreateRowGroup())
                         {
-                            int index = 0;
+                            int index = -1;
                             if (ColumnData.Timestamps.Any())
                             {
                                 var timestamps = ColumnData.Timestamps.Skip(startIndex).Skip(startIndex).Take(RowGroupSize);
-                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[index], timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()));
+                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()));
                             }
                             foreach (var doubleColumn in ColumnData.Columns)
                             {
@@ -151,13 +151,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public int GetDataColumnIndex(ADAPTDataColumn dataColumn)
         {
-            var columnIndex = Columns.IndexOf(dataColumn);
-            if (columnIndex != -1)
-            {
-                columnIndex += 2; //Index is 1-based
-            }
-
-            return columnIndex;
+            return Columns.IndexOf(dataColumn) + 1;  //Index is 1-based
         }
     }
 
