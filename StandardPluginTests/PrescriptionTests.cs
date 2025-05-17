@@ -11,13 +11,38 @@ using NUnit.Framework;
 
 namespace StandardPluginTests
 {
-    public class RasterGridPrescriptionTests
+    public class PrescriptionTests
     {
         private ApplicationDataModel _adm;
 
         [SetUp]
         public void Setup()
         {
+        }
+
+        [Test]
+        public void ManualRx()
+        {
+            SetupProducts();
+            var field = new AgGateway.ADAPT.ApplicationDataModel.Logistics.Field() { Description = "Test Field" };
+            _adm.Catalog.Fields = new List<AgGateway.ADAPT.ApplicationDataModel.Logistics.Field>()
+            {
+                field
+            };
+
+            ProductUse use = new ProductUse()
+            {
+                Rate = new NumericRepresentationValue() { Representation = new NumericRepresentation() { Code = "vrAppRateMassActual" }, Value = new NumericValue(new UnitOfMeasure() { Code = "lb1ac-1" }, 15d) },
+                ProductId = _adm.Catalog.Products.First().Id.ReferenceId
+            };
+            ManualPrescription rx = new ManualPrescription();
+            rx.ProductUses.Add(use);
+            _adm.Catalog.Prescriptions = new List<ManualPrescription>() { rx };
+
+                        
+            var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
+            plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
+
         }
 
         [Test]

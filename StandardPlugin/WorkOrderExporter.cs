@@ -274,7 +274,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 WorkOrderElement dstWorkOrder = new WorkOrderElement()
                 {
-                    Id = new Id() { ReferenceId = string.Concat("WorkOrder", rx.Id) },
+                    Id = new Id() { ReferenceId = string.Concat("WorkOrder", rx.Id.ReferenceId) },
                     CropZoneId = rx.CropZoneId.HasValue ? rx.CropZoneId.Value.ToString() : null,
                     FieldId = rx.FieldId.ToString(),
                     Name = string.Concat(rx.Description, ": Work Order"),
@@ -315,6 +315,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<IError> errors = new List<IError>();
             if (rx is ManualPrescription manualRx)
             {
+                summaryValues = new List<SummaryValueElement>();
                 foreach (var productUse in manualRx.ProductUses)
                 {
                     var product = catalog.Products.FirstOrDefault(x => x.Id.ReferenceId == productUse.ProductId);
