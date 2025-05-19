@@ -1,19 +1,14 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Common;
 using AgGateway.ADAPT.ApplicationDataModel.Documents;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
-using BitMiracle.LibTiff.Classic;
-using Microsoft.Data.Analysis;
 using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
@@ -117,7 +112,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                             Name = dataColumn.SrcName,
                                             DefinitionCode = dataColumn.TargetName,
                                             ProductId = dataColumn.ProductId,
-                                            Id = _commonExporters.ExportID(dataColumn.SrcObject.Id),
+                                            Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
                                             FileDataIndex = operationDefinition.ColumnData.GetDataColumnIndex(dataColumn),
                                         };
                                         operationDefinition.VariablesByOutputName.Add(dataColumn.TargetName, variable);
