@@ -11,6 +11,9 @@ using NUnit.Framework;
 
 namespace StandardPluginTests
 {
+    /// <summary>
+    /// Tests currently require manual validation of output
+    /// </summary>
     public class PrescriptionTests
     {
         private ApplicationDataModel _adm;
@@ -39,7 +42,7 @@ namespace StandardPluginTests
             rx.ProductUses.Add(use);
             _adm.Catalog.Prescriptions = new List<ManualPrescription>() { rx };
 
-                        
+
             var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
             plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
 
@@ -69,7 +72,7 @@ namespace StandardPluginTests
                 Representation = new NumericRepresentation() { Code = "vrAppRateVolumeActual" },
                 UnitOfMeasure = new UnitOfMeasure() { Code = "gal1ac-1" }
             };
-            VectorPrescription rx = new VectorPrescription() { FieldId = field.Id.ReferenceId, RxProductLookups = new List<RxProductLookup>() { p1, p4}};
+            VectorPrescription rx = new VectorPrescription() { FieldId = field.Id.ReferenceId, RxProductLookups = new List<RxProductLookup>() { p1, p4 } };
 
             Polygon one = new Polygon()
             {
@@ -136,8 +139,8 @@ namespace StandardPluginTests
             _adm.Documents.WorkItems = new List<WorkItem>() { item };
             _adm.Catalog.Prescriptions = new List<VectorPrescription>() { rx };
 
-           
-            
+
+
             var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
             plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
 
@@ -169,15 +172,15 @@ namespace StandardPluginTests
 
         private RasterGridPrescription SetupRasterPrescription()
         {
-           return new RasterGridPrescription
+            return new RasterGridPrescription
             {
                 CellHeight = new NumericRepresentationValue { Value = new NumericValue(new UnitOfMeasure(), 0.001) },
                 CellWidth = new NumericRepresentationValue { Value = new NumericValue(new UnitOfMeasure(), 0.002) },
                 ColumnCount = 10,
                 RowCount = 5,
                 OperationType = OperationTypeEnum.SowingAndPlanting,
-                Origin = new Point { X = -87.60, Y = 41.88  },
-                RxProductLookups = _adm.Catalog.Products.Select(x => new RxProductLookup { ProductId = x.Id.ReferenceId, UnitOfMeasure = new UnitOfMeasure { Code = "kg1ha-1" }, Representation = new NumericRepresentation() { Code = "vrAppRateMassActual"} }).ToList(),
+                Origin = new Point { X = -87.60, Y = 41.88 },
+                RxProductLookups = _adm.Catalog.Products.Select(x => new RxProductLookup { ProductId = x.Id.ReferenceId, UnitOfMeasure = new UnitOfMeasure { Code = "kg1ha-1" }, Representation = new NumericRepresentation() { Code = "vrAppRateMassActual" } }).ToList(),
                 ProductIds = _adm.Catalog.Products.Select(x => x.Id.ReferenceId).ToList(),
                 Rates = new List<RxCellLookup>(),
                 Description = "RasterRx"
