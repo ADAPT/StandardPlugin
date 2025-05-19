@@ -57,7 +57,14 @@ namespace AgGateway.ADAPT.StandardPlugin
         public static IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model, Root root, string exportPath, Properties properties)
         {
             WorkRecordExporter exporter = new WorkRecordExporter(root, exportPath, properties);
-            return exporter.Export(model);
+            if (model.Documents?.LoggedData != null)
+            {
+                return exporter.Export(model);
+            }
+            else
+            {
+                return new List<IError>();
+            }
         }
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
