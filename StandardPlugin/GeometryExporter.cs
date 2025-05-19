@@ -79,11 +79,19 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         internal static string ExportMultiPolygonWKT(AdaptShapes.MultiPolygon srcMultiPolygon)
         {
+            if (srcMultiPolygon == null)
+            {
+                return null;
+            }
             return ExportMultiPolygon(srcMultiPolygon).AsText();
         }
 
         internal static byte[] ExportMultiPolygonWKB(AdaptShapes.MultiPolygon srcMultiPolygon)
         {
+            if (srcMultiPolygon == null)
+            {
+                return null;
+            }
             return ExportMultiPolygon(srcMultiPolygon).AsBinary();
         }
 
