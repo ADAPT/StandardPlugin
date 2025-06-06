@@ -79,18 +79,18 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public List<TimeScopeElement> ExportTimeScopes(List<TimeScope> srcTimeScopes, out List<string> seasonIds)
         {
-            seasonIds = null;
+            seasonIds = new List<string>();
             if (srcTimeScopes.IsNullOrEmpty())
             {
                 return null;
             }
-
+            var validTimeScopes = srcTimeScopes.Where(x => x != null).ToList();
             List<TimeScopeElement> output = new List<TimeScopeElement>();
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ActualStart, DateContextEnum.ActualEnd));
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ProposedStart, DateContextEnum.ProposedEnd));
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.RequestedStart, DateContextEnum.RequestedEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.ActualStart, DateContextEnum.ActualEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.ProposedStart, DateContextEnum.ProposedEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.RequestedStart, DateContextEnum.RequestedEnd));
 
-            foreach (var frameworkTimeScope in srcTimeScopes)
+            foreach (var frameworkTimeScope in validTimeScopes)
             {
                 if (frameworkTimeScope.DateContext == DateContextEnum.TimingEvent)
                 {
@@ -128,6 +128,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             var end = timeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture);
             var description = !timeScope.Description.IsNullOrEmpty() ? timeScope.Description : timeScope.TimeStamp1?.ToString("yyyy", CultureInfo.InvariantCulture) ?? string.Empty;
 
+            if (_catalog.Seasons == null)
+            {
+                _catalog.Seasons = new List<SeasonElement>();
+            }
             var season = _catalog.Seasons.FirstOrDefault(x => x.Start == start && x.End == end && x.Description == description);
             if (season == null)
             {
@@ -154,10 +158,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
         }
 
-        private IEnumerable<TimeScopeElement> HandleStartEndTimeScopes(List<TimeScope> srcTimeScopes, DateContextEnum startConext, DateContextEnum endContext)
+        private IEnumerable<TimeScopeElement> HandleStartEndTimeScopes(List<TimeScope> srcTimeScopes, DateContextEnum startContext, DateContextEnum endContext)
         {
             List<TimeScopeElement> output = new List<TimeScopeElement>();
-            var startEndTimeScopes = srcTimeScopes.Where(x => x.DateContext == startConext || x.DateContext == endContext).ToList();
+            var startEndTimeScopes = srcTimeScopes.Where(x => x != null && (x.DateContext == startContext || x.DateContext == endContext)).ToList();
 
             TimeScope startTimeScope = null;
             TimeScopeElement startTimeScopeElement = null;
@@ -165,7 +169,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 srcTimeScopes.Remove(srcTimeScope);
 
-                if (srcTimeScope.DateContext == startConext)
+                if (srcTimeScope.DateContext == startContext)
                 {
                     startTimeScope = srcTimeScope;
                     startTimeScopeElement = ExportTimeScope(srcTimeScope);

@@ -135,7 +135,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 foreach (var sourceSummary in sourceSummaries)
                 {
-                    if (sourceSummary.OperationSummaries.Any())
+                    if (sourceSummary.OperationSummaries != null &&
+                        sourceSummary.OperationSummaries.Any())
                     {
                         foreach (var srcOpSummary in sourceSummary.OperationSummaries)
                         {
@@ -185,7 +186,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     string seasonId = null;
                     foreach (var loggedData in fieldIdGroupBy.ToList())
                     {
-                        timeScopeElements.AddRange(_commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds));
+                        var timeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds);
+                        if (timeScopes != null)
+                        {
+                            timeScopeElements.AddRange(timeScopes);
+                        }
                         if (seasonIds.Any())
                         {
                             seasonId = seasonIds.First();

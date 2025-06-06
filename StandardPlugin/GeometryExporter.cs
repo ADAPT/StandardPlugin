@@ -83,7 +83,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return null;
             }
-            return ExportMultiPolygon(srcMultiPolygon).AsText();
+            var output = ExportMultiPolygon(srcMultiPolygon);
+            if (output != null)
+            {
+                return output.AsText();
+            }
+            return null;
         }
 
         internal static byte[] ExportMultiPolygonWKB(AdaptShapes.MultiPolygon srcMultiPolygon)
@@ -92,7 +97,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 return null;
             }
-            return ExportMultiPolygon(srcMultiPolygon).AsBinary();
+            var output = ExportMultiPolygon(srcMultiPolygon);
+            if (output != null)
+            {
+                return output.AsBinary();
+            }
+            return null;
         }
 
         internal static string ExportLineString(AdaptShapes.LineString srcLine)
