@@ -138,136 +138,39 @@ namespace AgGateway.ADAPT.StandardPlugin
                 switch (frameworkProduct)
                 {
                     case GenericProduct genericProduct:
-                        break;
                     case CropNutritionProduct nutritionProduct:
-                        product.CropNutritionProductAttributes = new CropNutritionProductAttributes
-                        {
-                            Ingredients = ExportIngredients(nutritionProduct.ProductComponents, srcCatalog.Ingredients),
-                            IsManure = nutritionProduct.IsManure
-                        };
                         break;
                     case CropProtectionProduct protectionProduct:
-                        product.CropProtectionProductAttributes = new CropProtectionProductAttributes
+                        if (protectionProduct.Biological)
                         {
-                            //The framework didn't have nullable bools and defaulted to false
-                            //As such we will treat false as null and only convert true.
-                            HasBiological = protectionProduct.Biological ? true : (bool?)null,
-                            HasCarbamate = protectionProduct.Carbamate? true : (bool?)null,
-                            HasOrganophosphate = protectionProduct.Organophosphate ? true : (bool?)null,
-                            Ingredients = ExportIngredients(protectionProduct.ProductComponents, srcCatalog.Ingredients)
-                        };
+                            product.ContextItems.Add(new ContextItemElement() { DefinitionCode = "HasBiological", ValueText = "true" }); //We won't set false for these next 4 as the source data is not in nullable bools.
+                        }
+                        if (protectionProduct.Carbamate)
+                        {
+                            product.ContextItems.Add(new ContextItemElement() { DefinitionCode = "HasCarbamate", ValueText = "true" });
+                        }
+                        if (protectionProduct.Organophosphate)
+                        {
+                            product.ContextItems.Add(new ContextItemElement() { DefinitionCode = "HasOrganophosphate", ValueText = "true" });
+                        }
                         break;
                     case CropVarietyProduct varietyProduct:
-                        product.CropVarietyProductAttributes = new CropVarietyProductAttributes
+                        product.CropId = varietyProduct.CropId.ToString(CultureInfo.InvariantCulture);
+                        if (varietyProduct.GeneticallyEnhanced)
                         {
-                            CropId = varietyProduct.CropId.ToString(CultureInfo.InvariantCulture),
-                            VarietyIsGeneticallyEnhanced = varietyProduct.GeneticallyEnhanced ? true : (bool?)null,
-                        };
+                            product.ContextItems.Add(new ContextItemElement() { DefinitionCode = "CropVarietyIsGeneticallyEnhanced", ValueText = "true" });
+                        }
                         break;
                     case HarvestedCommodityProduct commodityProduct:
-                        product.HarvestedProductAttributes = new HarvestedProductAttributes
-                        {
-                            CropId = commodityProduct.CropId.ToString(CultureInfo.InvariantCulture)
-                        };
+                        product.CropId = commodityProduct.CropId.ToString(CultureInfo.InvariantCulture);
                         break;
                     case MixProduct mixProduct:
-                        product.MixProductAttributes = new MixProductAttributes
-                        {
-                            MixTotalQuantity = _commonExporters.ExportAsNumericValue<MixTotalQuantity>(mixProduct.TotalQuantity)
-                        };
                         product.ProductTypeCode = "MIX";
                         break;
                 }
                 output.Add(product);
             }
             _catalog.Products = output;
-        }
-
-        private List<IngredientElement> ExportIngredients(List<ProductComponent> srcProductComponents, List<Ingredient> srcIngredients)
-        {
-            var output = new List<IngredientElement>();
-            if (srcProductComponents.IsNullOrEmpty())
-            {
-                return output;
-            }
-            foreach (var frameworkComponent in srcProductComponents)
-            {
-                var frameworkIngredient = srcIngredients.FirstOrDefault(x => x.Id.ReferenceId == frameworkComponent.IngredientId);
-                if (frameworkIngredient == null)
-                {
-                    continue;
-                }
-
-                var ingredient = new IngredientElement
-                {
-                    Id = _commonExporters.ExportID(frameworkIngredient.Id),
-                    Name = frameworkIngredient.Description,
-                    ContextItems = _commonExporters.ExportContextItems(frameworkIngredient.ContextItems)
-                };
-
-                switch (frameworkIngredient)
-                {
-                    case ActiveIngredient activeIngredient:
-                        ingredient.IsActiveIngredient = true;
-                        break;
-                    case InertIngredient inertIngredient:
-                        ingredient.IsActiveIngredient = false;
-                        break;
-                    case CropNutritionIngredient nutritionIngredient:
-                        ingredient.CropNutritionIngredientItemCode = ExportNutritionIngredientCode(nutritionIngredient.IngredientCode);
-                        ingredient.IsActiveIngredient = true;
-                        break;
-                }
-
-                output.Add(ingredient);
-            }
-
-            return output;
-        }
-
-        private string ExportNutritionIngredientCode(EnumeratedValue ingredientCode)
-        {
-            var code = ingredientCode?.Value?.Value?.ToUpperInvariant();
-            if (string.IsNullOrEmpty(code))
-            {
-                return null;
-            }
-
-            switch (code)
-            {
-                case "DTIN":
-                    return "NITROGEN";
-                case "DTIP":
-                    return "PHOSPHORUS";
-                case "DTIK":
-                    return "POTASSIUM";
-                case "DTICA":
-                    return "CALCIUM";
-                case "DTIMG":
-                    return "MAGNESIUM";
-                case "DTIS":
-                    return "SULPHUR";
-                case "DTIB":
-                    return "BORON";
-                case "DTICL":
-                    return "CHLORINE";
-                case "DTICU":
-                    return "COPPER";
-                case "DTIFE":
-                    return "IRON";
-                case "DTIMN":
-                    return "MANGANESE";
-                case "DTIMO":
-                    return "MOLYBDENUM";
-                case "DTIZN":
-                    return "ZINC";
-                case "DTIFULVICACID":
-                    return "FULVIC_ACID";
-                case "DTIHUMICACID":
-                    return "HUMIC_ACID";
-            }
-
-            return null;
         }
 
         private List<ProductComponentElement> ExportProductComponents(List<ProductComponent> srcProductComponents, List<Ingredient> srcIngredients)
@@ -284,9 +187,32 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     IsCarrier = frameworkProductComponent.IsCarrier,
                     MixOrder = frameworkProductComponent.MixOrder,
-                    ProductId = CreateProductFromIngredient(frameworkProductComponent, srcIngredients),
-                    Quantity = _commonExporters.ExportAsNumericValue<Quantity>(frameworkProductComponent.Quantity)
                 };
+                if (frameworkProductComponent.IsProduct)
+                {
+                    productComponent.ProductId = frameworkProductComponent.IngredientId.ToString();
+                }
+                else
+                {
+                    Ingredient srcIngredient = srcIngredients.FirstOrDefault(i => i.Id.ReferenceId == frameworkProductComponent.IngredientId);
+                    if (srcIngredient != null)
+                    {
+                        productComponent.IngredientId = new IngredientId();
+                        //TODO no place for srcIngredient.Description.
+                        if (srcIngredient is CropNutritionIngredient fertilizer)
+                        {
+                            productComponent.IngredientId.IngredientCode = fertilizer.IngredientCode.Value.Value;
+                        }
+                        else if (srcIngredient is ActiveIngredient active)
+                        {
+                            productComponent.IngredientId.IsActiveIngredient = true;
+                        }
+                        else if (srcIngredient is InertIngredient inert)
+                        {
+                            productComponent.IngredientId.IsActiveIngredient = false;
+                        }
+                    }
+                }
 
                 output.Add(productComponent);
             }
@@ -425,14 +351,16 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     Id = _commonExporters.ExportID(frameworkGuidancePattern.Id),
                     Description = frameworkGuidancePattern.Description,
-                    GNssSource = ExportGpsSource(frameworkGuidancePattern.GpsSource),
                     GuidancePatternTypeCode = ExportGuidancePatternType(frameworkGuidancePattern.GuidancePatternType),
                     GuidancePatternPropagationDirectionCode = ExportPropagationDirection(frameworkGuidancePattern.PropagationDirection),
                     GuidancePatternExtensionCode = ExportGuidanceExtension(frameworkGuidancePattern.Extension),
                     SwathWidth = _commonExporters.ExportAsNumericValue<SwathWidth>(frameworkGuidancePattern.SwathWidth),
                     NumberOfSwathsLeft = frameworkGuidancePattern.NumbersOfSwathsLeft,
                     NumberOfSwathsRight = frameworkGuidancePattern.NumbersOfSwathsRight,
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidancePattern.BoundingPolygon)
+                    Boundary = new Boundary()
+                    {
+                        Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidancePattern.BoundingPolygon)
+                    } 
                 };
 
                 switch (frameworkGuidancePattern)
@@ -560,7 +488,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                     Id = _commonExporters.ExportID(frameworkGuidanceGroup.Id),
                     Description = frameworkGuidanceGroup.Description,
                     GuidancePatternIds = frameworkGuidanceGroup.GuidancePatternIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidanceGroup.BoundingPolygon)
+                    Boundary = new Boundary()
+                    {
+                        Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidanceGroup.BoundingPolygon)
+                    } 
                 };
                 output.Add(guidanceGroup);
             }
@@ -696,12 +627,14 @@ namespace AgGateway.ADAPT.StandardPlugin
                     ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
                     CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
-                    GNssSource = ExportGpsSource(frameworkCropZone.BoundarySource),
                     GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds.Any() ? frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                     Notes = ExportNotes(frameworkCropZone.Notes),
                     TimeScopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes, out var seasonIds),
                     SeasonIds = seasonIds,
-                    BoundaryGeometry = GeometryExporter.ExportMultiPolygonWKT(frameworkCropZone.BoundingRegion),
+                    Boundary = new Boundary()
+                    {
+                        Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkCropZone.BoundingRegion)
+                    },
                     ContextItems = _commonExporters.ExportContextItems(frameworkCropZone.ContextItems)
                 };
                 output.Add(cropZone);
@@ -764,9 +697,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     Id = _commonExporters.ExportID(frameworkFieldBoundary.Id),
                     Name = frameworkFieldBoundary.Description,
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkFieldBoundary.FieldId),
-                    GNssSource = ExportGpsSource(frameworkFieldBoundary.GpsSource),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
-                    Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkFieldBoundary.SpatialData),
+                    Boundary = new Boundary()
+                    {
+                        Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkFieldBoundary.SpatialData)
+                    },
                     SeasonIds = ExportTimeScopesAsSeasons(frameworkFieldBoundary.TimeScopes)?.Select(x => x.Id.ReferenceId).ToList(),
                     ContextItems = _commonExporters.ExportContextItems(frameworkFieldBoundary.ContextItems),
                 };
@@ -912,7 +847,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                 };
                 if (frameworkHeadland is DrivenHeadland drivenHeadland)
                 {
-                    headland.Geometry = GeometryExporter.ExportMultiPolygonWKT(drivenHeadland.SpatialData);
+                    headland.Boundary = new Boundary()
+                    {
+                        Geometry = GeometryExporter.ExportMultiPolygonWKT(drivenHeadland.SpatialData)
+                    };
                 }
                 else if (frameworkHeadland is ConstantOffsetHeadland)
                 {
@@ -925,23 +863,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                 output.Add(headland);
             }
             return output;
-        }
-
-        private GNssSource ExportGpsSource(GpsSource gpsSource)
-        {
-            if (gpsSource == null)
-            {
-                return null;
-            }
-
-            return new GNssSource
-            {
-                EstimatedPrecision = _commonExporters.ExportAsNumericValue<EstimatedPrecision>(gpsSource.EstimatedPrecision),
-                HorizontalAccuracy = _commonExporters.ExportAsNumericValue<HorizontalAccuracy>(gpsSource.HorizontalAccuracy),
-                VerticalAccuracy = _commonExporters.ExportAsNumericValue<VerticalAccuracy>(gpsSource.VerticalAccuracy),
-                GNssutcTime = gpsSource.GpsUtcTime?.ToString("O", CultureInfo.InvariantCulture),
-                NumberOfSatellites = gpsSource.NumberOfSatellites,
-            };
         }
 
         private string ExportContactInfo(ApplicationDataModel.Logistics.ContactInfo contactInfo, string ownerName)

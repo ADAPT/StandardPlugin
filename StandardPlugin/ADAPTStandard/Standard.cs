@@ -24,32 +24,15 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class Root
     {
-        /// <summary>
-        /// Container for data types that are fixed, infrequently changing, or otherwise prerequisite
-        /// to transactional data.  Master or Reference data, often called Setup or Coding data in
-        /// agricultural applications.
-        /// </summary>
         [JsonProperty("catalog", NullValueHandling = NullValueHandling.Ignore)]
         public Catalog Catalog { get; set; }
 
-        /// <summary>
-        /// Version of the Standard Data Type Definitions used.  If omitted, the current version is
-        /// assumed.
-        /// </summary>
         [JsonProperty("dataTypeDefinitionVersion", NullValueHandling = NullValueHandling.Ignore)]
         public double? DataTypeDefinitionVersion { get; set; }
 
-        /// <summary>
-        /// Container for transactional, frequently changing data.   Documents will necessarily
-        /// reference master data defined in the Catalog.
-        /// </summary>
         [JsonProperty("documents", NullValueHandling = NullValueHandling.Ignore)]
         public Documents Documents { get; set; }
 
-        /// <summary>
-        /// Version identifier describing the ADAPT Unit System used throughout the model.   If
-        /// omitted, the current version is assumed.
-        /// </summary>
         [JsonProperty("unitSystemVersion", NullValueHandling = NullValueHandling.Ignore)]
         public double? UnitSystemVersion { get; set; }
     }
@@ -87,10 +70,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("customDataTypeDefinitions", NullValueHandling = NullValueHandling.Ignore)]
         public List<CustomDataTypeDefinitionElement> CustomDataTypeDefinitions { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -168,10 +147,6 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// All Brands in the data
-    ///
-    /// A list of Brands
-    ///
     /// A trade name under which a Manufacturer markets a good. Also known as Make in
     /// vehicles/equipment.
     /// </summary>
@@ -183,38 +158,20 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// Optional mapping to Manufacturer
-        /// </summary>
         [JsonProperty("manufacturerId", NullValueHandling = NullValueHandling.Ignore)]
         public string ManufacturerId { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// List of supplemental information for this data element
-    ///
-    /// List of supplemental information with which a data element is tagged.
-    ///
     /// Additional information with which a data element is tagged.
     /// </summary>
     public partial class ContextItemElement
@@ -226,11 +183,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Code identifying a Data Type Definition, either in the ADAPT Standard Data Type
-        /// Definitions or within the Catalog.Custom Data Type
-        /// Definitions.   Required.
-        /// </summary>
         [JsonProperty("definitionCode")]
         public string DefinitionCode { get; set; }
 
@@ -240,46 +192,25 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<TimeScopeElement> TimeScopes { get; set; }
 
-        /// <summary>
-        /// The value of the Context Item expressed in text.  Required unless nested Context Items
-        /// are used as the values.
-        /// </summary>
         [JsonProperty("valueText", NullValueHandling = NullValueHandling.Ignore)]
         public string ValueText { get; set; }
     }
 
     /// <summary>
-    /// Any Time Scopes governing the Context Item
-    ///
-    /// Collection of Time Scopes
-    ///
     /// A period of time, optionally containing a defined start or end,  locational context, or
     /// simply duration.
     /// </summary>
     public partial class TimeScopeElement
     {
-        /// <summary>
-        /// Code matching the relevant item in the Date Context Representation.  Required.
-        /// </summary>
         [JsonProperty("dateContextCode")]
         public string DateContextCode { get; set; }
 
-        /// <summary>
-        /// Duration of the event in seconds.  Included separately from End Date/Time for cases where
-        /// only the duration is relevant.
-        /// </summary>
         [JsonProperty("duration", NullValueHandling = NullValueHandling.Ignore)]
         public double? Duration { get; set; }
 
-        /// <summary>
-        /// The date and time (UTC) at the end of an event.
-        /// </summary>
         [JsonProperty("end", NullValueHandling = NullValueHandling.Ignore)]
         public string End { get; set; }
 
-        /// <summary>
-        /// The date and time (UTC) at the start of an event.
-        /// </summary>
         [JsonProperty("start", NullValueHandling = NullValueHandling.Ignore)]
         public string Start { get; set; }
     }
@@ -290,9 +221,6 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class Id
     {
-        /// <summary>
-        /// A unique string that identifies an object within a single data instance. Required.
-        /// </summary>
         [JsonProperty("referenceId")]
         public string ReferenceId { get; set; }
 
@@ -304,61 +232,34 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// Optional persistent ids for this component.
-    ///
-    /// One or more Unique Ids
-    ///
     /// A persistent identifier for an entity as defined by a specific source.
     /// </summary>
     public partial class UniqueIdElement
     {
-        /// <summary>
-        /// Source of the id, where known.
-        /// </summary>
         [JsonProperty("idSource", NullValueHandling = NullValueHandling.Ignore)]
         public string IdSource { get; set; }
 
-        /// <summary>
-        /// Type if the Id Source, if present.
-        /// </summary>
         [JsonProperty("idSourceTypeCode", NullValueHandling = NullValueHandling.Ignore)]
         public string IdSourceTypeCode { get; set; }
 
-        /// <summary>
-        /// The actual ID value.  Required.
-        /// </summary>
         [JsonProperty("idText")]
         public string IdText { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Id Type data type
-        /// definition.  Required.
-        /// </summary>
         [JsonProperty("idTypeCode")]
         public string IdTypeCode { get; set; }
     }
 
     /// <summary>
-    /// All Crop Zones in the data
-    ///
-    /// A list of Crop Zones
-    ///
     /// A more detailed representation of/within a Field, defining a crop, its growing season and
     /// usually a separate boundary.   Where Crop Zone is used, Field is also required.
     /// </summary>
     public partial class CropZoneElement
     {
-        /// <summary>
-        /// Total area of the Crop Zone that is cultivated, excluding areas such as waterways
-        /// </summary>
         [JsonProperty("arableArea", NullValueHandling = NullValueHandling.Ignore)]
         public ArableArea ArableArea { get; set; }
 
-        /// <summary>
-        /// The boundary polygon/multipolygon defining the Crop Zone region
-        /// </summary>
-        [JsonProperty("boundaryGeometry", NullValueHandling = NullValueHandling.Ignore)]
-        public string BoundaryGeometry { get; set; }
+        [JsonProperty("boundary", NullValueHandling = NullValueHandling.Ignore)]
+        public Boundary Boundary { get; set; }
 
         /// <summary>
         /// List of supplemental information for this data element
@@ -366,30 +267,14 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Required mapping to the crop
-        /// </summary>
         [JsonProperty("cropId")]
         public string CropId { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Required mapping to the parent field
-        /// </summary>
         [JsonProperty("fieldId")]
         public string FieldId { get; set; }
-
-        /// <summary>
-        /// Optional GNSS provenance data for the Cropzone boundary
-        /// </summary>
-        [JsonProperty("gNSSSource", NullValueHandling = NullValueHandling.Ignore)]
-        public GNssSource GNssSource { get; set; }
 
         /// <summary>
         /// Mappings to any Guidance Groups for this Crop Zone
@@ -397,16 +282,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("guidanceGroupIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> GuidanceGroupIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -431,128 +309,207 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// Total area of the Crop Zone that is cultivated, excluding areas such as waterways
-    ///
     /// Total area of the Field that is cultivated, excluding areas such as waterways
     /// </summary>
     public partial class ArableArea
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Optional GNSS provenance data for the Cropzone boundary
-    ///
-    /// The type and quality of a GNSS reading
-    ///
-    /// The type and quality of the GNSS readings that defined this boundary.   Optional.
-    ///
-    /// The type and quality of the GNSS reading when the pattern was created.   Optional.
+    /// An unattributed geospatial definition of an enclosed region, optionally including source
+    /// metadata.
     /// </summary>
-    public partial class GNssSource
+    public partial class Boundary
     {
-        /// <summary>
-        /// Estimated precision of the GNSS reading(s)
-        /// </summary>
-        [JsonProperty("estimatedPrecision", NullValueHandling = NullValueHandling.Ignore)]
-        public EstimatedPrecision EstimatedPrecision { get; set; }
+        [JsonProperty("boundaryCreationMethodCode", NullValueHandling = NullValueHandling.Ignore)]
+        public string BoundaryCreationMethodCode { get; set; }
+
+        [JsonProperty("geometry")]
+        public string Geometry { get; set; }
+
+        [JsonProperty("gNSSBaseStationTypeCode", NullValueHandling = NullValueHandling.Ignore)]
+        public string GNssBaseStationTypeCode { get; set; }
+
+        [JsonProperty("gNSSBaseSurveyTypeCode", NullValueHandling = NullValueHandling.Ignore)]
+        public string GNssBaseSurveyTypeCode { get; set; }
+
+        [JsonProperty("gNSSCorrectionNetworkBrand", NullValueHandling = NullValueHandling.Ignore)]
+        public string GNssCorrectionNetworkBrand { get; set; }
+
+        [JsonProperty("gNSSCorrectionNetworkName", NullValueHandling = NullValueHandling.Ignore)]
+        public string GNssCorrectionNetworkName { get; set; }
 
         /// <summary>
-        /// The UTC time as reported by GNSS corresponding to this source information.
+        /// Collection of metrics supplied to document the quality of a GNSS dataset.  Comprised of
+        /// Data Types scoped at the GNSS Data Quality Metrics component.
         /// </summary>
-        [JsonProperty("gNSSUTCTime", NullValueHandling = NullValueHandling.Ignore)]
-        public string GNssutcTime { get; set; }
+        [JsonProperty("gNSSDataQualityMetrics", NullValueHandling = NullValueHandling.Ignore)]
+        public List<GNssDataQualityMetricElement> GNssDataQualityMetrics { get; set; }
+
+        [JsonProperty("gNSSMobileBaseStationMetadata", NullValueHandling = NullValueHandling.Ignore)]
+        public GNssMobileBaseStationMetadata GNssMobileBaseStationMetadata { get; set; }
+
+        [JsonProperty("gNSSReceiverMetadata", NullValueHandling = NullValueHandling.Ignore)]
+        public GNssReceiverMetadata GNssReceiverMetadata { get; set; }
+
+        [JsonProperty("highDefinitionSourceLayerId", NullValueHandling = NullValueHandling.Ignore)]
+        public string HighDefinitionSourceLayerId { get; set; }
 
         /// <summary>
-        /// The accuracy of the horizontal data in the GNSS reading(s)
+        /// Definition of parties involved in the boundary creation.   PartyRole code COLLECTOR is
+        /// intended to define the party that drove or "collected" the data for the boundary.
         /// </summary>
-        [JsonProperty("horizontalAccuracy", NullValueHandling = NullValueHandling.Ignore)]
-        public HorizontalAccuracy HorizontalAccuracy { get; set; }
-
-        /// <summary>
-        /// Reported number of satellites
-        /// </summary>
-        [JsonProperty("numberOfSatellites", NullValueHandling = NullValueHandling.Ignore)]
-        public long? NumberOfSatellites { get; set; }
-
-        /// <summary>
-        /// The accuracy of the vertical data in the GNSS reading(s)
-        /// </summary>
-        [JsonProperty("verticalAccuracy", NullValueHandling = NullValueHandling.Ignore)]
-        public VerticalAccuracy VerticalAccuracy { get; set; }
+        [JsonProperty("partyRoles", NullValueHandling = NullValueHandling.Ignore)]
+        public List<PartyRoleElement> PartyRoles { get; set; }
     }
 
     /// <summary>
-    /// Estimated precision of the GNSS reading(s)
+    /// Metric supplied to document the quality of a GNSS dataset.
     /// </summary>
-    public partial class EstimatedPrecision
+    public partial class GNssDataQualityMetricElement
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
+        [JsonProperty("definitionCode")]
+        public string DefinitionCode { get; set; }
+
+        [JsonProperty("valueText")]
+        public string ValueText { get; set; }
+    }
+
+    /// <summary>
+    /// Information about the GNSS Base Station used in the collection of spatial data
+    /// </summary>
+    public partial class GNssMobileBaseStationMetadata
+    {
+        [JsonProperty("baseStationPosition", NullValueHandling = NullValueHandling.Ignore)]
+        public string BaseStationPosition { get; set; }
+
+        [JsonProperty("deviceId", NullValueHandling = NullValueHandling.Ignore)]
+        public string DeviceId { get; set; }
+
+        [JsonProperty("surveyTime", NullValueHandling = NullValueHandling.Ignore)]
+        public SurveyTime SurveyTime { get; set; }
+    }
+
+    /// <summary>
+    /// The amount of time a GNSS reference station spends collecting data to establish a precise
+    /// position.
+    /// </summary>
+    public partial class SurveyTime
+    {
+        [JsonProperty("dateContextCode")]
+        public string DateContextCode { get; set; }
+
+        [JsonProperty("duration", NullValueHandling = NullValueHandling.Ignore)]
+        public double? Duration { get; set; }
+
+        [JsonProperty("end", NullValueHandling = NullValueHandling.Ignore)]
+        public string End { get; set; }
+
+        [JsonProperty("start", NullValueHandling = NullValueHandling.Ignore)]
+        public string Start { get; set; }
+    }
+
+    /// <summary>
+    /// Information about the GNSS receiver used to record spatial data.
+    /// </summary>
+    public partial class GNssReceiverMetadata
+    {
+        [JsonProperty("appliedOffsets", NullValueHandling = NullValueHandling.Ignore)]
+        public AppliedOffsets AppliedOffsets { get; set; }
+
+        [JsonProperty("deviceId", NullValueHandling = NullValueHandling.Ignore)]
+        public string DeviceId { get; set; }
+
+        [JsonProperty("loggingRate")]
+        public double LoggingRate { get; set; }
+    }
+
+    /// <summary>
+    /// For informational purposes, spatial offsets from a source point such as a GNSS receiver
+    /// that have been applied by the data producer. ADAPT requires all offsets to be applied in
+    /// mapped data, and this property is to be used only for geospatial data quality assessments
+    /// and data provenance.  In no circumstances will the data consumer need to apply these data
+    /// to any geometry.
+    /// </summary>
+    public partial class AppliedOffsets
+    {
+        [JsonProperty("xOffset", NullValueHandling = NullValueHandling.Ignore)]
+        public XOffset XOffset { get; set; }
+
+        [JsonProperty("yOffset", NullValueHandling = NullValueHandling.Ignore)]
+        public YOffset YOffset { get; set; }
+
+        [JsonProperty("zOffset", NullValueHandling = NullValueHandling.Ignore)]
+        public ZOffset ZOffset { get; set; }
+    }
+
+    /// <summary>
+    /// Offset in the X (inline) direction.  Positive values are forward, negative values are
+    /// backward.
+    /// </summary>
+    public partial class XOffset
+    {
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// The accuracy of the horizontal data in the GNSS reading(s)
-    ///
-    /// Numerical value for the horizontal accuracy.
+    /// Offset in the Y (lateral) direction.  Positive values are right, negative values are left.
     /// </summary>
-    public partial class HorizontalAccuracy
+    public partial class YOffset
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// The accuracy of the vertical data in the GNSS reading(s)
+    /// Offset in the Z (Vertical) direction.  Positive values are upward.
     /// </summary>
-    public partial class VerticalAccuracy
+    public partial class ZOffset
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// All Crops in the data
-    ///
-    /// A list of Crops
-    ///
+    /// The function assumed by an individual or business entity for a specific time and purpose.
+    /// </summary>
+    public partial class PartyRoleElement
+    {
+        /// <summary>
+        /// List of supplemental information for this data element
+        /// </summary>
+        [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ContextItemElement> ContextItems { get; set; }
+
+        [JsonProperty("partyId")]
+        public string PartyId { get; set; }
+
+        [JsonProperty("roleCode")]
+        public string RoleCode { get; set; }
+
+        /// <summary>
+        /// Any Time Scopes that limit the period in which this role applies.
+        /// </summary>
+        [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
+        public List<TimeScopeElement> TimeScopes { get; set; }
+    }
+
+    /// <summary>
     /// A plant or animal type cultivated for agricultural produce.
     /// </summary>
     public partial class CropElement
@@ -563,365 +520,204 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Reference Id of the Crop identified as the hierarchical parent to this crop in the given
-        /// crop taxonomy
-        /// </summary>
         [JsonProperty("parentId", NullValueHandling = NullValueHandling.Ignore)]
         public string ParentId { get; set; }
 
-        /// <summary>
-        /// Reference weight for the crop.  E.g., 56 lb/bu.
-        /// </summary>
         [JsonProperty("referenceWeight", NullValueHandling = NullValueHandling.Ignore)]
         public ReferenceWeight ReferenceWeight { get; set; }
 
-        /// <summary>
-        /// The targeted moisture value at which the commodity is sold.  E.g., 15.5%
-        /// </summary>
         [JsonProperty("standardPayableMoisture", NullValueHandling = NullValueHandling.Ignore)]
         public StandardPayableMoisture StandardPayableMoisture { get; set; }
     }
 
     /// <summary>
-    /// Reference weight for the crop.  E.g., 56 lb/bu.
-    ///
     /// Reference weight for the crop.
     /// </summary>
     public partial class ReferenceWeight
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// The targeted moisture value at which the commodity is sold.  E.g., 15.5%
-    ///
     /// The targeted moisture value at which the commodity is sold
     /// </summary>
     public partial class StandardPayableMoisture
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Any custom Data Type Definitions defined by the producer for this data.  By default, this
-    /// list is empty and all definitions are sourced from the ADAPT Standard Data Type
-    /// Definitions.
-    ///
-    /// A list of Custom Data Type Definitions
-    ///
-    /// The definition of a type of data, as may exist either in the published list of standard
-    /// types or to types defined within an individual data instance.
+    /// A user-defined Data Type Definition per ADAPT model instance.
     /// </summary>
     public partial class CustomDataTypeDefinitionElement
     {
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Data Definition Base Type
-        /// data type definition.  Required.
-        /// </summary>
         [JsonProperty("dataDefinitionBaseTypeCode")]
         public string DataDefinitionBaseTypeCode { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Data Definition Status data
-        /// type definition.  Required.
-        /// </summary>
         [JsonProperty("dataDefinitionStatusCode")]
         public string DataDefinitionStatusCode { get; set; }
 
-        /// <summary>
-        /// Code identifying a Data Type Definition, either in the standard list or within the Custom
-        /// Data Type
-        /// Definitions in this data instance.  Required.
-        /// </summary>
         [JsonProperty("definitionCode")]
         public string DefinitionCode { get; set; }
 
-        /// <summary>
-        /// A long description.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Numeric type attributes.   Required if Base Type is Enumerated.
-        /// </summary>
         [JsonProperty("enumeratedDataTypeDefinitionAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public EnumeratedDataTypeDefinitionAttributes EnumeratedDataTypeDefinitionAttributes { get; set; }
 
         /// <summary>
-        /// Any Geo Political Contexts to which the Data Type Definition applies
+        /// Any specific Geo Political Contexts to which the Data Type Definition applies
         /// </summary>
         [JsonProperty("geoPoliticalContexts", NullValueHandling = NullValueHandling.Ignore)]
         public List<GeoPoliticalContextElement> GeoPoliticalContexts { get; set; }
 
-        /// <summary>
-        /// Textual strings used for identification in searches.   Optional.
-        /// </summary>
         [JsonProperty("keywords", NullValueHandling = NullValueHandling.Ignore)]
         public string Keywords { get; set; }
 
+        /// <summary>
+        /// Names for this Data Type Definition in other languages.
+        /// </summary>
         [JsonProperty("labels", NullValueHandling = NullValueHandling.Ignore)]
         public List<LabelElement> Labels { get; set; }
 
-        /// <summary>
-        /// The short name of the Data Type Definition
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Numeric type attributes.   Required if Base Type is Numeric.
-        /// </summary>
         [JsonProperty("numericDataTypeDefinitionAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public NumericDataTypeDefinitionAttributes NumericDataTypeDefinitionAttributes { get; set; }
 
         /// <summary>
-        /// Any Scopes on the Data Type Representation
+        /// The names of ADAPT Standard components to which this Data Type Definition may be applied,
+        /// either as a Context Item or to a defined property such as a Variable.
         /// </summary>
         [JsonProperty("scopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> Scopes { get; set; }
 
-        /// <summary>
-        /// Code identifying a different Data Type Definition that replaces this one.  Required and
-        /// relevant only when the status of the current item is SUPERSEDED.
-        /// </summary>
         [JsonProperty("supersededByCode", NullValueHandling = NullValueHandling.Ignore)]
         public string SupersededByCode { get; set; }
 
-        /// <summary>
-        /// Numeric type attributes.   Required if Base Type is Text.
-        /// </summary>
         [JsonProperty("textDataTypeDefinitionAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public TextDataTypeDefinitionAttributes TextDataTypeDefinitionAttributes { get; set; }
     }
 
     /// <summary>
-    /// Numeric type attributes.   Required if Base Type is Enumerated.
-    ///
     /// Data Type Definition attributes specific to enumerated types
     /// </summary>
     public partial class EnumeratedDataTypeDefinitionAttributes
     {
-        /// <summary>
-        /// The item selected by default.
-        /// </summary>
         [JsonProperty("default", NullValueHandling = NullValueHandling.Ignore)]
         public double? Default { get; set; }
 
-        /// <summary>
-        /// The list of choices.   Required.
-        /// </summary>
         [JsonProperty("items")]
         public List<ItemElement> Items { get; set; }
     }
 
     /// <summary>
-    /// The list of choices.   Required.
-    ///
     /// List of enumerated items within an enumeration.
     ///
     /// An enumeration item within an enumeration
     /// </summary>
     public partial class ItemElement
     {
-        /// <summary>
-        /// Code for the item, taken from the list of valid codes for a given Enumerated Data Type
-        /// Definition.   Required.
-        /// </summary>
         [JsonProperty("code")]
         public string Code { get; set; }
 
-        /// <summary>
-        /// Optional description of item
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// The status of this Enumeration Item.  Required.
-        /// </summary>
         [JsonProperty("enumerationItemStatusCode")]
         public string EnumerationItemStatusCode { get; set; }
 
-        [JsonProperty("labels", NullValueHandling = NullValueHandling.Ignore)]
-        public List<LabelElement> Labels { get; set; }
-
-        /// <summary>
-        /// Name of item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Code identifying a different Enumeration Item that supersedes this item.  Required and
-        /// relevant only when the status of the current item is SUPERSEDED.
-        /// </summary>
         [JsonProperty("supersededByCode", NullValueHandling = NullValueHandling.Ignore)]
         public string SupersededByCode { get; set; }
     }
 
     /// <summary>
-    /// A list of Labels
-    ///
-    /// A version of text represented in a specific language.
-    /// </summary>
-    public partial class LabelElement
-    {
-        /// <summary>
-        /// Long description.  Optional.
-        /// </summary>
-        [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
-        public string Description { get; set; }
-
-        /// <summary>
-        /// The language code as defined by the code in ISO 639-1, with an optional identifier for
-        /// the ISO 3166-1 Alpha 2 Code for the geography. E.g. "pt", "pt-BR"   Required.
-        /// </summary>
-        [JsonProperty("languageCode")]
-        public string LanguageCode { get; set; }
-
-        /// <summary>
-        /// The localized name.  Required.
-        /// </summary>
-        [JsonProperty("name")]
-        public string Name { get; set; }
-    }
-
-    /// <summary>
-    /// Any Geo Political Contexts to which the Data Type Definition applies
-    ///
-    /// A list of Geo Political Contexts
-    ///
     /// The Country/Region to which a concept applies
     /// </summary>
     public partial class GeoPoliticalContextElement
     {
-        /// <summary>
-        /// Optional description
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Geopolitical Ontology Id from GeoNames.org to add further administrative/locational
-        /// specificity beyond the ISO3166-2 Code.  Optional.
-        /// </summary>
         [JsonProperty("geoNamesId", NullValueHandling = NullValueHandling.Ignore)]
         public string GeoNamesId { get; set; }
 
-        /// <summary>
-        /// ISO 3166-2 Code.   Required.
-        /// </summary>
         [JsonProperty("iSO3166-2Code")]
         public string ISo31662Code { get; set; }
     }
 
     /// <summary>
-    /// Numeric type attributes.   Required if Base Type is Numeric.
-    ///
+    /// A version of text represented in a specific language.
+    /// </summary>
+    public partial class LabelElement
+    {
+        [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
+        public string Description { get; set; }
+
+        [JsonProperty("languageCode")]
+        public string LanguageCode { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+    }
+
+    /// <summary>
     /// Attributes for Numeric Data Types
     /// </summary>
     public partial class NumericDataTypeDefinitionAttributes
     {
-        /// <summary>
-        /// Default value. Optional.
-        /// </summary>
         [JsonProperty("default", NullValueHandling = NullValueHandling.Ignore)]
         public double? Default { get; set; }
 
-        /// <summary>
-        /// Maximum Value.   Optional.
-        /// </summary>
         [JsonProperty("maximum", NullValueHandling = NullValueHandling.Ignore)]
         public double? Maximum { get; set; }
 
-        /// <summary>
-        /// Minimum value.  Optional.
-        /// </summary>
         [JsonProperty("minimum", NullValueHandling = NullValueHandling.Ignore)]
         public double? Minimum { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Numeric Data Type
-        /// Representation.   Required.
-        /// </summary>
         [JsonProperty("numericDataTypeCode")]
         public string NumericDataTypeCode { get; set; }
 
-        /// <summary>
-        /// Adapt unit of measure to be used.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Numeric type attributes.   Required if Base Type is Text.
-    ///
     /// Data Type Definition attributes specific to the text type
     /// </summary>
     public partial class TextDataTypeDefinitionAttributes
     {
-        /// <summary>
-        /// Optional regular expression to validate textual values
-        /// </summary>
         [JsonProperty("validationRegularExpression", NullValueHandling = NullValueHandling.Ignore)]
         public string ValidationRegularExpression { get; set; }
     }
 
     /// <summary>
-    /// All Device Models in the data
-    ///
-    /// A list of Device Models
-    ///
     /// A prototypical model of equipment to be instantiated in one or more Devices.
     /// </summary>
     public partial class DeviceModelElement
     {
-        /// <summary>
-        /// The Brand (also known as Make) of the Device Model.
-        /// </summary>
         [JsonProperty("brandId", NullValueHandling = NullValueHandling.Ignore)]
         public string BrandId { get; set; }
 
@@ -931,38 +727,20 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// The name of any formal Series in which the Device Model is included.
-        /// </summary>
         [JsonProperty("deviceSeries", NullValueHandling = NullValueHandling.Ignore)]
         public string DeviceSeries { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// All Devices in the data
-    ///
-    /// A list of Devices
-    ///
     /// Equipment that logs data
     /// </summary>
     public partial class DeviceElement
@@ -973,44 +751,23 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Optional Model of the Device
-        /// </summary>
         [JsonProperty("deviceModelId", NullValueHandling = NullValueHandling.Ignore)]
         public string DeviceModelId { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// The serial number of the device.
-        /// </summary>
         [JsonProperty("serialNumber", NullValueHandling = NullValueHandling.Ignore)]
         public string SerialNumber { get; set; }
     }
 
     /// <summary>
-    /// All Farms in the data
-    ///
-    /// A collection of Farms
-    ///
     /// A collection of fields grouped together as a common organizational unit, often reflecting
     /// shared location or historical ownership.
     /// </summary>
@@ -1022,45 +779,23 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Reference Id of the Grower entity that is a parent to this Farm
-        /// </summary>
         [JsonProperty("growerId", NullValueHandling = NullValueHandling.Ignore)]
         public string GrowerId { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Party specifically defining the Farm.  E.g., a large Grower has
-        /// subsidiary entities for its individual Farms
-        /// </summary>
         [JsonProperty("partyId", NullValueHandling = NullValueHandling.Ignore)]
         public string PartyId { get; set; }
     }
 
     /// <summary>
-    /// All Field Boundaries in the data
-    ///
-    /// A list of Field Boundaries
-    ///
     /// A geometry that identifies the geospatial coordinates of a field. The boundary can be
     /// used to define the area for a particular operation, a particular crop or crops, or for
     /// legal purposes. A field can have different boundaries that may vary in geometry based on
@@ -1068,59 +803,30 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class FieldBoundaryElement
     {
+        [JsonProperty("boundary")]
+        public Boundary Boundary { get; set; }
+
         /// <summary>
         /// List of supplemental information for this data element
         /// </summary>
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Mapping to the Field that is the logical parent of this Field Boundary
-        /// </summary>
         [JsonProperty("fieldId")]
         public string FieldId { get; set; }
 
-        /// <summary>
-        /// The geospatial definition of the boundary.  Required.  Must be a Polygon or Multi Polygon.
-        /// </summary>
-        [JsonProperty("geometry")]
-        public string Geometry { get; set; }
-
-        /// <summary>
-        /// The type and quality of the GNSS readings that defined this boundary.   Optional.
-        /// </summary>
-        [JsonProperty("gNSSSource", NullValueHandling = NullValueHandling.Ignore)]
-        public GNssSource GNssSource { get; set; }
-
-        /// <summary>
-        /// Any Headland geometries on the Field Boundary
-        /// </summary>
         [JsonProperty("headlands", NullValueHandling = NullValueHandling.Ignore)]
         public List<HeadlandElement> Headlands { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Any Obstacles defined within this Field Boundary
-        /// </summary>
         [JsonProperty("obstacles", NullValueHandling = NullValueHandling.Ignore)]
         public List<ObstacleElement> Obstacles { get; set; }
 
@@ -1132,8 +838,6 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// Any Headland geometries on the Field Boundary
-    ///
     /// A collection of Headlands
     ///
     /// Ground near the ends of a field that is cultivated differently than the main body of the
@@ -1141,28 +845,20 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class HeadlandElement
     {
+        [JsonProperty("boundary")]
+        public Boundary Boundary { get; set; }
+
         /// <summary>
         /// List of supplemental information for this data element
         /// </summary>
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Polygon / Multi Polygon defining the Headland.   Required.
-        /// </summary>
-        [JsonProperty("geometry")]
-        public string Geometry { get; set; }
-
-        /// <summary>
-        /// Name of the headland.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// Any Obstacles defined within this Field Boundary
-    ///
     /// Any Obstacles within a Field Boundary
     ///
     /// A spatial object that directly affects the execution of a field operation, such as a
@@ -1170,51 +866,31 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class ObstacleElement
     {
+        [JsonProperty("boundary")]
+        public Boundary Boundary { get; set; }
+
         /// <summary>
         /// List of supplemental information for this data element
         /// </summary>
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Spatial definition of the Obstacle.   Required.
-        /// </summary>
-        [JsonProperty("geometry")]
-        public string Geometry { get; set; }
-
-        /// <summary>
-        /// Whether the boundary may be crossed with a vehicle, e.g., a grass waterway (true) vs. a
-        /// rock pile (false)
-        /// </summary>
         [JsonProperty("isPassable", NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsPassable { get; set; }
 
-        /// <summary>
-        /// Name of the interior boundary attribute.   Optional.
-        /// </summary>
         [JsonProperty("name", NullValueHandling = NullValueHandling.Ignore)]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// All Fields in the data
-    ///
-    /// A Collection of Fields
-    ///
     /// A named, farmer-accepted physical space where production agriculture takes place.  Used
     /// to partition and identify data.
     /// </summary>
     public partial class FieldElement
     {
-        /// <summary>
-        /// The Reference Id of the FieldBoundary currently active for this field
-        /// </summary>
         [JsonProperty("activeBoundaryId", NullValueHandling = NullValueHandling.Ignore)]
         public string ActiveBoundaryId { get; set; }
 
-        /// <summary>
-        /// Total area of the Field that is cultivated, excluding areas such as waterways
-        /// </summary>
         [JsonProperty("arableArea", NullValueHandling = NullValueHandling.Ignore)]
         public ArableArea ArableArea { get; set; }
 
@@ -1224,18 +900,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Mapping to a Farm containing this field.   If the source data model does not use the farm
-        /// concept and maps the field directly to a grower, the data producer must create a Farm
-        /// with the Grower name to complete the data linkage.
-        /// </summary>
         [JsonProperty("farmId", NullValueHandling = NullValueHandling.Ignore)]
         public string FarmId { get; set; }
 
@@ -1245,33 +912,17 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("guidanceGroupIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> GuidanceGroupIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Time zone identifier from the IANA/tz database, defining the local time zone at a
-        /// location. May be used to interpret ADAPT's required UTC timestamps into a local times for
-        /// that location.  Optional.
-        /// </summary>
         [JsonProperty("timeZone", NullValueHandling = NullValueHandling.Ignore)]
         public string TimeZone { get; set; }
     }
 
     /// <summary>
-    /// All Growers in the data
-    ///
-    /// A collection of Growers
-    ///
     /// An individual/business entity engaged in agricultural production.
     /// </summary>
     public partial class GrowerElement
@@ -1282,48 +933,27 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Party for detailed individual/entity information.
-        /// </summary>
         [JsonProperty("partyId", NullValueHandling = NullValueHandling.Ignore)]
         public string PartyId { get; set; }
     }
 
     /// <summary>
-    /// All Guidance Groups in the data
-    ///
-    /// A list of Guidance Groups
-    ///
     /// A container for guidance patterns to be used together, e.g., a headland pattern and a
     /// main field pattern
     /// </summary>
     public partial class GuidanceGroupElement
     {
-        /// <summary>
-        /// Geometry defining the spatial extent of the Guidance Group
-        /// </summary>
-        [JsonProperty("boundaryGeometry", NullValueHandling = NullValueHandling.Ignore)]
-        public string BoundaryGeometry { get; set; }
+        [JsonProperty("boundary", NullValueHandling = NullValueHandling.Ignore)]
+        public Boundary Boundary { get; set; }
 
         /// <summary>
         /// List of supplemental information for this data element
@@ -1331,10 +961,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -1344,52 +970,29 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("guidancePatternIds")]
         public List<string> GuidancePatternIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// All Guidance Patterns in the data
-    ///
-    /// A list of Guidance Patterns
-    ///
     /// A geospatial definition used to guide a vehicle in a field
     /// </summary>
     public partial class GuidancePatternElement
     {
-        /// <summary>
-        /// Definition of a ABCurve Guidance Pattern.  Required when GuidancePatternType is ABCurve .
-        /// </summary>
         [JsonProperty("aBCurveAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public ABCurveAttributes ABCurveAttributes { get; set; }
 
-        /// <summary>
-        /// Definition of a ABLine Guidance Pattern.  Required when GuidancePatternType is ABCurve .
-        /// </summary>
         [JsonProperty("aBLineAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public ABLineAttributes ABLineAttributes { get; set; }
 
-        /// <summary>
-        /// Definition of a APlus Guidance Pattern.  Required when GuidancePatternType is APlus.
-        /// </summary>
         [JsonProperty("aPlusAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public APlusAttributes APlusAttributes { get; set; }
 
-        /// <summary>
-        /// Any fixed spatial extent in which the Guidance Pattern is valid.  Optional.
-        /// </summary>
-        [JsonProperty("boundaryGeometry", NullValueHandling = NullValueHandling.Ignore)]
-        public string BoundaryGeometry { get; set; }
+        [JsonProperty("boundary", NullValueHandling = NullValueHandling.Ignore)]
+        public Boundary Boundary { get; set; }
 
         /// <summary>
         /// List of supplemental information for this data element
@@ -1397,256 +1000,138 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// The type and quality of the GNSS reading when the pattern was created.   Optional.
-        /// </summary>
-        [JsonProperty("gNSSSource", NullValueHandling = NullValueHandling.Ignore)]
-        public GNssSource GNssSource { get; set; }
-
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Guidance Pattern Extension
-        /// Representation.  Optional.
-        /// </summary>
         [JsonProperty("guidancePatternExtensionCode", NullValueHandling = NullValueHandling.Ignore)]
         public string GuidancePatternExtensionCode { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Guidance Pattern Propagation
-        /// Direction Representation.  Optional.
-        /// </summary>
         [JsonProperty("guidancePatternPropagationDirectionCode", NullValueHandling = NullValueHandling.Ignore)]
         public string GuidancePatternPropagationDirectionCode { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Guidance Pattern Type
-        /// Representation.  Required.
-        /// </summary>
         [JsonProperty("guidancePatternTypeCode")]
         public string GuidancePatternTypeCode { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Number of swaths to propagate the pattern to the left.  Optional.
-        /// </summary>
         [JsonProperty("numberOfSwathsLeft", NullValueHandling = NullValueHandling.Ignore)]
         public long? NumberOfSwathsLeft { get; set; }
 
-        /// <summary>
-        /// Number of swaths to propagate the pattern to the right.  Optional.
-        /// </summary>
         [JsonProperty("numberOfSwathsRight", NullValueHandling = NullValueHandling.Ignore)]
         public long? NumberOfSwathsRight { get; set; }
 
-        /// <summary>
-        /// Definition of a Pivot Guidance Pattern.  Required when GuidancePatternType is Pivot.
-        /// </summary>
         [JsonProperty("pivotAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public PivotAttributes PivotAttributes { get; set; }
 
-        /// <summary>
-        /// Definition of a Spiral Guidance Pattern.  Required when GuidancePatternType is Spiral.
-        /// </summary>
         [JsonProperty("spiralAttributes", NullValueHandling = NullValueHandling.Ignore)]
         public SpiralAttributes SpiralAttributes { get; set; }
 
-        /// <summary>
-        /// Any implement width to which the Guidance Pattern is specifically intended.  Optional.
-        /// </summary>
         [JsonProperty("swathWidth", NullValueHandling = NullValueHandling.Ignore)]
         public SwathWidth SwathWidth { get; set; }
     }
 
     /// <summary>
-    /// Definition of a ABCurve Guidance Pattern.  Required when GuidancePatternType is ABCurve
-    /// .
-    ///
     /// Relevant attributes for an ABCurve Guidance Pattern
     /// </summary>
     public partial class ABCurveAttributes
     {
-        /// <summary>
-        /// Optional
-        /// </summary>
         [JsonProperty("heading", NullValueHandling = NullValueHandling.Ignore)]
         public double? Heading { get; set; }
 
-        /// <summary>
-        /// One or more line strings that compose the curve. Required.
-        /// </summary>
         [JsonProperty("lineStrings")]
         public string LineStrings { get; set; }
 
-        /// <summary>
-        /// For an ABCurve, the number of segments in the curve
-        /// </summary>
         [JsonProperty("numberOfSegments")]
         public long NumberOfSegments { get; set; }
     }
 
     /// <summary>
-    /// Definition of a ABLine Guidance Pattern.  Required when GuidancePatternType is ABCurve .
-    ///
     /// Relevant attributes for the ABLine guidance pattern
     /// </summary>
     public partial class ABLineAttributes
     {
-        /// <summary>
-        /// The Start (A) point.   Required.
-        /// </summary>
         [JsonProperty("a")]
         public string A { get; set; }
 
-        /// <summary>
-        /// The end (B) point.   Required.
-        /// </summary>
         [JsonProperty("b")]
         public string B { get; set; }
 
-        /// <summary>
-        /// Optional
-        /// </summary>
         [JsonProperty("heading", NullValueHandling = NullValueHandling.Ignore)]
         public double? Heading { get; set; }
     }
 
     /// <summary>
-    /// Definition of a APlus Guidance Pattern.  Required when GuidancePatternType is APlus.
-    ///
     /// Relevant attributes for APlus Guidance Patterns
     /// </summary>
     public partial class APlusAttributes
     {
-        /// <summary>
-        /// The start (A) point.   Required.
-        /// </summary>
         [JsonProperty("a")]
         public string A { get; set; }
 
-        /// <summary>
-        /// Required.
-        /// </summary>
         [JsonProperty("heading")]
         public double Heading { get; set; }
     }
 
     /// <summary>
-    /// Definition of a Pivot Guidance Pattern.  Required when GuidancePatternType is Pivot.
-    ///
     /// Relevant Attributes for the Pivot Guidance Pattern.   One of the three pivot definitions
     /// is required.
     /// </summary>
     public partial class PivotAttributes
     {
-        /// <summary>
-        /// WKT for the center point of the pivot.  Required.
-        /// </summary>
         [JsonProperty("centerPoint")]
         public string CenterPoint { get; set; }
 
-        /// <summary>
-        /// WKT for an end point of the pivot.   Required for partial pivots.
-        /// </summary>
         [JsonProperty("endPoint", NullValueHandling = NullValueHandling.Ignore)]
         public string EndPoint { get; set; }
 
-        /// <summary>
-        /// Pivot direction. True for clockwise.  False for counter clockwise.   Required for Partial
-        /// Pivots
-        /// </summary>
         [JsonProperty("isClockwise", NullValueHandling = NullValueHandling.Ignore)]
         public bool? IsClockwise { get; set; }
 
-        /// <summary>
-        /// Radius of the pivot.    Required.
-        /// </summary>
         [JsonProperty("radius")]
         public Radius Radius { get; set; }
 
-        /// <summary>
-        /// WKT for a start point of the pivot.   Required for partial pivots.
-        /// </summary>
         [JsonProperty("startPoint", NullValueHandling = NullValueHandling.Ignore)]
         public string StartPoint { get; set; }
     }
 
     /// <summary>
-    /// Radius of the pivot.    Required.
-    ///
     /// The radius of a center pivot
     /// </summary>
     public partial class Radius
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Definition of a Spiral Guidance Pattern.  Required when GuidancePatternType is Spiral.
-    ///
     /// Relevant attributes for the Spiral Guidance Pattern type
     /// </summary>
     public partial class SpiralAttributes
     {
-        /// <summary>
-        /// One or more line strings that compose the Spiral
-        /// </summary>
         [JsonProperty("lineStrings")]
         public string LineStrings { get; set; }
     }
 
     /// <summary>
-    /// Any implement width to which the Guidance Pattern is specifically intended.  Optional.
-    ///
     /// A defined width of a point or pass on a field, based on the implement's active width.
     /// </summary>
     public partial class SwathWidth
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// All Manufacturers in the data
-    ///
-    /// A list of Manufacturers
-    ///
     /// The entity who manufactured a given market good.
     /// </summary>
     public partial class ManufacturerElement
@@ -1657,39 +1142,21 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
     }
 
     /// <summary>
-    /// All Parties in the data
-    ///
-    /// A list of Parties
-    ///
     /// A business entity or individual
     /// </summary>
     public partial class PartyElement
     {
-        /// <summary>
-        /// Optional contact information.
-        /// </summary>
         [JsonProperty("contactInfo", NullValueHandling = NullValueHandling.Ignore)]
         public ContactInfo ContactInfo { get; set; }
 
@@ -1699,43 +1166,23 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Any other Party that represents the logical parent to this Party within a hierarchy.
-        /// </summary>
         [JsonProperty("parentPartyId", NullValueHandling = NullValueHandling.Ignore)]
         public string ParentPartyId { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Party Type Representation.
-        /// Required.
-        /// </summary>
         [JsonProperty("partyTypeCode")]
         public string PartyTypeCode { get; set; }
     }
 
     /// <summary>
-    /// Optional contact information.
-    ///
     /// Contact Information for an individual/business entity
     /// </summary>
     public partial class ContactInfo
@@ -1760,18 +1207,10 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// Any Addresses as part of this Contact Info
-    ///
-    /// One or more Addresses.
-    ///
     /// An address for someone or something.
     /// </summary>
     public partial class AddressContactMethodElement
     {
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Address Contact Type
-        /// Representation
-        /// </summary>
         [JsonProperty("addressContactTypeCode")]
         public string AddressContactTypeCode { get; set; }
 
@@ -1781,73 +1220,39 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("addressLines", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> AddressLines { get; set; }
 
-        /// <summary>
-        /// The city within the Address
-        /// </summary>
         [JsonProperty("city", NullValueHandling = NullValueHandling.Ignore)]
         public string City { get; set; }
 
-        /// <summary>
-        /// The country defined within the Address
-        /// </summary>
         [JsonProperty("country", NullValueHandling = NullValueHandling.Ignore)]
         public string Country { get; set; }
 
-        /// <summary>
-        /// ISO 3166 alpha-2 code.  Optional.
-        /// </summary>
         [JsonProperty("countryCode", NullValueHandling = NullValueHandling.Ignore)]
         public string CountryCode { get; set; }
 
-        /// <summary>
-        /// Subdivision or region of a country such as a state or province, including entries in
-        /// ISO-3166.
-        /// </summary>
         [JsonProperty("countrySubdivision", NullValueHandling = NullValueHandling.Ignore)]
         public string CountrySubdivision { get; set; }
 
-        /// <summary>
-        /// The postal code within the Address
-        /// </summary>
         [JsonProperty("postalCode", NullValueHandling = NullValueHandling.Ignore)]
         public string PostalCode { get; set; }
     }
 
     /// <summary>
-    /// Any telephone numbers/email addresses as part of this Contact Info
-    ///
-    /// Telephone numbers and email addresses.
-    ///
     /// A telephone number or email address
     /// </summary>
     public partial class TelecommunicationContactMethodElement
     {
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Telecommunication Contact
-        /// Type data type definition.  Required.
-        /// </summary>
         [JsonProperty("telecommunicationContactTypeCode")]
         public string TelecommunicationContactTypeCode { get; set; }
 
-        /// <summary>
-        /// The value of this contact item.  E.g., phone number.
-        /// </summary>
         [JsonProperty("valueText")]
         public string ValueText { get; set; }
     }
 
     /// <summary>
-    /// All Products in the data
-    ///
-    /// A list of Products
-    ///
     /// Agricultural input or produce
     /// </summary>
     public partial class ProductElement
     {
-        /// <summary>
-        /// Where known, the id of the product brand.
-        /// </summary>
         [JsonProperty("brandId", NullValueHandling = NullValueHandling.Ignore)]
         public string BrandId { get; set; }
 
@@ -1857,62 +1262,21 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Relevant attributes for products of type Crop Nutrition Product
-        /// </summary>
-        [JsonProperty("cropNutritionProductAttributes", NullValueHandling = NullValueHandling.Ignore)]
-        public CropNutritionProductAttributes CropNutritionProductAttributes { get; set; }
+        [JsonProperty("cropId", NullValueHandling = NullValueHandling.Ignore)]
+        public string CropId { get; set; }
 
-        /// <summary>
-        /// Relevant attributes for products of type Crop Protection Product
-        /// </summary>
-        [JsonProperty("cropProtectionProductAttributes", NullValueHandling = NullValueHandling.Ignore)]
-        public CropProtectionProductAttributes CropProtectionProductAttributes { get; set; }
-
-        /// <summary>
-        /// Relevant attributes for products of type Crop Variety
-        /// </summary>
-        [JsonProperty("cropVarietyProductAttributes", NullValueHandling = NullValueHandling.Ignore)]
-        public CropVarietyProductAttributes CropVarietyProductAttributes { get; set; }
-
-        /// <summary>
-        /// The density of the product (mass per volume)
-        /// </summary>
         [JsonProperty("density", NullValueHandling = NullValueHandling.Ignore)]
         public Density Density { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        [JsonProperty("harvestedProductAttributes", NullValueHandling = NullValueHandling.Ignore)]
-        public HarvestedProductAttributes HarvestedProductAttributes { get; set; }
-
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// Where known, the id of the product manufacturer.
-        /// </summary>
         [JsonProperty("manufacturerId", NullValueHandling = NullValueHandling.Ignore)]
         public string ManufacturerId { get; set; }
 
-        /// <summary>
-        /// Relevant attributes for products of type Mix
-        /// </summary>
-        [JsonProperty("mixProductAttributes", NullValueHandling = NullValueHandling.Ignore)]
-        public MixProductAttributes MixProductAttributes { get; set; }
-
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -1922,167 +1286,89 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("productComponents", NullValueHandling = NullValueHandling.Ignore)]
         public List<ProductComponentElement> ProductComponents { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Product Form
-        /// Representation.   Required.
-        /// </summary>
         [JsonProperty("productFormCode")]
         public string ProductFormCode { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Product Status
-        /// Representation.   Optional.
-        /// </summary>
         [JsonProperty("productStatusCode", NullValueHandling = NullValueHandling.Ignore)]
         public string ProductStatusCode { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Product Type
-        /// Representation.  Required.
-        /// </summary>
         [JsonProperty("productTypeCode")]
         public string ProductTypeCode { get; set; }
 
-        /// <summary>
-        /// The unitless specific gravity ratio of the product
-        /// </summary>
         [JsonProperty("specificGravity", NullValueHandling = NullValueHandling.Ignore)]
         public double? SpecificGravity { get; set; }
-    }
-
-    /// <summary>
-    /// Relevant attributes for products of type Crop Nutrition Product
-    ///
-    /// Product Attributes relevant for Crop Nutrition products
-    /// </summary>
-    public partial class CropNutritionProductAttributes
-    {
-        /// <summary>
-        /// Any defined Ingredients on this Product
-        /// </summary>
-        [JsonProperty("ingredients", NullValueHandling = NullValueHandling.Ignore)]
-        public List<IngredientElement> Ingredients { get; set; }
 
         /// <summary>
-        /// Whether a Crop Nutrition product is manure.
-        /// </summary>
-        [JsonProperty("isManure", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? IsManure { get; set; }
-    }
-
-    /// <summary>
-    /// Any defined Ingredients on this Product
-    ///
-    /// A list of Ingredients
-    ///
-    /// A basic (non-product) ingredient within a Product.   Often a chemical element or compound.
-    /// </summary>
-    public partial class IngredientElement
-    {
-        /// <summary>
-        /// List of supplemental information for this data element
-        /// </summary>
-        [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ContextItemElement> ContextItems { get; set; }
-
-        /// <summary>
-        /// Value from the Crop Nutrition Ingredient Representation.   Required for Crop Nutrition
-        /// Ingredients.  Omitted for Crop Protection Ingredients.
-        /// </summary>
-        [JsonProperty("cropNutritionIngredientItemCode", NullValueHandling = NullValueHandling.Ignore)]
-        public string CropNutritionIngredientItemCode { get; set; }
-
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
-        [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
-        public string Description { get; set; }
-
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
-        [JsonProperty("id")]
-        public Id Id { get; set; }
-
-        /// <summary>
-        /// Required for Crop Protection products.  True if this is an active ingredient.   False if
-        /// it is an inert ingredient.   Omitted for Crop Nutrition Ingredients.
-        /// </summary>
-        [JsonProperty("isActiveIngredient", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? IsActiveIngredient { get; set; }
-
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
-        [JsonProperty("name")]
-        public string Name { get; set; }
-    }
-
-    /// <summary>
-    /// Relevant attributes for products of type Crop Protection Product
-    ///
-    /// Product Attributes relevant for Products of type Crop Protection.
-    /// </summary>
-    public partial class CropProtectionProductAttributes
-    {
-        /// <summary>
-        /// Whether the CropProtectionProduct contains biological ingredients
-        /// </summary>
-        [JsonProperty("hasBiological", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? HasBiological { get; set; }
-
-        /// <summary>
-        /// Whether the CropProtectionProduct contains carbamate ingredients
-        /// </summary>
-        [JsonProperty("hasCarbamate", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? HasCarbamate { get; set; }
-
-        /// <summary>
-        /// Whether the CropProtectionProduct contains organophosphate ingredients
-        /// </summary>
-        [JsonProperty("hasOrganophosphate", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? HasOrganophosphate { get; set; }
-
-        /// <summary>
-        /// Any defined Ingredients on this Product
-        /// </summary>
-        [JsonProperty("ingredients", NullValueHandling = NullValueHandling.Ignore)]
-        public List<IngredientElement> Ingredients { get; set; }
-    }
-
-    /// <summary>
-    /// Relevant attributes for products of type Crop Variety
-    ///
-    /// Product attributes relevant when the type is Crop Variety
-    /// </summary>
-    public partial class CropVarietyProductAttributes
-    {
-        /// <summary>
-        /// Required mapping to the crop
-        /// </summary>
-        [JsonProperty("cropId")]
-        public string CropId { get; set; }
-
-        /// <summary>
-        /// Any defined genetic Traits on this Variety.
+        /// For Crop Variety products, list of traits. Optional.
         /// </summary>
         [JsonProperty("traits", NullValueHandling = NullValueHandling.Ignore)]
         public List<TraitElement> Traits { get; set; }
-
-        /// <summary>
-        /// For varieties, optional indicator to signify that the variety is genetically enhanced.
-        /// </summary>
-        [JsonProperty("varietyIsGeneticallyEnhanced", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? VarietyIsGeneticallyEnhanced { get; set; }
     }
 
     /// <summary>
-    /// Any defined genetic Traits on this Variety.
-    ///
-    /// A collection of traits
-    ///
+    /// The density of the product (mass per volume)
+    /// </summary>
+    public partial class Density
+    {
+        [JsonProperty("numericValue")]
+        public double NumericValue { get; set; }
+
+        [JsonProperty("unitOfMeasureCode")]
+        public string UnitOfMeasureCode { get; set; }
+    }
+
+    /// <summary>
+    /// Details on an individual component that comprises part of a Product.
+    /// </summary>
+    public partial class ProductComponentElement
+    {
+        [JsonProperty("amount")]
+        public Amount Amount { get; set; }
+
+        [JsonProperty("ingredientId", NullValueHandling = NullValueHandling.Ignore)]
+        public IngredientId IngredientId { get; set; }
+
+        [JsonProperty("isCarrier", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsCarrier { get; set; }
+
+        [JsonProperty("mixOrder", NullValueHandling = NullValueHandling.Ignore)]
+        public long? MixOrder { get; set; }
+
+        [JsonProperty("productId", NullValueHandling = NullValueHandling.Ignore)]
+        public string ProductId { get; set; }
+    }
+
+    /// <summary>
+    /// Amount of a product component within the parent product.  Valid amounts are in volume or
+    /// mass per volume or mass.  E.g.s, 3 floz1gal-1, 0.26 lb1lb-1, 1oz1gal-1.   For
+    /// ingredients, amounts may be expressed as percentages.
+    /// </summary>
+    public partial class Amount
+    {
+        [JsonProperty("numericValue")]
+        public double NumericValue { get; set; }
+
+        [JsonProperty("unitOfMeasureCode")]
+        public string UnitOfMeasureCode { get; set; }
+    }
+
+    /// <summary>
+    /// A product component defined by a meaningful code and not further subdivided into
+    /// components.
+    /// </summary>
+    public partial class IngredientId
+    {
+        [JsonProperty("ingredientCode")]
+        public string IngredientCode { get; set; }
+
+        [JsonProperty("ingredientCodeSource", NullValueHandling = NullValueHandling.Ignore)]
+        public string IngredientCodeSource { get; set; }
+
+        [JsonProperty("isActiveIngredient", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsActiveIngredient { get; set; }
+    }
+
+    /// <summary>
     /// Genetic attribute of a seed variety
     /// </summary>
     public partial class TraitElement
@@ -2093,166 +1379,23 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// Mapping to the manufacturer, where known.
-        /// </summary>
         [JsonProperty("manufacturerId", NullValueHandling = NullValueHandling.Ignore)]
         public string ManufacturerId { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Manufacturer code that identifies this trait.  Required.
-        /// </summary>
         [JsonProperty("traitCode")]
         public string TraitCode { get; set; }
     }
 
     /// <summary>
-    /// The density of the product (mass per volume)
-    /// </summary>
-    public partial class Density
-    {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
-        [JsonProperty("numericValue")]
-        public double NumericValue { get; set; }
-
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
-        [JsonProperty("unitOfMeasureCode")]
-        public string UnitOfMeasureCode { get; set; }
-    }
-
-    /// <summary>
-    /// Relevant attributes for Products of type Harvested Product
-    /// </summary>
-    public partial class HarvestedProductAttributes
-    {
-        /// <summary>
-        /// Required
-        /// </summary>
-        [JsonProperty("cropId")]
-        public string CropId { get; set; }
-    }
-
-    /// <summary>
-    /// Relevant attributes for products of type Mix
-    ///
-    /// Product attributes required for type Mix
-    /// </summary>
-    public partial class MixProductAttributes
-    {
-        /// <summary>
-        /// The total quantity of the mix recipe.  Required.
-        /// </summary>
-        [JsonProperty("mixTotalQuantity")]
-        public MixTotalQuantity MixTotalQuantity { get; set; }
-    }
-
-    /// <summary>
-    /// The total quantity of the mix recipe.  Required.
-    ///
-    /// For products of type mix, the total quantity of the mix recipe.
-    /// </summary>
-    public partial class MixTotalQuantity
-    {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
-        [JsonProperty("numericValue")]
-        public double NumericValue { get; set; }
-
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
-        [JsonProperty("unitOfMeasureCode")]
-        public string UnitOfMeasureCode { get; set; }
-    }
-
-    /// <summary>
-    /// Optional list of the components that make up this product.
-    ///
-    /// A list of Product Components
-    ///
-    /// Details on an individual component that comprises part of a Product.
-    /// </summary>
-    public partial class ProductComponentElement
-    {
-        /// <summary>
-        /// True if this component represents the primary (generally liquid) contents of a mix
-        /// </summary>
-        [JsonProperty("isCarrier")]
-        public bool IsCarrier { get; set; }
-
-        /// <summary>
-        /// In what order was this component added to the mix? (1 = First).
-        /// Can have duplicate numbers, representing a situation where two or more components are
-        /// added simultaneously.
-        /// </summary>
-        [JsonProperty("mixOrder", NullValueHandling = NullValueHandling.Ignore)]
-        public long? MixOrder { get; set; }
-
-        /// <summary>
-        /// Mapping to the product that defines this component.
-        /// </summary>
-        [JsonProperty("productId")]
-        public string ProductId { get; set; }
-
-        /// <summary>
-        /// Quantity may be set in any appropriate Representation.
-        /// E.g.s, vrProvidedAmountMass, vrProvidedAmountVolume, vrProductContent,
-        /// vrSolutionRateLiquid, vrActiveIngredientMassPerMass, etc.
-        /// </summary>
-        [JsonProperty("quantity")]
-        public Quantity Quantity { get; set; }
-    }
-
-    /// <summary>
-    /// Quantity may be set in any appropriate Representation.
-    /// E.g.s, vrProvidedAmountMass, vrProvidedAmountVolume, vrProductContent,
-    /// vrSolutionRateLiquid, vrActiveIngredientMassPerMass, etc.
-    /// </summary>
-    public partial class Quantity
-    {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
-        [JsonProperty("numericValue")]
-        public double NumericValue { get; set; }
-
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
-        [JsonProperty("unitOfMeasureCode")]
-        public string UnitOfMeasureCode { get; set; }
-    }
-
-    /// <summary>
-    /// All Seasons in the data
-    ///
-    /// A list of Seasons
-    ///
     /// The span of time for which field operations contribute to a particular growing season.
     /// For many areas, this is approximately a year in length.  E.g., In the northern
     /// hemisphere, Season "2022" may extend from the first operations following harvest in the
@@ -2268,35 +1411,18 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// End date of the crop season.
-        /// </summary>
         [JsonProperty("end", NullValueHandling = NullValueHandling.Ignore)]
         public string End { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// Start date of the Crop Season.
-        /// </summary>
         [JsonProperty("start", NullValueHandling = NullValueHandling.Ignore)]
         public string Start { get; set; }
     }
@@ -2339,10 +1465,6 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// All Plans in the data
-    ///
-    /// Documents collecting operational intent for a growing season
-    ///
     /// Document collecting operational intent for a growing season. A plan may define a
     /// collection of intended Crop Zones, defining a crop for each field/partial field and may
     /// further define dates and intended operations (WorkItems).  Alternatively, a Plan may
@@ -2370,10 +1492,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("cropZoneIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> CropZoneIds { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -2381,13 +1499,8 @@ namespace AgGateway.ADAPT.Standard
         /// Optional collection of correlations to other Documents within this data instance.
         /// </summary>
         [JsonProperty("documentCorrelations", NullValueHandling = NullValueHandling.Ignore)]
-        public DocumentCorrelations DocumentCorrelations { get; set; }
+        public List<DocumentCorrelationElement> DocumentCorrelations { get; set; }
 
-        /// <summary>
-        /// The estimated area planned/recommended.  Generally used in cases where a certain amount
-        /// of a crop of is planned without spatial reference.  If this property is set, Field Ids
-        /// and Crop Zone Ids may not be set.
-        /// </summary>
         [JsonProperty("estimatedArea", NullValueHandling = NullValueHandling.Ignore)]
         public EstimatedArea EstimatedArea { get; set; }
 
@@ -2397,16 +1510,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("fieldIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> FieldIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -2422,9 +1528,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("operations")]
         public List<OperationElement> Operations { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Season
-        /// </summary>
         [JsonProperty("seasonId", NullValueHandling = NullValueHandling.Ignore)]
         public string SeasonId { get; set; }
 
@@ -2434,73 +1537,43 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<TimeScopeElement> TimeScopes { get; set; }
 
-        /// <summary>
-        /// Optional version number.
-        /// </summary>
         [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public string Version { get; set; }
     }
 
     /// <summary>
-    /// Optional collection of correlations to other Documents within this data instance.
-    ///
-    /// Collection of Document Correlation components.
+    /// An object defining the relationship between two document objects.
     /// </summary>
-    public partial class DocumentCorrelations
+    public partial class DocumentCorrelationElement
     {
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Document Relationship Type
-        /// Representation
-        /// </summary>
         [JsonProperty("documentRelationshipTypeCode")]
         public string DocumentRelationshipTypeCode { get; set; }
 
-        /// <summary>
-        /// Foreign Key mapping to the originating Document to which the defined relationship
-        /// applies.  Required.
-        /// </summary>
         [JsonProperty("originatingDocumentId")]
         public string OriginatingDocumentId { get; set; }
     }
 
     /// <summary>
-    /// The estimated area planned/recommended.  Generally used in cases where a certain amount
-    /// of a crop of is planned without spatial reference.  If this property is set, Field Ids
-    /// and Crop Zone Ids may not be set.
-    ///
     /// Numeric value for Estimated Area.
     /// </summary>
     public partial class EstimatedArea
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Operations that make up the Plan.  Required.
-    ///
-    /// Collections of records for a single OperationType on a single Field at one time.
-    ///
     /// Records for a single OperationType on a single Field at one time.  If Device
     /// Configuration is specified (implements are known), data from each separate Device must be
     /// in a separate Operation.
     /// </summary>
     public partial class OperationElement
     {
-        /// <summary>
-        /// The boundary of this Operation.  Optional.
-        /// </summary>
-        [JsonProperty("boundaryGeometry", NullValueHandling = NullValueHandling.Ignore)]
-        public string BoundaryGeometry { get; set; }
+        [JsonProperty("boundary", NullValueHandling = NullValueHandling.Ignore)]
+        public Boundary Boundary { get; set; }
 
         /// <summary>
         /// List of supplemental information for this data element
@@ -2508,16 +1581,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// A mapping to a specific Device Configuration where the Device for the Operation is known.
-        /// </summary>
         [JsonProperty("deviceConfiguration", NullValueHandling = NullValueHandling.Ignore)]
         public DeviceConfiguration DeviceConfiguration { get; set; }
 
@@ -2527,24 +1593,12 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("guidanceAllocations", NullValueHandling = NullValueHandling.Ignore)]
         public List<GuidanceAllocationElement> GuidanceAllocations { get; set; }
 
-        /// <summary>
-        /// On Work Record Operations, the textual identifier of a harvest load.  E.g., "Load 1".
-        /// Separate loads must be tracked as separate Operations.  Any load quantities may
-        /// consequently be tracked as Summary Values.
-        /// </summary>
         [JsonProperty("harvestLoadIdentifier", NullValueHandling = NullValueHandling.Ignore)]
         public string HarvestLoadIdentifier { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -2554,10 +1608,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("notes", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> Notes { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Operation Type
-        /// Representation.  Required.
-        /// </summary>
         [JsonProperty("operationTypeCode")]
         public string OperationTypeCode { get; set; }
 
@@ -2566,12 +1616,8 @@ namespace AgGateway.ADAPT.Standard
         /// Operation.
         /// </summary>
         [JsonProperty("partyRoles", NullValueHandling = NullValueHandling.Ignore)]
-        public List<Roo> PartyRoles { get; set; }
+        public List<PartyRoleElement> PartyRoles { get; set; }
 
-        /// <summary>
-        /// Mapping to other Operation defined within this dataset that prescribed this Operation.
-        /// The prescribing operation would generally be part of a Work Order, Recommendation or Plan.
-        /// </summary>
         [JsonProperty("prescribingOperationId", NullValueHandling = NullValueHandling.Ignore)]
         public string PrescribingOperationId { get; set; }
 
@@ -2587,13 +1633,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("referenceLayerIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> ReferenceLayerIds { get; set; }
 
-        /// <summary>
-        /// A reference to the file/URL containing specific Spatial Records for this Operation,
-        /// Prescription or Reference Layer. When the model is serialized to disk, this file must
-        /// reside within the same directory as the ApplicationDataModel itself.    Vector data must
-        /// be in GeoParquet format and raster data in GeoTiff format with columns/bands ordered as
-        /// specified by the File Data Index on the variable definitions.
-        /// </summary>
         [JsonProperty("spatialRecordsFile", NullValueHandling = NullValueHandling.Ignore)]
         public string SpatialRecordsFile { get; set; }
 
@@ -2625,9 +1664,6 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// A mapping to a specific Device Configuration where the Device for the Operation is
-    /// known.
-    ///
     /// Temporary configuration information for a Device within transactional Documents
     /// information.
     /// </summary>
@@ -2639,18 +1675,11 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Mapping to the Device.  Required.
-        /// </summary>
         [JsonProperty("deviceId")]
         public string DeviceId { get; set; }
     }
 
     /// <summary>
-    /// Any Guidance Allocations associated to this Operation
-    ///
-    /// List of Guidance Allocations
-    ///
     /// A instance of specific Guidance Pattern data as applied to a planned or actual field
     /// operation.
     /// </summary>
@@ -2662,35 +1691,18 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// Mapping to the GuidanceGroup.   Required.
-        /// </summary>
         [JsonProperty("guidanceGroupId")]
         public string GuidanceGroupId { get; set; }
 
-        /// <summary>
-        /// Optional Guidance Shift
-        /// </summary>
         [JsonProperty("guidanceShift", NullValueHandling = NullValueHandling.Ignore)]
         public GuidanceShift GuidanceShift { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -2702,40 +1714,23 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// Optional Guidance Shift
-    ///
     /// Shift information added to Guidance Patterns during a specific field operation, mapped to
     /// that LoggedData via the Guidance Allocation component
     /// </summary>
     public partial class GuidanceShift
     {
-        /// <summary>
-        /// The shift East of a guidance pattern
-        /// </summary>
         [JsonProperty("eastShift", NullValueHandling = NullValueHandling.Ignore)]
         public EastShift EastShift { get; set; }
 
-        /// <summary>
-        /// Mapping to a Guidance Group
-        /// </summary>
         [JsonProperty("guidanceGroupId", NullValueHandling = NullValueHandling.Ignore)]
         public string GuidanceGroupId { get; set; }
 
-        /// <summary>
-        /// Mapping to a Guidance Pattern
-        /// </summary>
         [JsonProperty("guidancePatternId", NullValueHandling = NullValueHandling.Ignore)]
         public string GuidancePatternId { get; set; }
 
-        /// <summary>
-        /// The North shift of a Guidance Pattern
-        /// </summary>
         [JsonProperty("northShift", NullValueHandling = NullValueHandling.Ignore)]
         public NorthShift NorthShift { get; set; }
 
-        /// <summary>
-        /// Perpendicular offset of a guidance pattern by a fixed offset.
-        /// </summary>
         [JsonProperty("propagationOffset", NullValueHandling = NullValueHandling.Ignore)]
         public PropagationOffset PropagationOffset { get; set; }
 
@@ -2751,15 +1746,9 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class EastShift
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
@@ -2769,15 +1758,9 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class NorthShift
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
@@ -2787,112 +1770,28 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class PropagationOffset
     {
-        /// <summary>
-        /// The actual value of the Measurement
-        /// </summary>
         [JsonProperty("numericValue")]
         public double NumericValue { get; set; }
 
-        /// <summary>
-        /// The unit of measure for the given value.  Required.
-        /// </summary>
         [JsonProperty("unitOfMeasureCode")]
         public string UnitOfMeasureCode { get; set; }
     }
 
     /// <summary>
-    /// Any Parties/Roles associated to this Operation.  E.g., the equipment operator for the
-    /// Operation.
-    ///
-    /// List of Party Roles
-    ///
-    /// The function assumed by an individual or business entity for a specific time and
-    /// purpose.
-    ///
-    /// Any Party Role associated to this Summary Value.   E.g., An equipment operator associated
-    /// to a fuel usage total.
-    /// </summary>
-    public partial class Roo
-    {
-        /// <summary>
-        /// List of supplemental information for this data element
-        /// </summary>
-        [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ContextItemElement> ContextItems { get; set; }
-
-        /// <summary>
-        /// Mapping to the Party. Required.
-        /// </summary>
-        [JsonProperty("partyId")]
-        public string PartyId { get; set; }
-
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Role Representation.
-        /// Required.
-        /// </summary>
-        [JsonProperty("roleCode")]
-        public string RoleCode { get; set; }
-
-        /// <summary>
-        /// Any Time Scopes that limit the period in which this role applies.
-        /// </summary>
-        [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
-        public List<TimeScopeElement> TimeScopes { get; set; }
-    }
-
-    /// <summary>
-    /// Averages or Totals for specific Variables used either as manually-entered logged data or
-    /// flat rate prescriptions.   Where a Summary Value maps to a Variable with a (spatial) File
-    /// Data Index, the Summary Value can be interpreted to summarize the spatial data in that
-    /// column.
-    ///
-    /// One or more Summary Value records
-    ///
     /// A recorded value of a specific type, representing an average or total either calculated
     /// by a system or manually-entered by a user.   E.g.s., total amount of fuel used within an
     /// operation on a field,
     /// </summary>
     public partial class SummaryValueElement
     {
-        /// <summary>
-        /// Any Party Role associated to this Summary Value.   E.g., An equipment operator associated
-        /// to a fuel usage total.
-        /// </summary>
-        [JsonProperty("partyRole", NullValueHandling = NullValueHandling.Ignore)]
-        public Roo PartyRole { get; set; }
-
-        /// <summary>
-        /// Time Scopes describing the Summary Value data.  E.g., Start and End times for an
-        /// application total of a specific product within a multi-product Operation.
-        /// </summary>
-        [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
-        public List<TimeScopeElement> TimeScopes { get; set; }
-
-        /// <summary>
-        /// The actual value of the Summary Value represented as text.   The data type of the
-        /// associated Variable will determine into what type it may be parsed.   Required.
-        /// </summary>
         [JsonProperty("valueText")]
         public string ValueText { get; set; }
 
-        /// <summary>
-        /// Mapping to a Variable within this Operation that defines the type of data recorded in
-        /// this object.  Required.
-        /// </summary>
         [JsonProperty("variableId")]
         public string VariableId { get; set; }
     }
 
     /// <summary>
-    /// Variables used within Spatial Records and/or Summary Values.   Usually required unless
-    /// the Operation simply records general information without any rates or totals. E.g., that
-    /// a certain field was planted with a particular product.
-    ///
-    /// Variables describe the data logged within a completed Operation, and the prescribed rates
-    /// for a planned Operation.
-    ///
-    /// One or more Logged Variables
-    ///
     /// An individual type of measurement during a field operation that will be populated at
     /// multiple points in the field.
     /// </summary>
@@ -2904,74 +1803,35 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// For prescribed variables, the default rate.
-        /// </summary>
         [JsonProperty("defaultRate", NullValueHandling = NullValueHandling.Ignore)]
         public double? DefaultRate { get; set; }
 
-        /// <summary>
-        /// Code identifying a Data Type Definition, either in the standard list or within the Custom
-        /// Data Type
-        /// Definitions in this data instance.
-        /// </summary>
         [JsonProperty("definitionCode")]
         public string DefinitionCode { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        /// <summary>
-        /// The column index in a corresponding GeoParquet file, or the band index in a corresponding
-        /// GeoTiff file.   Required when data is reported on Spatial Records.
-        /// </summary>
         [JsonProperty("fileDataIndex", NullValueHandling = NullValueHandling.Ignore)]
         public long? FileDataIndex { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// For prescribed variables, the rate to be used when the equipment loses the GNSS signal.
-        /// </summary>
         [JsonProperty("lossOfGNSSRate", NullValueHandling = NullValueHandling.Ignore)]
         public double? LossOfGnssRate { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// For prescribed variables, the rate to be used when the applicator is outside the defined
-        /// field boundary.
-        /// </summary>
         [JsonProperty("outOfFieldRate", NullValueHandling = NullValueHandling.Ignore)]
         public double? OutOfFieldRate { get; set; }
 
-        /// <summary>
-        /// An optional product against which this variable is recorded.  A Variable may linked to a
-        /// maximum of 1 product.  If a value refers to multiple products, it must be separated into
-        /// multiple Variables or the Product Id must be omitted.
-        /// </summary>
         [JsonProperty("productId", NullValueHandling = NullValueHandling.Ignore)]
         public string ProductId { get; set; }
     }
 
     /// <summary>
-    /// All Recommendations in the data
-    ///
-    /// Documents summarizing guidance to a Grower from an advisor.
-    ///
     /// Document summarizing guidance to a Grower from an advisor.  An example might be
     /// recommendations for amounts of specific crops to plant from a financial or market
     /// advisor, specific varieties or crop protection chemicals to use from an agronomic
@@ -3008,10 +1868,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("cropZoneIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> CropZoneIds { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -3019,13 +1875,8 @@ namespace AgGateway.ADAPT.Standard
         /// Optional collection of correlations to other Documents within this data instance.
         /// </summary>
         [JsonProperty("documentCorrelations", NullValueHandling = NullValueHandling.Ignore)]
-        public DocumentCorrelations DocumentCorrelations { get; set; }
+        public List<DocumentCorrelationElement> DocumentCorrelations { get; set; }
 
-        /// <summary>
-        /// The estimated area planned/recommended.  Generally used in cases where a certain amount
-        /// of a crop of is planned without spatial reference.  If this property is set, Field Ids
-        /// and Crop Zone Ids may not be set.
-        /// </summary>
         [JsonProperty("estimatedArea", NullValueHandling = NullValueHandling.Ignore)]
         public EstimatedArea EstimatedArea { get; set; }
 
@@ -3035,16 +1886,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("fieldIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> FieldIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -3060,9 +1904,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("operations")]
         public List<OperationElement> Operations { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Season
-        /// </summary>
         [JsonProperty("seasonId", NullValueHandling = NullValueHandling.Ignore)]
         public string SeasonId { get; set; }
 
@@ -3072,18 +1913,11 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<TimeScopeElement> TimeScopes { get; set; }
 
-        /// <summary>
-        /// Optional version number.
-        /// </summary>
         [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public string Version { get; set; }
     }
 
     /// <summary>
-    /// All Reference Layers in the data
-    ///
-    /// List of Reference Layers
-    ///
     /// Preformatted geospatial layer to be referenced within the model
     /// </summary>
     public partial class ReferenceLayerElement
@@ -3100,10 +1934,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("cropZoneIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> CropZoneIds { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -3113,29 +1943,15 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("fieldIds", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> FieldIds { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The code that identifies the enumeration item value from the Layer Type Representation.
-        /// Required.
-        /// </summary>
         [JsonProperty("layerTypeCode")]
         public string LayerTypeCode { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        /// <summary>
-        /// GeoParquet or GeoTiff file containing the layer.  Required.
-        /// </summary>
         [JsonProperty("spatialRecordsFile")]
         public string SpatialRecordsFile { get; set; }
 
@@ -3153,10 +1969,6 @@ namespace AgGateway.ADAPT.Standard
     }
 
     /// <summary>
-    /// All Work Orders in the data
-    ///
-    /// Documents summarizing the final agronomic instructions to be acted upon
-    ///
     /// Document summarizing the final collection of agronomic instructions (Operations) to be
     /// acted upon once operational decisions are taken. A work order documents operational
     /// decisions made.  A common example would be a list of fixed or variable rate
@@ -3177,16 +1989,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Crop Zone.
-        /// </summary>
         [JsonProperty("cropZoneId", NullValueHandling = NullValueHandling.Ignore)]
         public string CropZoneId { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -3194,24 +1999,14 @@ namespace AgGateway.ADAPT.Standard
         /// Optional collection of correlations to other Documents within this data instance.
         /// </summary>
         [JsonProperty("documentCorrelations", NullValueHandling = NullValueHandling.Ignore)]
-        public DocumentCorrelations DocumentCorrelations { get; set; }
+        public List<DocumentCorrelationElement> DocumentCorrelations { get; set; }
 
-        /// <summary>
-        /// Mapping to a Field.    Required.
-        /// </summary>
         [JsonProperty("fieldId")]
         public string FieldId { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -3227,9 +2022,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("operations")]
         public List<OperationElement> Operations { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Season
-        /// </summary>
         [JsonProperty("seasonId", NullValueHandling = NullValueHandling.Ignore)]
         public string SeasonId { get; set; }
 
@@ -3239,19 +2031,11 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<TimeScopeElement> TimeScopes { get; set; }
 
-        /// <summary>
-        /// Optional version number.
-        /// </summary>
         [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public string Version { get; set; }
     }
 
     /// <summary>
-    /// All Work Records in the data
-    ///
-    /// Records of completed work, contemporaneous in nature and scoped to a single Field or Crop
-    /// Zone
-    ///
     /// A record of completed work, contemporaneous in nature and scoped to a single Field or
     /// Crop Zone.     At least one Operation.   E.g.s.,
     /// -The harvest of a single Crop Zone completed by two combines over several days.   Each
@@ -3270,16 +2054,9 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("contextItems", NullValueHandling = NullValueHandling.Ignore)]
         public List<ContextItemElement> ContextItems { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Crop Zone.
-        /// </summary>
         [JsonProperty("cropZoneId", NullValueHandling = NullValueHandling.Ignore)]
         public string CropZoneId { get; set; }
 
-        /// <summary>
-        /// A string that describes an object, likely containing more contextual information than a
-        /// Name.  Optional.
-        /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
@@ -3287,24 +2064,14 @@ namespace AgGateway.ADAPT.Standard
         /// Optional collection of correlations to other Documents within this data instance.
         /// </summary>
         [JsonProperty("documentCorrelations", NullValueHandling = NullValueHandling.Ignore)]
-        public DocumentCorrelations DocumentCorrelations { get; set; }
+        public List<DocumentCorrelationElement> DocumentCorrelations { get; set; }
 
-        /// <summary>
-        /// Mapping to a Field.    Required.
-        /// </summary>
         [JsonProperty("fieldId")]
         public string FieldId { get; set; }
 
-        /// <summary>
-        /// Identification entity that defines both an integer instance id (as a primary key) and a
-        /// collection of persistent identifiers
-        /// </summary>
         [JsonProperty("id")]
         public Id Id { get; set; }
 
-        /// <summary>
-        /// The name of this item.  Required.
-        /// </summary>
         [JsonProperty("name")]
         public string Name { get; set; }
 
@@ -3327,9 +2094,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("operations")]
         public List<OperationElement> Operations { get; set; }
 
-        /// <summary>
-        /// Optional mapping to a Season
-        /// </summary>
         [JsonProperty("seasonId", NullValueHandling = NullValueHandling.Ignore)]
         public string SeasonId { get; set; }
 
@@ -3339,9 +2103,6 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("timeScopes", NullValueHandling = NullValueHandling.Ignore)]
         public List<TimeScopeElement> TimeScopes { get; set; }
 
-        /// <summary>
-        /// Optional version number.
-        /// </summary>
         [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public string Version { get; set; }
     }
@@ -3362,8 +2123,6 @@ namespace AgGateway.ADAPT.Standard
         {
             MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
             DateParseHandling = DateParseHandling.None,
-            Formatting = Formatting.Indented,
-            NullValueHandling = NullValueHandling.Ignore,
             Converters =
             {
                 new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }

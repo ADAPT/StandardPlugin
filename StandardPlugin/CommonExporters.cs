@@ -321,17 +321,17 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        public List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
+        public List<PartyRoleElement> ExportPersonRoles(List<PersonRole> srcPersonRoles)
         {
             if (srcPersonRoles.IsNullOrEmpty())
             {
                 return null;
             }
 
-            List<Roo> output = new List<Roo>();
+            List<PartyRoleElement> output = new List<PartyRoleElement>();
             foreach (var frmeworkPersonRole in srcPersonRoles)
             {
-                var partyRole = new Roo
+                var partyRole = new PartyRoleElement
                 {
                     PartyId = frmeworkPersonRole.PersonId.ToString(CultureInfo.InvariantCulture),
                     RoleCode = ExportRole(frmeworkPersonRole.Role),
@@ -362,16 +362,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                     density.UnitOfMeasureCode = unitOfMeasureCode;
                     break;
 
-                case MixTotalQuantity mixTotalQuantity:
-                    mixTotalQuantity.NumericValue = numericValue;
-                    mixTotalQuantity.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case Quantity quantity:
-                    quantity.NumericValue = numericValue;
-                    quantity.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
                 case SwathWidth swathWidth:
                     swathWidth.NumericValue = numericValue;
                     swathWidth.UnitOfMeasureCode = unitOfMeasureCode;
@@ -395,21 +385,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case StandardPayableMoisture standardPayableMoisture:
                     standardPayableMoisture.NumericValue = numericValue;
                     standardPayableMoisture.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case EstimatedPrecision estimatedPrecision:
-                    estimatedPrecision.NumericValue = numericValue;
-                    estimatedPrecision.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case HorizontalAccuracy horizontalAccuracy:
-                    horizontalAccuracy.NumericValue = numericValue;
-                    horizontalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case VerticalAccuracy verticalAccuracy:
-                    verticalAccuracy.NumericValue = numericValue;
-                    verticalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
                     break;
 
                 case EastShift eastShift:
@@ -455,7 +430,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case OperationTypeEnum.Mowing:
                     return "HARVEST_PRE_HARVEST";
                 case OperationTypeEnum.SowingAndPlanting:
-                    return "APPLICATION_SOWING_AND_PLANTING";
+                    return "APPLICATION_SOWING_AND_PLANTING_SEEDS";
                 case OperationTypeEnum.Swathing:
                     return "HARVEST_PRE_HARVEST";
                 case OperationTypeEnum.Tillage:

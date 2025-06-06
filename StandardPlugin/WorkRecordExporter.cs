@@ -276,7 +276,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     contextItems.AddRange(items);
                 }
             }
-            List<Roo> partyRoles = new List<Roo>();  //No idea why this generated as "Roo"
+            List<PartyRoleElement> partyRoles = new List<PartyRoleElement>();  
             List<GuidanceAllocationElement> guidanceAllocations = new List<GuidanceAllocationElement>();
             foreach (var loggedData in operationDefinition.SourceLoggedDatas)
             {
@@ -339,7 +339,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                     {
                         SummaryValueElement summaryValueElement = new SummaryValueElement()
                         {
-                            TimeScopes = _commonExporters.ExportTimeScopes(new List<TimeScope>() { srcValues.Stamp }, out _),
                             ValueText = value.Value.ToString(),
                             VariableId = variable.Id.ReferenceId
                         };
