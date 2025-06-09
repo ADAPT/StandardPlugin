@@ -512,7 +512,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 DeviceModelElement deviceModel = new DeviceModelElement()
                 {
                     Id = _commonExporters.ExportID(frameworkDeviceModel.Id),
-                    Name = frameworkDeviceModel.Description,
+                    Name = frameworkDeviceModel.Description ?? "Unknown",
                     BrandId = GetIdWithReferentialIntegrity(srcCatalog.Brands, frameworkDeviceModel.BrandId),
                     DeviceSeries = series?.Description,
                     ContextItems = _commonExporters.ExportContextItems(frameworkDeviceModel.ContextItems)
@@ -620,26 +620,35 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<CropZoneElement> output = new List<CropZoneElement>();
             foreach (var frameworkCropZone in srcCatalog.CropZones)
             {
-                CropZoneElement cropZone = new CropZoneElement()
+                Boundary boundary = null;
+                if (frameworkCropZone.BoundingRegion != null)
                 {
-                    Id = _commonExporters.ExportID(frameworkCropZone.Id),
-                    Name = frameworkCropZone.Description,
-                    ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
-                    CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
-                    FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
-                    GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds.Any() ? frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
-                    Notes = ExportNotes(frameworkCropZone.Notes),
-                    TimeScopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes, out var seasonIds),
-                    SeasonIds = seasonIds,
-                    Boundary = new Boundary()
+                    boundary = new Boundary()
                     {
                         Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkCropZone.BoundingRegion)
-                    },
-                    ContextItems = _commonExporters.ExportContextItems(frameworkCropZone.ContextItems)
-                };
-                output.Add(cropZone);
+                    };
+                }
+                var timescopes = _commonExporters.ExportTimeScopes(frameworkCropZone.TimeScopes, out var seasonIds);
+                if (seasonIds.Any())
+                {
+                    CropZoneElement cropZone = new CropZoneElement()
+                    {
+                        Id = _commonExporters.ExportID(frameworkCropZone.Id),
+                        Name = frameworkCropZone.Description,
+                        ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
+                        CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
+                        FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
+                        GuidanceGroupIds = frameworkCropZone.GuidanceGroupIds.Any() ? frameworkCropZone.GuidanceGroupIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
+                        Notes = ExportNotes(frameworkCropZone.Notes),
+                        TimeScopes = timescopes,
+                        SeasonIds = seasonIds,
+                        Boundary = boundary,
+                        ContextItems = _commonExporters.ExportContextItems(frameworkCropZone.ContextItems)
+                    };
+                    output.Add(cropZone);
+                }
             }
-            _catalog.CropZones = output;
+            _catalog.CropZones = output.Any() ? output : null;
         }
 
         private List<string> ExportNotes(List<Note> srcNotes)

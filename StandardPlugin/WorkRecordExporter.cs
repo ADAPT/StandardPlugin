@@ -113,7 +113,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                             DefinitionCode = dataColumn.TargetName,
                                             ProductId = dataColumn.ProductId,
                                             Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
-                                            FileDataIndex = operationDefinition.ColumnData.GetDataColumnIndex(dataColumn),
+                                            FileDataIndex = operationDefinition.ColumnData.GetDataColumnIndex(dataColumn) + 1,
                                         };
                                         operationDefinition.VariablesByOutputName.Add(dataColumn.TargetName, variable);
                                     }
@@ -187,7 +187,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     foreach (var loggedData in fieldIdGroupBy.ToList())
                     {
                         var timeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds);
-                        if (timeScopes != null)
+                        if (timeScopes != null) 
                         {
                             timeScopeElements.AddRange(timeScopes);
                         }
@@ -205,7 +205,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         CropZoneId = cropZoneId,
                         Name = string.Join(";", fieldIdGroupBy.ToList().Select(x => x.Description)),
                         Notes = notes,
-                        TimeScopes = timeScopeElements,
+                        TimeScopes = timeScopeElements.Any() ? timeScopeElements : null,
                         SeasonId = seasonId
                     };
                     _root.Documents.WorkRecords.Add(fieldWorkRecord);
@@ -263,10 +263,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 outputFileName = outputFileName.Substring(0, 255);
             }
-
+            var id = new Id() { ReferenceId = Guid.NewGuid().ToString() };
             var variables = operationDefinition.VariablesByOutputName.Values.ToList();
-            string joinedName = string.Join(";", operationDefinition.SourceOperations.Select(x => x.OperationData.Description));
+            string joinedName = string.Join("_", operationDefinition.SourceOperations.Select(x => x.OperationData.Description));
             string name = string.IsNullOrEmpty(joinedName) ? workRecord.Name + "_" + operationType : joinedName;
+            if (name.All(x => x == '_'))
+            {
+                name = id.ReferenceId;
+            }
             List<ContextItemElement> contextItems = new List<ContextItemElement>();
             foreach (var srcOp in operationDefinition.SourceOperations)
             {
@@ -294,14 +298,15 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             Standard.OperationElement outputOperation = new OperationElement()
             {
+                Id = id,
                 OperationTypeCode = _commonExporters.ExportOperationType(operationDefinition.OperationType),
                 ContextItems = contextItems.Any() ? contextItems : null,
                 Name = name,
-                Variables = variables,
+                Variables = variables.Any() ? variables : null,
                 ProductIds = operationDefinition.ProductIds.Any() ? operationDefinition.ProductIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                 SpatialRecordsFile = outputFileName,
                 GuidanceAllocations = guidanceAllocations.Any() ? guidanceAllocations : null,
-                PartyRoles =  partyRoles,
+                PartyRoles =  partyRoles.Any()? partyRoles : null,
                 SummaryValues = ExportSummaryValues(operationDefinition, variables)
             };
 
@@ -371,7 +376,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 AppendSummaryValue(generalSummary, variables, output);
             }
 
-            return output;
+            return output.Any() ? output : null;
         }
 
         private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string srcVariableName, int? productId = null)
@@ -445,11 +450,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                     if (priorSpatialRecord != null)
                     {
                         timeDelta = (record.Timestamp - priorSpatialRecord.Timestamp).TotalSeconds;
-                    }
-                    //TODO remove
-                    if (record.Timestamp.Minute == 6 && record.Timestamp.Second == 39)
-                    {
-                        int x = 0;
                     }
                     if (section.IsEngaged(record) &&
                                 timeDelta < 5d &&
