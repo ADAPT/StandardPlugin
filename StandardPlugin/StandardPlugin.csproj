@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <RootNamespace>AgGateway.ADAPT.StandardPlugin</RootNamespace>
+    <AssemblyName>AgGateway.ADAPT.StandardPlugin</AssemblyName>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AgGatewayADAPTFramework" Version="3.1.0" />
+    <PackageReference Include="BitMiracle.LibTiff.NET" Version="2.4.649" />
+    <PackageReference Include="microsoft.csharp" Version="4.7.0" />
+    <PackageReference Include="NetTopologySuite" Version="2.5.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="Nito.AsyncEx.Context" Version="5.1.2" />
+    <PackageReference Include="Parquet.Net" Version="4.24.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="ADAPTStandard/adapt-data-type-definitions.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="TypeMappings/framework-to-standard-type-mappings.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
