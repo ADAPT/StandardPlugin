@@ -100,7 +100,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 Standard.DeviceElement device = new Standard.DeviceElement()
                 {
                     Id = _commonExporters.ExportID(frameworkDeviceElement.Id),
-                    Name = frameworkDeviceElement.Description,
+                    Name = frameworkDeviceElement.Description.AsName("Device", frameworkDeviceElement.Id.ReferenceId.ToString()),
                     DeviceModelId = frameworkDeviceElement.DeviceModelId.ToString(CultureInfo.InvariantCulture),
                     SerialNumber = frameworkDeviceElement.SerialNumber,
                     ContextItems = _commonExporters.ExportContextItems(frameworkDeviceElement.ContextItems)
@@ -123,7 +123,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 ProductElement product = new ProductElement()
                 {
                     Id = _commonExporters.ExportID(frameworkProduct.Id),
-                    Name = frameworkProduct.Description,
+                    Name = frameworkProduct.Description.AsName("Product", frameworkProduct.Id.ReferenceId.ToString()),
                     BrandId = srcCatalog.Brands.Any(x => x.Id.ReferenceId == frameworkProduct.BrandId) ? frameworkProduct.BrandId?.ToString(CultureInfo.InvariantCulture) : null,
                     Density = _commonExporters.ExportAsNumericValue<Density>(frameworkProduct.Density),
                     ManufacturerId = srcCatalog.Manufacturers.Any(x => x.Id.ReferenceId == frameworkProduct.ManufacturerId) ? frameworkProduct.ManufacturerId?.ToString(CultureInfo.InvariantCulture) : null,
@@ -198,7 +198,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     if (srcIngredient != null)
                     {
                         productComponent.IngredientId = new IngredientId();
-                        //TODO no place for srcIngredient.Description.
+                        //Possible enhancement.  Consider a place for srcIngredient.Description.
                         if (srcIngredient is CropNutritionIngredient fertilizer)
                         {
                             productComponent.IngredientId.IngredientCode = fertilizer.IngredientCode.Value.Value;
@@ -329,7 +329,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 ManufacturerElement manufacturer = new ManufacturerElement()
                 {
                     Id = _commonExporters.ExportID(frameworkManufacturer.Id),
-                    Name = frameworkManufacturer.Description,
+                    Name = frameworkManufacturer.Description.AsName("Manufacturer", frameworkManufacturer.Id.ReferenceId.ToString()),
                     ContextItems = _commonExporters.ExportContextItems(frameworkManufacturer.ContextItems)
                 };
                 output.Add(manufacturer);
@@ -512,7 +512,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 DeviceModelElement deviceModel = new DeviceModelElement()
                 {
                     Id = _commonExporters.ExportID(frameworkDeviceModel.Id),
-                    Name = frameworkDeviceModel.Description ?? "Unknown",
+                    Name = frameworkDeviceModel.Description.AsName("DeviceModel", frameworkDeviceModel.Id.ReferenceId.ToString()),
                     BrandId = GetIdWithReferentialIntegrity(srcCatalog.Brands, frameworkDeviceModel.BrandId),
                     DeviceSeries = series?.Description,
                     ContextItems = _commonExporters.ExportContextItems(frameworkDeviceModel.ContextItems)
@@ -535,7 +535,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 BrandElement brand = new BrandElement()
                 {
                     Id = _commonExporters.ExportID(frameworkBrand.Id),
-                    Name = frameworkBrand.Description,
+                    Name = frameworkBrand.Description.AsName("Brand", frameworkBrand.Id.ReferenceId.ToString()),
                     ManufacturerId = GetIdWithReferentialIntegrity(srcCatalog.Manufacturers, frameworkBrand.ManufacturerId),
                     ContextItems = _commonExporters.ExportContextItems(frameworkBrand.ContextItems)
                 };
@@ -570,12 +570,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             List<PartyElement> output = new List<PartyElement>();
             foreach (var frameworkPerson in srcPersons)
             {
+                string name = !string.IsNullOrWhiteSpace(frameworkPerson.CombinedName)
+                        ? frameworkPerson.CombinedName
+                        : string.Join(" ", Extensions.FilterEmptyValues(frameworkPerson.FirstName, frameworkPerson.MiddleName, frameworkPerson.LastName));
                 PartyElement party = new PartyElement()
                 {
                     Id = _commonExporters.ExportID(frameworkPerson.Id),
-                    Name = !string.IsNullOrWhiteSpace(frameworkPerson.CombinedName)
-                        ? frameworkPerson.CombinedName
-                        : string.Join(" ", Extensions.FilterEmptyValues(frameworkPerson.FirstName, frameworkPerson.MiddleName, frameworkPerson.LastName)),
+                    Name = name.AsName("Party", frameworkPerson.Id.ReferenceId.ToString()),
                     PartyTypeCode = "INDIVIDUAL",
                     ContactInfo = ExportContactInfo(srcContactInfos.FirstOrDefault(x => x.Id.ReferenceId == frameworkPerson.ContactInfoId)),
                     ContextItems = _commonExporters.ExportContextItems(frameworkPerson.ContextItems)
@@ -599,7 +600,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 PartyElement party = new PartyElement()
                 {
                     Id = _commonExporters.ExportID(frameworkCompany.Id),
-                    Name = frameworkCompany.Name,
+                    Name = frameworkCompany.Name.AsName("Party", frameworkCompany.Id.ReferenceId.ToString()),
                     PartyTypeCode = "BUSINESS",
                     ContactInfo = ExportContactInfo(srcContactInfos.FirstOrDefault(x => x.Id.ReferenceId == frameworkCompany.ContactInfoId)),
                     ContextItems = _commonExporters.ExportContextItems(frameworkCompany.ContextItems)
@@ -634,7 +635,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     CropZoneElement cropZone = new CropZoneElement()
                     {
                         Id = _commonExporters.ExportID(frameworkCropZone.Id),
-                        Name = frameworkCropZone.Description,
+                        Name = frameworkCropZone.Description.AsName("CropZone", frameworkCropZone.Id.ReferenceId.ToString()),
                         ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkCropZone.Area),
                         CropId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCropZone.CropId),
                         FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkCropZone.FieldId),
@@ -680,7 +681,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 CropElement crop = new CropElement()
                 {
                     Id = _commonExporters.ExportID(frameworkCrop.Id),
-                    Name = frameworkCrop.Name,
+                    Name = frameworkCrop.Name.AsName("Crop", frameworkCrop.Id.ReferenceId.ToString()),
                     ParentId = GetIdWithReferentialIntegrity(srcCatalog.Crops, frameworkCrop.ParentId),
                     ReferenceWeight = _commonExporters.ExportAsNumericValue<ReferenceWeight>(frameworkCrop.ReferenceWeight),
                     StandardPayableMoisture = _commonExporters.ExportAsNumericValue<StandardPayableMoisture>(frameworkCrop.StandardPayableMoisture),
@@ -704,7 +705,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 FieldBoundaryElement fieldBoundary = new FieldBoundaryElement()
                 {
                     Id = _commonExporters.ExportID(frameworkFieldBoundary.Id),
-                    Name = frameworkFieldBoundary.Description,
+                    Name = frameworkFieldBoundary.Description.AsName("FieldBoundary", frameworkFieldBoundary.Id.ReferenceId.ToString()),
                     FieldId = GetIdWithReferentialIntegrity(srcCatalog.Fields, frameworkFieldBoundary.FieldId),
                     Headlands = ExportHeadlands(frameworkFieldBoundary.Headlands),
                     Boundary = new Boundary()
@@ -756,7 +757,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     FieldElement field = new FieldElement()
                     {
                         Id = _commonExporters.ExportID(frameworkField.Id),
-                        Name = frameworkField.Description,
+                        Name = frameworkField.Description.AsName("Field", frameworkField.Id.ReferenceId.ToString()),
                         FarmId = GetIdWithReferentialIntegrity(srcModel.Catalog.Farms, frameworkField.FarmId),
                         ArableArea = _commonExporters.ExportAsNumericValue<ArableArea>(frameworkField.Area),
                         ActiveBoundaryId = GetIdWithReferentialIntegrity(srcModel.Catalog.FieldBoundaries, frameworkField.ActiveBoundaryId),
@@ -789,7 +790,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     FarmElement farm = new FarmElement()
                     {
                         Id = _commonExporters.ExportID(frameworkFarm.Id),
-                        Name = frameworkFarm.Description,
+                        Name = frameworkFarm.Description.AsName("Farm", frameworkFarm.Id.ReferenceId.ToString()),
                         GrowerId = GetIdWithReferentialIntegrity(srcModel.Catalog.Growers, frameworkFarm.GrowerId),
                         ContextItems = _commonExporters.ExportContextItems(frameworkFarm.ContextItems),
                         PartyId = ExportContactInfo(frameworkFarm.ContactInfo, frameworkFarm.Description)
@@ -819,7 +820,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 {
                     GrowerElement grower = new GrowerElement()
                     {
-                        Name = frameworkGrower.Name,
+                        Name = frameworkGrower.Name.AsName("Grower", frameworkGrower.Id.ReferenceId.ToString()),
                         Id = _commonExporters.ExportID(frameworkGrower.Id),
                         ContextItems = _commonExporters.ExportContextItems(frameworkGrower.ContextItems),
                         PartyId = ExportContactInfo(frameworkGrower.ContactInfo, frameworkGrower.Name)
@@ -852,7 +853,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 HeadlandElement headland = new HeadlandElement()
                 {
-                    Name = frameworkHeadland.Description
+                    Name = frameworkHeadland.Description.AsName("Headland", string.Empty),
                 };
                 if (frameworkHeadland is DrivenHeadland drivenHeadland)
                 {
@@ -884,7 +885,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             var party = new PartyElement
             {
                 Id = _commonExporters.ExportID(contactInfo.Id),
-                Name = ownerName,
+                Name = ownerName.AsName("Party", contactInfo.Id.ReferenceId.ToString()),
                 PartyTypeCode = "UNKNOWN",
                 ContactInfo = ExportContactInfo(contactInfo)
             };

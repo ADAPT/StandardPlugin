@@ -419,7 +419,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         var variable = new VariableElement
                         {
                             Id = _commonExporters.ExportID(frameworkRxProductLookup.Id),
-                            Name = frameworkRxProductLookup.Representation?.Code,
+                            Name = frameworkRxProductLookup.Representation?.Code?.AsName("Variable", frameworkRxProductLookup.Id.ReferenceId.ToString()),
                             FileDataIndex = ++index, 
                             LossOfGnssRate = ExportNumericValue(frameworkRxProductLookup.LossOfGpsRate),
                             OutOfFieldRate = ExportNumericValue(frameworkRxProductLookup.OutOfFieldRate),

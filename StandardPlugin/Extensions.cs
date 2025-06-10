@@ -152,7 +152,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         {
             if (deviceElementConfiguration is SectionConfiguration sectionConfiguration)
             {
-               return sectionConfiguration.SectionWidth?.AsConvertedDouble("m") ?? 0d;
+                return sectionConfiguration.SectionWidth?.AsConvertedDouble("m") ?? 0d;
             }
             else if (deviceElementConfiguration is ImplementConfiguration implementConfiguration)
             {
@@ -259,7 +259,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 backRight = latestLeadingEdge.Right.Destination(distance, HeadingBack(heading));
                 backLeft = backRight.Destination(width, HeadingLeft(heading));
             }
-            
+
             List<Coordinate> ringCoordinates = new List<Coordinate>()
             {
                 latestLeadingEdge.Left.AsCoordinate(),
@@ -272,16 +272,25 @@ namespace AgGateway.ADAPT.StandardPlugin
             return new Polygon(exterior);
         }
         public static string AsMD5Hash(this string input)
-         {
+        {
             var bytes = ASCIIEncoding.ASCII.GetBytes(input);
             var hashBytes = new MD5CryptoServiceProvider().ComputeHash(bytes);
             int i;
             StringBuilder sOutput = new StringBuilder(hashBytes.Length);
-            for (i=0;i < hashBytes.Length; i++)
+            for (i = 0; i < hashBytes.Length; i++)
             {
                 sOutput.Append(hashBytes[i].ToString("X2"));
             }
             return sOutput.ToString();
-         }
+        }
+
+        public static string AsName(this string suppliedName, string objectType, string id)
+        {
+            if (suppliedName.IsNullOrEmpty())
+            {
+                return string.Concat(objectType, id);
+            }
+            return suppliedName;
+        }
     }
 }
