@@ -181,12 +181,17 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             List<ProductComponentElement> output = new List<ProductComponentElement>();
-            foreach (var frameworkProductComponent in srcProductComponents)
+            foreach (var frameworkProductComponent in srcProductComponents.Where(x => x.Quantity?.Value != null))
             {
                 var productComponent = new ProductComponentElement
                 {
                     IsCarrier = frameworkProductComponent.IsCarrier,
                     MixOrder = frameworkProductComponent.MixOrder,
+                    Amount = new Amount() //Future enhancement, conversion into mass/volume per mass/volume
+                    {
+                        NumericValue = frameworkProductComponent.Quantity.Value.Value,
+                        UnitOfMeasureCode = frameworkProductComponent.Quantity.Value.UnitOfMeasure.Code
+                    }
                 };
                 if (frameworkProductComponent.IsProduct)
                 {
