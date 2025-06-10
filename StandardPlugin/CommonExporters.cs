@@ -79,18 +79,18 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public List<TimeScopeElement> ExportTimeScopes(List<TimeScope> srcTimeScopes, out List<string> seasonIds)
         {
-            seasonIds = null;
+            seasonIds = new List<string>();
             if (srcTimeScopes.IsNullOrEmpty())
             {
                 return null;
             }
-
+            var validTimeScopes = srcTimeScopes.Where(x => x != null).ToList();
             List<TimeScopeElement> output = new List<TimeScopeElement>();
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ActualStart, DateContextEnum.ActualEnd));
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.ProposedStart, DateContextEnum.ProposedEnd));
-            output.AddRange(HandleStartEndTimeScopes(srcTimeScopes, DateContextEnum.RequestedStart, DateContextEnum.RequestedEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.ActualStart, DateContextEnum.ActualEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.ProposedStart, DateContextEnum.ProposedEnd));
+            output.AddRange(HandleStartEndTimeScopes(validTimeScopes, DateContextEnum.RequestedStart, DateContextEnum.RequestedEnd));
 
-            foreach (var frameworkTimeScope in srcTimeScopes)
+            foreach (var frameworkTimeScope in validTimeScopes)
             {
                 if (frameworkTimeScope.DateContext == DateContextEnum.TimingEvent)
                 {
@@ -114,6 +114,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 output.Add(timeScope);
 
             }
+
+            if (!output.Any())
+            {
+                output = null;
+            }
             return output;
         }
 
@@ -123,6 +128,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             var end = timeScope.TimeStamp2?.ToString("O", CultureInfo.InvariantCulture);
             var description = !timeScope.Description.IsNullOrEmpty() ? timeScope.Description : timeScope.TimeStamp1?.ToString("yyyy", CultureInfo.InvariantCulture) ?? string.Empty;
 
+            if (_catalog.Seasons == null)
+            {
+                _catalog.Seasons = new List<SeasonElement>();
+            }
             var season = _catalog.Seasons.FirstOrDefault(x => x.Start == start && x.End == end && x.Description == description);
             if (season == null)
             {
@@ -149,10 +158,10 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
         }
 
-        private IEnumerable<TimeScopeElement> HandleStartEndTimeScopes(List<TimeScope> srcTimeScopes, DateContextEnum startConext, DateContextEnum endContext)
+        private IEnumerable<TimeScopeElement> HandleStartEndTimeScopes(List<TimeScope> srcTimeScopes, DateContextEnum startContext, DateContextEnum endContext)
         {
             List<TimeScopeElement> output = new List<TimeScopeElement>();
-            var startEndTimeScopes = srcTimeScopes.Where(x => x.DateContext == startConext || x.DateContext == endContext).ToList();
+            var startEndTimeScopes = srcTimeScopes.Where(x => x != null && (x.DateContext == startContext || x.DateContext == endContext)).ToList();
 
             TimeScope startTimeScope = null;
             TimeScopeElement startTimeScopeElement = null;
@@ -160,7 +169,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             {
                 srcTimeScopes.Remove(srcTimeScope);
 
-                if (srcTimeScope.DateContext == startConext)
+                if (srcTimeScope.DateContext == startContext)
                 {
                     startTimeScope = srcTimeScope;
                     startTimeScopeElement = ExportTimeScope(srcTimeScope);
@@ -312,17 +321,17 @@ namespace AgGateway.ADAPT.StandardPlugin
             return output;
         }
 
-        public List<Roo> ExportPersonRoles(List<PersonRole> srcPersonRoles)
+        public List<PartyRoleElement> ExportPersonRoles(List<PersonRole> srcPersonRoles)
         {
             if (srcPersonRoles.IsNullOrEmpty())
             {
                 return null;
             }
 
-            List<Roo> output = new List<Roo>();
+            List<PartyRoleElement> output = new List<PartyRoleElement>();
             foreach (var frmeworkPersonRole in srcPersonRoles)
             {
-                var partyRole = new Roo
+                var partyRole = new PartyRoleElement
                 {
                     PartyId = frmeworkPersonRole.PersonId.ToString(CultureInfo.InvariantCulture),
                     RoleCode = ExportRole(frmeworkPersonRole.Role),
@@ -353,16 +362,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                     density.UnitOfMeasureCode = unitOfMeasureCode;
                     break;
 
-                case MixTotalQuantity mixTotalQuantity:
-                    mixTotalQuantity.NumericValue = numericValue;
-                    mixTotalQuantity.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case Quantity quantity:
-                    quantity.NumericValue = numericValue;
-                    quantity.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
                 case SwathWidth swathWidth:
                     swathWidth.NumericValue = numericValue;
                     swathWidth.UnitOfMeasureCode = unitOfMeasureCode;
@@ -386,21 +385,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case StandardPayableMoisture standardPayableMoisture:
                     standardPayableMoisture.NumericValue = numericValue;
                     standardPayableMoisture.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case EstimatedPrecision estimatedPrecision:
-                    estimatedPrecision.NumericValue = numericValue;
-                    estimatedPrecision.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case HorizontalAccuracy horizontalAccuracy:
-                    horizontalAccuracy.NumericValue = numericValue;
-                    horizontalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
-                    break;
-
-                case VerticalAccuracy verticalAccuracy:
-                    verticalAccuracy.NumericValue = numericValue;
-                    verticalAccuracy.UnitOfMeasureCode = unitOfMeasureCode;
                     break;
 
                 case EastShift eastShift:
@@ -446,7 +430,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 case OperationTypeEnum.Mowing:
                     return "HARVEST_PRE_HARVEST";
                 case OperationTypeEnum.SowingAndPlanting:
-                    return "APPLICATION_SOWING_AND_PLANTING";
+                    return "APPLICATION_SOWING_AND_PLANTING_SEEDS";
                 case OperationTypeEnum.Swathing:
                     return "HARVEST_PRE_HARVEST";
                 case OperationTypeEnum.Tillage:

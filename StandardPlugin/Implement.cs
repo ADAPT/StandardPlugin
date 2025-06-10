@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
@@ -174,17 +176,9 @@ namespace AgGateway.ADAPT.StandardPlugin
         public DeviceModel DeviceModel { get; set; }
         public List<SectionDefinition> Sections { get; set; }
 
-        public string GetOperationDefinitionKey(OperationData srcOperation)
+        public string GetImplementDefinitionKey()
         {
             StringBuilder builder = new StringBuilder();
-            builder.Append(srcOperation.OperationType.ToString());
-            builder.Append("_");
-            builder.Append(string.Join("|", srcOperation.ProductIds));
-            builder.Append("_");
-            builder.Append(srcOperation.LoadId?.ToString() ?? string.Empty);
-            builder.Append(srcOperation.WorkItemOperationId?.ToString() ?? string.Empty); //TODO add these links to output operation
-            builder.Append(srcOperation.PrescriptionId?.ToString() ?? string.Empty);
-            builder.Append("_");
             builder.Append(DeviceModel?.Description ?? string.Empty);
             builder.Append("_");
             builder.Append(TopDeviceElement?.Description ?? string.Empty);
@@ -214,5 +208,4 @@ namespace AgGateway.ADAPT.StandardPlugin
             return distinctWorkingDatas;
         }
     }
-
 }
