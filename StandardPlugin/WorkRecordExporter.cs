@@ -89,13 +89,21 @@ namespace AgGateway.ADAPT.StandardPlugin
                             else
                             {
                                 //First one in this group
-                                groupedOperations.Add(operationDefinition);
-
                                 //Add the columns for parquet
                                 _errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
 
+                                if (operationDefinition.ColumnData.Columns.Any())
+                                {
+                                    groupedOperations.Add(operationDefinition);
+                                }
+                                else
+                                {
+                                    //This operation did not match any variable to export
+                                    continue;
+                                }
+
                                 //Add the variables for the output operation
-                                VariableElement timestamp = new VariableElement()
+                                    VariableElement timestamp = new VariableElement()
                                 {
                                     Name = "Timestamp",
                                     DefinitionCode = "Timestamp",
