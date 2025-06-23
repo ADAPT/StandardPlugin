@@ -1,6 +1,3 @@
-using Parquet.Schema;
-using Parquet;
-using Parquet.Data;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,47 +7,47 @@ using System;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Prescriptions;
+using ParquetSharp;
+using NetTopologySuite.Geometries;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class ADAPTParquetWriter
     {
         const int RowGroupSize = 65535;
-        public static Dictionary<string, string> GeoParquetMetadata
-        {
-            get
-            {
-                return new Dictionary<string, string>
-                {
-                    ["geo"] =
-                    "{\"version\":\"1.0.0\",\"primary_column\":\"geometry\",\"columns\":{\"geometry\":{\"encoding\":\"WKB\",\"geometry_types\":[\"Polygon\"]}}}"
-                };
-            }
-        }
 
         public ADAPTParquetWriter(ADAPTParquetColumnData columnData)
-        {
-            List<DataField> dataFields = new List<DataField>();
-            if (columnData.Timestamps.Any())
-            {
-                dataFields.Add(new DataField<string>("timestamp"));
-            }
-            dataFields.AddRange(columnData.Columns.Select(n => new DataField<double?>(n.TargetName)));
-            dataFields.Add(new DataField<byte[]>("geometry"));
-            Schema = new ParquetSchema(dataFields);
+        {    
             ColumnData = columnData;
         }
 
-        private ParquetSchema Schema { get; set; }
         private ADAPTParquetColumnData ColumnData { get; set; }
 
-        public async Task Write(string outputFile)
+        public void Write(string outputFile)
         {
+            List<Column> dataFields = new List<Column>();
+            if (ColumnData.Timestamps.Any())
+            {
+                dataFields.Add(new Column<string>("timestamp"));
+            }
+            dataFields.AddRange(ColumnData.Columns.Select(n => new Column<double?>(n.TargetName)));
+            dataFields.Add(new Column<byte[]>("geometry"));
+
+            var geoColumn = new GeoParquet.GeoColumn();
+            geoColumn.Encoding = "WKB";
+            geoColumn.Geometry_types.Add("Polygon");
+            geoColumn.Bbox = new[] {
+                ColumnData.BoundingBox.MinX,
+                ColumnData.BoundingBox.MinY,
+                ColumnData.BoundingBox.MaxX,
+                ColumnData.BoundingBox.MaxY
+            };
+            var geometadata = GeoParquet.GeoMetadata.GetGeoMetadata(geoColumn);
+
             using (var fs = File.Create(outputFile))
             {
-                using (ParquetWriter writer = await ParquetWriter.CreateAsync(Schema, fs))
+                using (var writer = new ParquetFileWriter(outputFile, dataFields.ToArray(), keyValueMetadata: geometadata))
                 {
-                    writer.CustomMetadata = GeoParquetMetadata;
                     int startIndex = 0;
                     int remainingRowGroups = ColumnData.Geometries.Count / RowGroupSize;
                     if (ColumnData.Geometries.Count % RowGroupSize > 0)
@@ -59,21 +56,23 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                     while (remainingRowGroups > 0)
                     {
-                        using (ParquetRowGroupWriter rg = writer.CreateRowGroup())
+                        using (RowGroupWriter rg = writer.AppendRowGroup())
                         {
-                            int index = -1;
                             if (ColumnData.Timestamps.Any())
                             {
-                                var timestamps = ColumnData.Timestamps.Skip(startIndex).Skip(startIndex).Take(RowGroupSize);
-                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()));
+                                var timestampWriter = rg.NextColumn().LogicalWriter<string>();
+                                var timestamps = ColumnData.Timestamps.Skip(startIndex).Take(RowGroupSize);
+                                timestampWriter.WriteBatch(timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()); ;
                             }
                             foreach (var doubleColumn in ColumnData.Columns)
                             {
+                                var doubleWriter = rg.NextColumn().LogicalWriter<double?>();
                                 var values = doubleColumn.Values.Skip(startIndex).Take(RowGroupSize);
-                                await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], values.ToArray()));
+                                doubleWriter.WriteBatch(values.ToArray());
                             }
                             var geometries = ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize);
-                            await rg.WriteColumnAsync(new DataColumn(Schema.DataFields[++index], geometries.ToArray()));
+                            var geometryWriter = rg.NextColumn().LogicalWriter<byte[]>();
+                            geometryWriter.WriteBatch(ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize).ToArray());
                         }
                         startIndex += RowGroupSize;
                         remainingRowGroups--;
@@ -148,6 +147,8 @@ namespace AgGateway.ADAPT.StandardPlugin
         public List<ADAPTDataColumn> Columns { get; set; }
 
         public List<byte[]> Geometries { get; set; }
+
+        public Envelope BoundingBox { get; set; }
 
         public int GetDataColumnIndex(ADAPTDataColumn dataColumn)
         {
