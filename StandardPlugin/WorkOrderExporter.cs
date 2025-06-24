@@ -10,7 +10,6 @@ using AgGateway.ADAPT.ApplicationDataModel.Prescriptions;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
 using BitMiracle.LibTiff.Classic;
-using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -478,7 +477,16 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             foreach (var shapeLookup in srcRx.RxShapeLookups)
             {
-                var wkb = GeometryExporter.ExportMultiPolygonWKB(shapeLookup.Shape);
+                var geometry = GeometryExporter.ExportMultiPolygon(shapeLookup.Shape);
+                if (columnData.BoundingBox == null)
+                {
+                    columnData.BoundingBox = geometry.EnvelopeInternal;
+                }
+                else
+                {
+                    columnData.BoundingBox.ExpandToInclude(geometry.EnvelopeInternal);
+                }
+                
                 foreach (var dataColumn in columnData.Columns)
                 {
                     int columnIndex = columnData.GetDataColumnIndex(dataColumn);
@@ -493,11 +501,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                         dataColumn.Values.Add(0d);
                     }
                 }
-                columnData.Geometries.Add(wkb);
+                columnData.Geometries.Add(geometry.ToBinary());
             }
 
             ADAPTParquetWriter writer = new ADAPTParquetWriter(columnData);
-            AsyncContext.Run(async () => await writer.Write(outputPath));
+            writer.Write(outputPath);
 
             return outputPath;
         }

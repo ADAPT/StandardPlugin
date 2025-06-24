@@ -9,7 +9,6 @@ using AgGateway.ADAPT.ApplicationDataModel.Documents;
 using AgGateway.ADAPT.ApplicationDataModel.LoggedData;
 using AgGateway.ADAPT.ApplicationDataModel.Representations;
 using AgGateway.ADAPT.Standard;
-using Nito.AsyncEx;
 
 namespace AgGateway.ADAPT.StandardPlugin
 {
@@ -21,7 +20,6 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly CommonExporters _commonExporters;
         private readonly Standard.Root _root;
         private int _variableCounter;
-
         private readonly string _exportPath;
         private WorkRecordExporter(Root root, string exportPath, Properties properties)
         {
@@ -32,7 +30,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _errors = new List<IError>();
             _commonExporters = new CommonExporters(root);
 
-            _geometryPositition = SourceGeometryPosition.GPSReceiver;
+            _geometryPositition = SourceGeometryPosition.GNSSReceiver;
             _deviceDefinition = SourceDeviceDefinition.DeviceElementHierarchy;
             if (properties != null)
             {
@@ -89,13 +87,21 @@ namespace AgGateway.ADAPT.StandardPlugin
                             else
                             {
                                 //First one in this group
-                                groupedOperations.Add(operationDefinition);
-
                                 //Add the columns for parquet
                                 _errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
 
+                                if (operationDefinition.ColumnData.Columns.Any())
+                                {
+                                    groupedOperations.Add(operationDefinition);
+                                }
+                                else
+                                {
+                                    //This operation did not match any variable to export
+                                    continue;
+                                }
+
                                 //Add the variables for the output operation
-                                VariableElement timestamp = new VariableElement()
+                                    VariableElement timestamp = new VariableElement()
                                 {
                                     Name = "Timestamp",
                                     DefinitionCode = "Timestamp",
@@ -327,7 +333,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     outputOperation.SpatialRecordsFile = newName;
                 }
                 ADAPTParquetWriter writer = new ADAPTParquetWriter(operationDefinition.ColumnData);
-                AsyncContext.Run(async () => await writer.Write(outputFile));
+                writer.Write(outputFile);
             }
             workRecord.Operations.Add(outputOperation);
         }
@@ -457,6 +463,14 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
                         {
                             runningOutput.Geometries.Add(polygon.ToBinary());
+                            if (runningOutput.BoundingBox == null)
+                            {
+                                runningOutput.BoundingBox = polygon.EnvelopeInternal;
+                            }
+                            else
+                            {
+                                runningOutput.BoundingBox.ExpandToInclude(polygon.EnvelopeInternal);
+                            }
 
                             runningOutput.Timestamps.Add(record.Timestamp);
 
