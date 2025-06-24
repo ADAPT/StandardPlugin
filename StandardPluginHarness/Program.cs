@@ -8,7 +8,7 @@ AgGateway.ADAPT.ISOv4Plugin.Plugin sourcePlugin = new AgGateway.ADAPT.ISOv4Plugi
 var models = sourcePlugin.Import(inputPath);
 
 Properties properties= new Properties();
-properties.SetProperty("SourceGeometryPosition", SourceGeometryPosition.GPSReceiver.ToString());
+properties.SetProperty("SourceGeometryPosition", SourceGeometryPosition.GNSSReceiver.ToString());
 properties.SetProperty("SourceDeviceDefinition", SourceDeviceDefinition.DeviceElementHierarchy.ToString());
 
 AgGateway.ADAPT.StandardPlugin.Plugin outputPlugin = new AgGateway.ADAPT.StandardPlugin.Plugin();

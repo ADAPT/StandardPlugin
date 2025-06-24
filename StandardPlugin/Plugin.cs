@@ -11,7 +11,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
     public enum SourceGeometryPosition
     {
-        GPSReceiver = 0, 
+        GNSSReceiver = 0, 
         ImplementReferencePoint = 1,   
     }
 

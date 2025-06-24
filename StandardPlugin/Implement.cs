@@ -68,7 +68,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 }
                             }
 
-                            if (position == SourceGeometryPosition.GPSReceiver)
+                            if (position == SourceGeometryPosition.GNSSReceiver)
                             {
                                 //Add any tractor offset
                                 MachineConfiguration machineConfiguration = null;

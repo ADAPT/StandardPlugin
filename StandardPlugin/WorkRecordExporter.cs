@@ -30,7 +30,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             _errors = new List<IError>();
             _commonExporters = new CommonExporters(root);
 
-            _geometryPositition = SourceGeometryPosition.GPSReceiver;
+            _geometryPositition = SourceGeometryPosition.GNSSReceiver;
             _deviceDefinition = SourceDeviceDefinition.DeviceElementHierarchy;
             if (properties != null)
             {
