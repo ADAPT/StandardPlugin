@@ -14,7 +14,6 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class WorkRecordExporter
     {
-        private readonly List<IError> _errors;
         private readonly SourceGeometryPosition _geometryPositition;
         private readonly SourceDeviceDefinition _deviceDefinition;
         private readonly CommonExporters _commonExporters;
@@ -27,7 +26,6 @@ namespace AgGateway.ADAPT.StandardPlugin
             _exportPath = exportPath;
             _root = root;
             _root.Documents.WorkRecords = new List<WorkRecordElement>();
-            _errors = new List<IError>();
             _commonExporters = new CommonExporters(root);
 
             _geometryPositition = SourceGeometryPosition.GNSSReceiver;
@@ -62,6 +60,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
         {
+            List<IError> errors = new List<IError>();
             Directory.CreateDirectory(_exportPath);
             foreach (var fieldIdGroupBy in model.Documents.LoggedData.GroupBy(ld => ld.FieldId))
             {
@@ -73,7 +72,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     {
                         if (operationData.GetSpatialRecords().Any())
                         {
-                            Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings);
+                            Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings, errors);
 
                             //Output grouping
                             OperationDefinition operationDefinition = new OperationDefinition(implement, operationData, fieldLoggedData);
@@ -88,7 +87,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             {
                                 //First one in this group
                                 //Add the columns for parquet
-                                _errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
+                                errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
 
                                 if (operationDefinition.ColumnData.Columns.Any())
                                 {
@@ -101,12 +100,12 @@ namespace AgGateway.ADAPT.StandardPlugin
                                 }
 
                                 //Add the variables for the output operation
-                                    VariableElement timestamp = new VariableElement()
+                                VariableElement timestamp = new VariableElement()
                                 {
                                     Name = "Timestamp",
                                     DefinitionCode = "Timestamp",
                                     Id = new Id() { ReferenceId = string.Concat(operationDefinition.Key(), "-timestamp") },
-                                    FileDataIndex = 1
+                                    GeoParquetColumnName = "Timestamp"
                                 };
                                 operationDefinition.VariablesByOutputName.Add("Timestamp", timestamp);
                                 foreach (var dataColumn in operationDefinition.ColumnData.Columns)
@@ -116,10 +115,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                                         VariableElement variable = new VariableElement()
                                         {
                                             Name = dataColumn.SrcName,
-                                            DefinitionCode = dataColumn.TargetName,
+                                            DefinitionCode = dataColumn.TargetCode,
                                             ProductId = dataColumn.ProductId,
                                             Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
-                                            FileDataIndex = operationDefinition.ColumnData.GetDataColumnIndex(dataColumn) + 1,
+                                            GeoParquetColumnName = dataColumn.TargetName
                                         };
                                         operationDefinition.VariablesByOutputName.Add(dataColumn.TargetName, variable);
                                     }
@@ -146,7 +145,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     {
                         foreach (var srcOpSummary in sourceSummary.OperationSummaries)
                         {
-                            var opSummaryMatched = false;
+                            //var opSummaryMatched = false;
                             foreach (var groupedOperation in groupedOperations)
                             {
                                 if (groupedOperation.IsMatchingOperationSummary(srcOpSummary))
@@ -156,7 +155,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                                         groupedOperation.SourceSummaryValuesByProductId.Add(srcOpSummary.ProductId, new List<StampedMeteredValues>());
                                     }
                                     groupedOperation.SourceSummaryValuesByProductId[srcOpSummary.ProductId].AddRange(srcOpSummary.Data);
-                                    opSummaryMatched = true;
+                                    //opSummaryMatched = true;
                                     break; //Operation Summary should only match to a single output
                                 }
                             }
@@ -178,7 +177,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                     else
                     {
-                        //TODO log inability to match summary
+                         errors.Add(new Error
+                        {
+                            Id = sourceSummary.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
+                            Description = "Did not convert summary; could not map to an operation.",
+                        });
                     }
                 }
 
@@ -228,7 +231,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                         //Export the header & write out the parquet for this operation
                         if (operationDefinition.ColumnData.Geometries.Count > 0 || operationDefinition.SourceSummaryValuesByProductId.Any() || operationDefinition.SourceSummaryValuesWithoutProduct.Any())
                         {
-                            ExportOperation(operationDefinition, model, fieldWorkRecord);
+                            ExportOperation(operationDefinition, model, fieldWorkRecord, errors);
                         }
                     }
                 }
@@ -247,11 +250,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                 _root.Documents.WorkRecords = null;
             }
 
-            _errors.AddRange(_commonExporters.Errors);
-            return _errors;
+            errors.AddRange(_commonExporters.Errors);
+            return errors;
         }
 
-        private void ExportOperation(OperationDefinition operationDefinition, ApplicationDataModel.ADM.ApplicationDataModel model, WorkRecordElement workRecord)
+        private void ExportOperation(OperationDefinition operationDefinition, ApplicationDataModel.ADM.ApplicationDataModel model, WorkRecordElement workRecord, List<IError> errors)
         {
             //Give the parquet file a meaningful name
             string operationType = Enum.GetName(typeof(AgGateway.ADAPT.ApplicationDataModel.Common.OperationTypeEnum), operationDefinition.OperationType);
@@ -314,7 +317,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 SpatialRecordsFile = outputFileName,
                 GuidanceAllocations = guidanceAllocations.Any() ? guidanceAllocations : null,
                 PartyRoles =  partyRoles.Any()? partyRoles : null,
-                SummaryValues = ExportSummaryValues(operationDefinition, variables)
+                SummaryValues = ExportSummaryValues(operationDefinition, variables, errors)
             };
 
 
@@ -338,7 +341,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             workRecord.Operations.Add(outputOperation);
         }
 
-        private void AppendSummaryValue(StampedMeteredValues srcValues, List<VariableElement> variables, List<SummaryValueElement> output, int? productId = null)
+        private void AppendSummaryValue(StampedMeteredValues srcValues, List<VariableElement> variables, List<SummaryValueElement> output, List<IError> errors, int? productId = null)
         {
             foreach (var summaryItem in srcValues.Values.Select(x => x.Value).OfType<NumericRepresentationValue>())
             {
@@ -358,29 +361,37 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                     else
                     {
-                        //TODO log failed summary value or product not represented in spatial data
+                        errors.Add(new Error
+                        {
+                            Id = summaryItem.Representation.Code,
+                            Description = "Failed to convert summary data; was the product represented in spatial data?  Summary only operations not yet supported.",
+                        });
                     }
                 }
                 else
                 {
-                    //TODO log failed summary value
+                    errors.Add(new Error
+                    {
+                        Id = summaryItem.Representation.Code,
+                        Description = "Failed to convert summary data; could not map type.",
+                    });
                 }
             }
         }
 
-        private List<SummaryValueElement> ExportSummaryValues(OperationDefinition operationDefinition, List<VariableElement> variables)
+        private List<SummaryValueElement> ExportSummaryValues(OperationDefinition operationDefinition, List<VariableElement> variables, List<IError> errors)
         {
             List<SummaryValueElement> output = new List<SummaryValueElement>();
             foreach (var summaryKvp in operationDefinition.SourceSummaryValuesByProductId)
             {
                 foreach (var srcValue in summaryKvp.Value)
                 {
-                    AppendSummaryValue(srcValue, variables, output, summaryKvp.Key);
+                    AppendSummaryValue(srcValue, variables, output, errors, summaryKvp.Key);
                 }
             }
             foreach (var generalSummary in operationDefinition.SourceSummaryValuesWithoutProduct)
             {
-                AppendSummaryValue(generalSummary, variables, output);
+                AppendSummaryValue(generalSummary, variables, output, errors);
             }
 
             return output.Any() ? output : null;

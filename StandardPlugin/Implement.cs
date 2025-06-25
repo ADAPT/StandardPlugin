@@ -11,7 +11,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 {
     internal class Implement
     {
-        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition, List<TypeMapping> typeMappings)
+        public Implement(OperationData operation, Catalog catalog, SourceGeometryPosition position, SourceDeviceDefinition definition, List<TypeMapping> typeMappings, List<IError> errors)
         {
             Sections = new List<SectionDefinition>();
 
@@ -138,7 +138,11 @@ namespace AgGateway.ADAPT.StandardPlugin
                         {
                             if (sectionConfiguration.SectionWidth?.Value == null || sectionConfiguration.SectionWidth.Value.Value == 0)
                             {
-                                //TODO log error
+                                errors.Add(new Error
+                                {
+                                    Id = sectionConfiguration.Id.ReferenceId.ToString(),
+                                    Description = "Could not determine section width.",
+                                });
                             }
                             SectionDefinition section = new SectionDefinition(sectionUse, sectionConfiguration, null, operation, catalog, typeMappings);
                             section.AddAncestorWorkingDatas(implementUse, implementConfiguration, operation, typeMappings);

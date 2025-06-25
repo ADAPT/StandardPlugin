@@ -43,7 +43,8 @@ namespace AgGateway.ADAPT.StandardPlugin
             var root = new Root
             {
                 Catalog = new Standard.Catalog(),
-                Documents = new Standard.Documents()
+                Documents = new Standard.Documents(),
+                RootSchemaVersion = "2.0.0"
             };
 
             var catalogErrors = CatalogExporter.Export(dataModel, root, properties);

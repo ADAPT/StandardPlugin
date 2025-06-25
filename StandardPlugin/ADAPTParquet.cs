@@ -163,6 +163,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             SrcWorkingData = numericWorkingData;
             SrcName = numericWorkingData.Representation.Code;
             SrcUOMCode = numericWorkingData.UnitOfMeasure.Code;
+            TargetCode = targetName;
             TargetName = targetName;
             TargetUOMCode = targetUOM;
             Values = new List<double?>();
@@ -178,13 +179,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             SrcProductLookup = lookup;
             SrcName = lookup.Representation.Code;
             SrcUOMCode = lookup.UnitOfMeasure.Code;
+            TargetCode = targetName;
             TargetName = targetName;
             TargetUOMCode = targetUOM;
             Values = new List<double?>();
             ProductId = productId;
             if (productName != null)
             {
-                TargetName = $"{TargetName}_{productName}";
+                TargetName = $"{TargetCode}_{productName}";
             }
         }
 
@@ -195,6 +197,8 @@ namespace AgGateway.ADAPT.StandardPlugin
         public string ProductId { get; set; }
 
         public string TargetUOMCode { get; set; }
+
+        public string TargetCode { get; set; }
 
         public string TargetName { get; set; }
 

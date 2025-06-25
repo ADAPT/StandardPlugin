@@ -24,17 +24,20 @@ namespace AgGateway.ADAPT.Standard
     /// </summary>
     public partial class Root
     {
-        [JsonProperty("catalog", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("catalog")]
         public Catalog Catalog { get; set; }
 
         [JsonProperty("dataTypeDefinitionVersion", NullValueHandling = NullValueHandling.Ignore)]
-        public double? DataTypeDefinitionVersion { get; set; }
+        public string DataTypeDefinitionVersion { get; set; }
 
         [JsonProperty("documents", NullValueHandling = NullValueHandling.Ignore)]
         public Documents Documents { get; set; }
 
+        [JsonProperty("rootSchemaVersion")]
+        public string RootSchemaVersion { get; set; }
+
         [JsonProperty("unitSystemVersion", NullValueHandling = NullValueHandling.Ignore)]
-        public double? UnitSystemVersion { get; set; }
+        public string UnitSystemVersion { get; set; }
     }
 
     /// <summary>
@@ -310,6 +313,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Total area of the Field that is cultivated, excluding areas such as waterways
+    ///
+    /// Total area of the Crop Zone that is cultivated, excluding areas such as waterways
     /// </summary>
     public partial class ArableArea
     {
@@ -323,6 +328,21 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// An unattributed geospatial definition of an enclosed region, optionally including source
     /// metadata.
+    ///
+    /// The boundary polygon/multipolygon defining the Crop Zone region
+    ///
+    /// The geospatial definition of the boundary.  Required.
+    ///
+    /// Polygon / Multi Polygon defining the Headland.   Required.
+    ///
+    /// Spatial definition of the Obstacle.   Required.
+    ///
+    /// Geometry defining the spatial extent of the Guidance Group
+    ///
+    /// Any fixed spatial extent in which the Guidance Pattern is valid.  Optional.
+    ///
+    /// The boundary of this Operation, often generated as the hull around collected coverage
+    /// geometries (BoundaryCreationMethod: AUTO_OPERATION).
     /// </summary>
     public partial class Boundary
     {
@@ -398,6 +418,9 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// The amount of time a GNSS reference station spends collecting data to establish a precise
     /// position.
+    ///
+    /// The amount of time the GNSS reference station spends collecting data to establish a
+    /// precise position.  Uses "ACTUAL" DateContext Code
     /// </summary>
     public partial class SurveyTime
     {
@@ -435,6 +458,12 @@ namespace AgGateway.ADAPT.Standard
     /// mapped data, and this property is to be used only for geospatial data quality assessments
     /// and data provenance.  In no circumstances will the data consumer need to apply these data
     /// to any geometry.
+    ///
+    /// For informational purposes, spatial offsets from a GNSS-positioned point that have been
+    /// applied by the data producer. ADAPT requires all offsets to be applied in mapped data,
+    /// and this property is to be used only for geospatial data quality assessments and data
+    /// provenance.  In no circumstances will the data consumer need to apply these data to any
+    /// geometry.
     /// </summary>
     public partial class AppliedOffsets
     {
@@ -541,6 +570,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Reference weight for the crop.
+    ///
+    /// Reference weight for the crop.  E.g., 56 lb/bu.
     /// </summary>
     public partial class ReferenceWeight
     {
@@ -553,6 +584,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// The targeted moisture value at which the commodity is sold
+    ///
+    /// The targeted moisture value at which the commodity is sold.  E.g., 15.5%
     /// </summary>
     public partial class StandardPayableMoisture
     {
@@ -620,6 +653,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Data Type Definition attributes specific to enumerated types
+    ///
+    /// Numeric type attributes.   Required if Base Type is Enumerated.
     /// </summary>
     public partial class EnumeratedDataTypeDefinitionAttributes
     {
@@ -685,6 +720,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Attributes for Numeric Data Types
+    ///
+    /// Numeric type attributes.   Required if Base Type is Numeric.
     /// </summary>
     public partial class NumericDataTypeDefinitionAttributes
     {
@@ -706,6 +743,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Data Type Definition attributes specific to the text type
+    ///
+    /// Numeric type attributes.   Required if Base Type is Text.
     /// </summary>
     public partial class TextDataTypeDefinitionAttributes
     {
@@ -1036,6 +1075,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Relevant attributes for an ABCurve Guidance Pattern
+    ///
+    /// Definition of a ABCurve Guidance Pattern.  Required when GuidancePatternType is ABCurve .
     /// </summary>
     public partial class ABCurveAttributes
     {
@@ -1051,6 +1092,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Relevant attributes for the ABLine guidance pattern
+    ///
+    /// Definition of a ABLine Guidance Pattern.  Required when GuidancePatternType is ABCurve .
     /// </summary>
     public partial class ABLineAttributes
     {
@@ -1066,6 +1109,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Relevant attributes for APlus Guidance Patterns
+    ///
+    /// Definition of a APlus Guidance Pattern.  Required when GuidancePatternType is APlus.
     /// </summary>
     public partial class APlusAttributes
     {
@@ -1079,6 +1124,8 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Relevant Attributes for the Pivot Guidance Pattern.   One of the three pivot definitions
     /// is required.
+    ///
+    /// Definition of a Pivot Guidance Pattern.  Required when GuidancePatternType is Pivot.
     /// </summary>
     public partial class PivotAttributes
     {
@@ -1100,6 +1147,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// The radius of a center pivot
+    ///
+    /// Radius of the pivot.    Required.
     /// </summary>
     public partial class Radius
     {
@@ -1112,6 +1161,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Relevant attributes for the Spiral Guidance Pattern type
+    ///
+    /// Definition of a Spiral Guidance Pattern.  Required when GuidancePatternType is Spiral.
     /// </summary>
     public partial class SpiralAttributes
     {
@@ -1121,6 +1172,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// A defined width of a point or pass on a field, based on the implement's active width.
+    ///
+    /// Any implement width to which the Guidance Pattern is specifically intended.  Optional.
     /// </summary>
     public partial class SwathWidth
     {
@@ -1184,6 +1237,8 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Contact Information for an individual/business entity
+    ///
+    /// Optional contact information.
     /// </summary>
     public partial class ContactInfo
     {
@@ -1342,6 +1397,10 @@ namespace AgGateway.ADAPT.Standard
     /// Amount of a product component within the parent product.  Valid amounts are in volume or
     /// mass per volume or mass.  E.g.s, 3 floz1gal-1, 0.26 lb1lb-1, 1oz1gal-1.   For
     /// ingredients, amounts may be expressed as percentages.
+    ///
+    /// Amount of a product component within the parent product.  Valid amounts are in volume or
+    /// mass per volume or mass.  E.g.s, 3 floz1gal-1, 0.26 lb1lb-1, 1oz1gal-1. For ingredients,
+    /// amounts may be expressed as percentages.
     /// </summary>
     public partial class Amount
     {
@@ -1355,6 +1414,9 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// A product component defined by a meaningful code and not further subdivided into
     /// components.
+    ///
+    /// A product component defined by a meaningful code and not further subdivided into
+    /// components. Either Product Id or Ingredient Id is required.
     /// </summary>
     public partial class IngredientId
     {
@@ -1555,6 +1617,10 @@ namespace AgGateway.ADAPT.Standard
 
     /// <summary>
     /// Numeric value for Estimated Area.
+    ///
+    /// The estimated area planned/recommended.  Generally used in cases where a certain amount
+    /// of a crop of is planned without spatial reference.  If this property is set, Field Ids
+    /// and Crop Zone Ids may not be set.
     /// </summary>
     public partial class EstimatedArea
     {
@@ -1666,6 +1732,8 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Temporary configuration information for a Device within transactional Documents
     /// information.
+    ///
+    /// A mapping to a specific Device Configuration where the Device for the Operation is known.
     /// </summary>
     public partial class DeviceConfiguration
     {
@@ -1716,6 +1784,8 @@ namespace AgGateway.ADAPT.Standard
     /// <summary>
     /// Shift information added to Guidance Patterns during a specific field operation, mapped to
     /// that LoggedData via the Guidance Allocation component
+    ///
+    /// Optional Guidance Shift
     /// </summary>
     public partial class GuidanceShift
     {
@@ -1812,8 +1882,11 @@ namespace AgGateway.ADAPT.Standard
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
 
-        [JsonProperty("fileDataIndex", NullValueHandling = NullValueHandling.Ignore)]
-        public long? FileDataIndex { get; set; }
+        [JsonProperty("geoParquetColumnName", NullValueHandling = NullValueHandling.Ignore)]
+        public string GeoParquetColumnName { get; set; }
+
+        [JsonProperty("geoTIFFBandIndex", NullValueHandling = NullValueHandling.Ignore)]
+        public long? GeoTiffBandIndex { get; set; }
 
         [JsonProperty("id")]
         public Id Id { get; set; }
