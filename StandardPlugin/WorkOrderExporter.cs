@@ -17,7 +17,6 @@ namespace AgGateway.ADAPT.StandardPlugin
     {
         private readonly string _exportPath;
         private readonly Standard.Documents _documents;
-        private readonly List<IError> _errors;
         private readonly CommonExporters _commonExporters;
         private Tiff.TiffExtendProc _parentTagExtender;
 
@@ -25,7 +24,6 @@ namespace AgGateway.ADAPT.StandardPlugin
         {
             _exportPath = exportPath;
             _documents = root.Documents;
-            _errors = new List<IError>();
 
             _documents.WorkOrders = new List<WorkOrderElement>();
 
@@ -302,8 +300,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                 _documents.WorkOrders = null;
             }
 
-            _errors.AddRange(_commonExporters.Errors);
-            return _errors;
+            outErrors.AddRange(_commonExporters.Errors);
+            return outErrors;
         }
 
         private (IEnumerable<VariableElement>, string, List<SummaryValueElement>, List<IError> errors) ExportPrescription(Prescription rx, ApplicationDataModel.ADM.Catalog catalog)
@@ -415,14 +413,34 @@ namespace AgGateway.ADAPT.StandardPlugin
                     string targetUOMCode = _commonExporters.StandardDataTypes.Definitions.First(x => x.DefinitionCode == mapping.Target).NumericDataTypeDefinitionAttributes.UnitOfMeasureCode;
                     if (frameworkRxProductLookup.UnitOfMeasure.CanConvertInto(targetUOMCode))
                     {
+                        string columnName = null;
+                        int? bandIndex = null;
+                        var productId = frameworkRxProductLookup.ProductId;
+                        if (rx is RasterGridPrescription)
+                        {
+                            bandIndex = ++index;
+                        }
+                        else if (rx is VectorPrescription)
+                        {
+                            columnName = mapping.Target;
+                            if (productId != null)
+                            {
+                                var product = catalog.Products.FirstOrDefault(p => p.Id.ReferenceId == productId);
+                                if (product != null)
+                                {
+                                    columnName = string.Concat(columnName, "_", product.Description);
+                                }
+                            }
+                        }
                         var variable = new VariableElement
                         {
                             Id = _commonExporters.ExportID(frameworkRxProductLookup.Id),
                             Name = frameworkRxProductLookup.Representation?.Code?.AsName("Variable", frameworkRxProductLookup.Id.ReferenceId.ToString()),
-                            FileDataIndex = ++index, 
+                            GeoParquetColumnName = columnName, 
+                            GeoTiffBandIndex = bandIndex,
                             LossOfGnssRate = ExportNumericValue(frameworkRxProductLookup.LossOfGpsRate),
                             OutOfFieldRate = ExportNumericValue(frameworkRxProductLookup.OutOfFieldRate),
-                            ProductId = frameworkRxProductLookup.ProductId?.ToString(CultureInfo.InvariantCulture),
+                            ProductId = productId?.ToString(CultureInfo.InvariantCulture),
                             DefinitionCode = mapping.Target,
                         };
 
@@ -431,7 +449,6 @@ namespace AgGateway.ADAPT.StandardPlugin
                             Variable = variable,
                             ConversionFactor = 1d.ConvertValue(frameworkRxProductLookup.UnitOfMeasure.Code, targetUOMCode),
                             ProductLookup = frameworkRxProductLookup,
-                            Index = index
                         });
                     }
                     else
@@ -445,7 +462,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
                 if (rx is RasterGridPrescription rasterRx)
                 {
-                    spatialFile = ExportRaster(rasterRx, exportColumns);
+                    spatialFile = ExportRaster(rasterRx, exportColumns, errors);
                 }
                 else if (rx is VectorPrescription vectorRx)
                 {
@@ -488,9 +505,8 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 
                 foreach (var dataColumn in columnData.Columns)
-                {
-                    int columnIndex = columnData.GetDataColumnIndex(dataColumn);
-                    var exportColumn = exportColumns.FirstOrDefault(x => x.Index == columnIndex);
+                {                    
+                    var exportColumn = exportColumns.FirstOrDefault(x => x.Variable.GeoParquetColumnName == dataColumn.TargetName);
                     if (exportColumn != null)
                     {
                         var rate = shapeLookup.Rates.FirstOrDefault(x => x.RxProductLookupId == exportColumn.ProductLookup.Id.ReferenceId);
@@ -510,14 +526,14 @@ namespace AgGateway.ADAPT.StandardPlugin
             return outputPath;
         }
 
-        private string ExportRaster(RasterGridPrescription srcRx, List<WorkOrderExportColumn> exportColumns)
+        private string ExportRaster(RasterGridPrescription srcRx, List<WorkOrderExportColumn> exportColumns, List<IError> errors)
         {
             if (srcRx.Rates.IsNullOrEmpty())
             {
                 return null;
             }
 
-            if (!ValidateInputs(srcRx))
+            if (!ValidateInputs(srcRx, errors))
             {
                 return null;
             }
@@ -607,12 +623,12 @@ namespace AgGateway.ADAPT.StandardPlugin
             return fileName;
         }
 
-        private bool ValidateInputs(RasterGridPrescription srcRxPrescription)
+        private bool ValidateInputs(RasterGridPrescription srcRxPrescription, List<IError> errors)
         {
             var uom = srcRxPrescription.CellHeight.Value.UnitOfMeasure?.Code;
             if (uom != null && !uom.EqualsIgnoreCase("arcdeg"))
             {
-                _errors.Add(new Error
+                errors.Add(new Error
                 {
                     Id = srcRxPrescription.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
                     Description = "CellHeight unif of measure should either be null or arcdeg.",
@@ -623,7 +639,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             uom = srcRxPrescription.CellWidth.Value.UnitOfMeasure?.Code;
             if (uom != null && !uom.EqualsIgnoreCase("arcdeg"))
             {
-                _errors.Add(new Error
+                errors.Add(new Error
                 {
                     Id = srcRxPrescription.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
                     Description = "CellWidth unif of measure should either be null or arcdeg.",
@@ -655,5 +671,4 @@ internal class WorkOrderExportColumn
     internal VariableElement Variable { get; set; }
     internal RxProductLookup ProductLookup { get; set; }
     internal double ConversionFactor { get; set; }
-    internal int Index { get; set;}
 }

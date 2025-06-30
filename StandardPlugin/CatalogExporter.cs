@@ -355,76 +355,79 @@ namespace AgGateway.ADAPT.StandardPlugin
                 GuidancePatternElement guidancePattern = new GuidancePatternElement()
                 {
                     Id = _commonExporters.ExportID(frameworkGuidancePattern.Id),
-                    Description = frameworkGuidancePattern.Description,
+                    Name = frameworkGuidancePattern.Description,
                     GuidancePatternTypeCode = ExportGuidancePatternType(frameworkGuidancePattern.GuidancePatternType),
                     GuidancePatternPropagationDirectionCode = ExportPropagationDirection(frameworkGuidancePattern.PropagationDirection),
                     GuidancePatternExtensionCode = ExportGuidanceExtension(frameworkGuidancePattern.Extension),
                     SwathWidth = _commonExporters.ExportAsNumericValue<SwathWidth>(frameworkGuidancePattern.SwathWidth),
                     NumberOfSwathsLeft = frameworkGuidancePattern.NumbersOfSwathsLeft,
                     NumberOfSwathsRight = frameworkGuidancePattern.NumbersOfSwathsRight,
-                    Boundary = new Boundary()
+                };
+                if (frameworkGuidancePattern.BoundingPolygon != null && frameworkGuidancePattern.BoundingPolygon.Polygons.Any())
+                {
+                    guidancePattern.Boundary = new Boundary()
                     {
                         Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidancePattern.BoundingPolygon)
-                    } 
-                };
+                    };
+                }
 
                 switch (frameworkGuidancePattern)
-                {
-                    case AbCurve abCurve:
-                        guidancePattern.ABCurveAttributes = new ABCurveAttributes
-                        {
-                            Heading = abCurve.Heading,
-                            NumberOfSegments = abCurve.NumberOfSegments,
-                            LineStrings = GeometryExporter.ExportLineStrings(abCurve.Shape)
-                        };
-                        break;
-                    case AbLine abLine:
-                        guidancePattern.ABLineAttributes = new ABLineAttributes
-                        {
-                            A = GeometryExporter.ExportPoint(abLine.A),
-                            B = GeometryExporter.ExportPoint(abLine.B),
-                            Heading = abLine.Heading
-                        };
-                        break;
-                    case APlus aPlus:
-                        guidancePattern.APlusAttributes = new APlusAttributes
-                        {
-                            A = GeometryExporter.ExportPoint(aPlus.Point),
-                            Heading = aPlus.Heading
-                        };
-                        break;
-                    case MultiAbLine multiAbLine:
-                        guidancePattern.ABLineAttributes = new ABLineAttributes
-                        {
-                            A = GeometryExporter.ExportPoint(multiAbLine.AbLines.FirstOrDefault()?.A),
-                            B = GeometryExporter.ExportPoint(multiAbLine.AbLines.FirstOrDefault()?.B),
-                            Heading = multiAbLine.AbLines.FirstOrDefault()?.Heading
-                        };
-                        break;
-                    case PivotGuidancePattern pivotGuidance:
-                        guidancePattern.PivotAttributes = new PivotAttributes
-                        {
-                            CenterPoint = GeometryExporter.ExportPoint(pivotGuidance.Center),
-                            EndPoint = GeometryExporter.ExportPoint(pivotGuidance.EndPoint),
-                            StartPoint = GeometryExporter.ExportPoint(pivotGuidance.StartPoint),
-                            Radius = _commonExporters.ExportAsNumericValue<Radius>(pivotGuidance.Radius)
-                        };
+                    {
+                        case AbCurve abCurve:
+                            guidancePattern.ABCurveAttributes = new ABCurveAttributes
+                            {
+                                Heading = abCurve.Heading,
+                                NumberOfSegments = abCurve.NumberOfSegments,
+                                LineStrings = GeometryExporter.ExportLineStrings(abCurve.Shape)
+                            };
+                            break;
+                        case AbLine abLine:
+                            guidancePattern.ABLineAttributes = new ABLineAttributes
+                            {
+                                A = GeometryExporter.ExportPoint(abLine.A),
+                                B = GeometryExporter.ExportPoint(abLine.B),
+                                Heading = abLine.Heading
+                            };
+                            break;
+                        case APlus aPlus:
+                            guidancePattern.APlusAttributes = new APlusAttributes
+                            {
+                                A = GeometryExporter.ExportPoint(aPlus.Point),
+                                Heading = aPlus.Heading
+                            };
+                            break;
+                        case MultiAbLine multiAbLine:
+                            guidancePattern.ABLineAttributes = new ABLineAttributes
+                            {
+                                A = GeometryExporter.ExportPoint(multiAbLine.AbLines.FirstOrDefault()?.A),
+                                B = GeometryExporter.ExportPoint(multiAbLine.AbLines.FirstOrDefault()?.B),
+                                Heading = multiAbLine.AbLines.FirstOrDefault()?.Heading
+                            };
+                            break;
+                        case PivotGuidancePattern pivotGuidance:
+                            guidancePattern.PivotAttributes = new PivotAttributes
+                            {
+                                CenterPoint = GeometryExporter.ExportPoint(pivotGuidance.Center),
+                                EndPoint = GeometryExporter.ExportPoint(pivotGuidance.EndPoint),
+                                StartPoint = GeometryExporter.ExportPoint(pivotGuidance.StartPoint),
+                                Radius = _commonExporters.ExportAsNumericValue<Radius>(pivotGuidance.Radius)
+                            };
 
-                        if(pivotGuidance.Center == null &&
-                           pivotGuidance.Point1 != null &&
-                           pivotGuidance.Point2 != null &&
-                           pivotGuidance.Point3 != null)
-                        {
-                            throw new NotImplementedException("PivotGuidancePattern with three points is not implemented.");
-                        }
-                        break;
-                    case Spiral spiral:
-                        guidancePattern.SpiralAttributes = new SpiralAttributes
-                        {
-                            LineStrings = GeometryExporter.ExportLineString(spiral.Shape)
-                        };
-                        break;
-                }
+                            if (pivotGuidance.Center == null &&
+                               pivotGuidance.Point1 != null &&
+                               pivotGuidance.Point2 != null &&
+                               pivotGuidance.Point3 != null)
+                            {
+                                throw new NotImplementedException("PivotGuidancePattern with three points is not implemented.");
+                            }
+                            break;
+                        case Spiral spiral:
+                            guidancePattern.SpiralAttributes = new SpiralAttributes
+                            {
+                                LineStrings = GeometryExporter.ExportLineString(spiral.Shape)
+                            };
+                            break;
+                    }
                 output.Add(guidancePattern);
             }
             _catalog.GuidancePatterns = output;
@@ -491,13 +494,16 @@ namespace AgGateway.ADAPT.StandardPlugin
                 GuidanceGroupElement guidanceGroup = new GuidanceGroupElement()
                 {
                     Id = _commonExporters.ExportID(frameworkGuidanceGroup.Id),
-                    Description = frameworkGuidanceGroup.Description,
+                    Name = frameworkGuidanceGroup.Description,
                     GuidancePatternIds = frameworkGuidanceGroup.GuidancePatternIds?.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList(),
-                    Boundary = new Boundary()
+                };
+                if (frameworkGuidanceGroup.BoundingPolygon != null && frameworkGuidanceGroup.BoundingPolygon.Polygons.Any())
+                {
+                    guidanceGroup.Boundary = new Boundary()
                     {
                         Geometry = GeometryExporter.ExportMultiPolygonWKT(frameworkGuidanceGroup.BoundingPolygon)
-                    } 
-                };
+                    };
+                }
                 output.Add(guidanceGroup);
             }
             _catalog.GuidanceGroups = output;

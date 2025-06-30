@@ -274,7 +274,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         public static string AsMD5Hash(this string input)
         {
             var bytes = ASCIIEncoding.ASCII.GetBytes(input);
-            var hashBytes = new MD5CryptoServiceProvider().ComputeHash(bytes);
+            var hashBytes = MD5.Create().ComputeHash(bytes);
             int i;
             StringBuilder sOutput = new StringBuilder(hashBytes.Length);
             for (i = 0; i < hashBytes.Length; i++)

@@ -7,6 +7,14 @@
     <RootNamespace>AgGateway.ADAPT.StandardPlugin</RootNamespace>
     <AssemblyName>AgGateway.ADAPT.StandardPlugin</AssemblyName>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PackageId>AgGateway.ADAPT.StandardPlugin</PackageId>
+    <Authors>AgGateway and ADAPT Contributors</Authors>
+    <Description>The ADAPT Standard Plugin is a transitional tool to assist the industry in migrating from the ADAPT Framework to the ADAPT Standard. It converts the in-memory ADAPT Framework Application Data Model into serialized data that conforms to the latest version of the ADAPT Standard.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/ADAPT/StandardPlugin</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <IncludeSymbols>true</IncludeSymbols>
+    <Copyright>Copyright (C) 2025 AgGateway and ADAPT Contributors</Copyright>
   </PropertyGroup>
 
   <ItemGroup>
