@@ -26,10 +26,10 @@ jobs:
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --configuration Release --no-restore
+        run: dotnet build StandardPlugin/StandardPlugin.csproj --configuration Release --no-restore
 
       - name: Pack
-        run: dotnet pack --configuration Release --no-build -o output /p:PackageVersion=${{ steps.get_version.outputs.VERSION }}
+        run: dotnet pack StandardPlugin/StandardPlugin.csproj --configuration Release --no-build -o output /p:PackageVersion=${{ steps.get_version.outputs.VERSION }}
 
       - name: Push to NuGet
         run: dotnet nuget push "output/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
