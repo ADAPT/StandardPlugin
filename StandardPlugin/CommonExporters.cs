@@ -26,11 +26,11 @@ namespace AgGateway.ADAPT.StandardPlugin
             _catalog = root.Catalog;
             Errors = new List<IError>();
 
-            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "TypeMappings/framework-to-standard-type-mappings.json");
+            var mappingFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "framework-to-standard-type-mappings.json");
             string mappingData = File.ReadAllText(mappingFile);
             TypeMappings = JsonConvert.DeserializeObject<List<TypeMapping>>(mappingData);
 
-            var standardTypesFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "ADAPTStandard/adapt-data-type-definitions.json");
+            var standardTypesFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "adapt-data-type-definitions.json");
             string typesJson = File.ReadAllText(standardTypesFile);
             StandardDataTypes = JsonConvert.DeserializeObject<DataTypeDefinitions.DataTypeDefinitions>(typesJson);
         }
