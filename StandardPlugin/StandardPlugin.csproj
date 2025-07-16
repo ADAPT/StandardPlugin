@@ -26,8 +26,17 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="ADAPTStandard/adapt-data-type-definitions.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="TypeMappings/framework-to-standard-type-mappings.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="adapt-data-type-definitions.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="framework-to-standard-type-mappings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+</ItemGroup>
+  <ItemGroup>
+    <None Include="adapt-data-type-definitions.json" Pack="true" PackagePath="build/" />
+    <None Include="framework-to-standard-type-mappings.json" Pack="true" PackagePath="build/" />
+    <None Include="build/AgGateway.ADAPT.StandardPlugin.targets" Pack="true" PackagePath="build/AgGateway.ADAPT.StandardPlugin.targets" />
   </ItemGroup>
 
 </Project>

@@ -20,6 +20,7 @@ namespace AgGateway.ADAPT.StandardPlugin
         private readonly Standard.Root _root;
         private int _variableCounter;
         private readonly string _exportPath;
+        private List<string> _operationIds = new List<string>();
         private WorkRecordExporter(Root root, string exportPath, Properties properties)
         {
             _variableCounter = 0;
@@ -267,13 +268,21 @@ namespace AgGateway.ADAPT.StandardPlugin
                                     p.Id.ReferenceId == r).Description)
                             .Aggregate((i, j) => i + "_" + j);
             }
-            string outputFileName = string.Concat(operationType, products, ".parquet");
+            string candidateName = string.Concat(operationType, products);
+            string uniqueName = candidateName;
+            int opNameCounter = 1;
+            while (_operationIds.Contains(uniqueName))
+            {
+                uniqueName = string.Concat(candidateName, "_", opNameCounter++);
+            }
+            _operationIds.Add(uniqueName);
+            string outputFileName = string.Concat(uniqueName, ".parquet");
             outputFileName = new string(outputFileName.Where(c => !Path.GetInvalidFileNameChars().Contains(c)).ToArray());
             if (outputFileName.Length > 255)
             {
                 outputFileName = outputFileName.Substring(0, 255);
             }
-            var id = new Id() { ReferenceId = Guid.NewGuid().ToString() };
+            var id = new Id() { ReferenceId = uniqueName };
             var variables = operationDefinition.VariablesByOutputName.Values.ToList();
             string joinedName = string.Join("_", operationDefinition.SourceOperations.Select(x => x.OperationData.Description));
             string name = string.IsNullOrEmpty(joinedName) ? workRecord.Name + "_" + operationType : joinedName;

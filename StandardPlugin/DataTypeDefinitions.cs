@@ -84,9 +84,9 @@ namespace AgGateway.ADAPT.DataTypeDefinitions
         public string UnitOfMeasureCode { get; set; }
     }
 
-    public enum DataDefinitionBaseTypeCode { Enumeration, Numeric, Text };
+    public enum DataDefinitionBaseTypeCode { Enumeration, Numeric, Text, Boolean };
 
-    public enum StatusCode { Valid };
+    public enum StatusCode { Valid, Invalid };
 
     public enum NumericDataTypeCode { Double, Integer };
 
@@ -145,6 +145,9 @@ namespace AgGateway.ADAPT.DataTypeDefinitions
                 case DataDefinitionBaseTypeCode.Text:
                     serializer.Serialize(writer, "TEXT");
                     return;
+                case DataDefinitionBaseTypeCode.Boolean:
+                    serializer.Serialize(writer, "BOOLEAN");
+                    return;
             }
             throw new Exception("Cannot marshal type DataDefinitionBaseTypeCode");
         }
@@ -178,6 +181,11 @@ namespace AgGateway.ADAPT.DataTypeDefinitions
             if (value == StatusCode.Valid)
             {
                 serializer.Serialize(writer, "VALID");
+                return;
+            }
+            if (value == StatusCode.Invalid)
+            {
+                serializer.Serialize(writer, "INVALID");
                 return;
             }
             throw new Exception("Cannot marshal type StatusCode");
