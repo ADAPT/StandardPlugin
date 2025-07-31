@@ -69,7 +69,7 @@
               "-41"
             ],
             "referenceLayerIds": [],
-            "spatialRecordsFile": "/Users/nelson/AgGateway/git/ADAPT/StandardPlugin/StandardPluginTests/bin/Debug/net8.0/vector/-49.parquet",
+            "spatialRecordsFile": "-49.parquet",
             "variables": [
               {
                 "definitionCode": "AppliedCountPerAreaActual",
