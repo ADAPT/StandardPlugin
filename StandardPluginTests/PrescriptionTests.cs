@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using AgGateway.ADAPT.ApplicationDataModel.ADM;
 using AgGateway.ADAPT.ApplicationDataModel.Common;
@@ -44,7 +45,12 @@ namespace StandardPluginTests
 
 
             var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
-            plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
+            var testFolder = Path.Combine(TestContext.CurrentContext.WorkDirectory, "manual");
+            plugin.Export(_adm, testFolder);
+
+            var expected = File.ReadAllText("expected/manual/adapt.json");
+            var current = File.ReadAllText("manual/adapt.json");
+            Assert.That(current, Is.EqualTo(expected));
 
         }
 
@@ -142,7 +148,13 @@ namespace StandardPluginTests
 
 
             var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
-            plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
+            var testFolder = Path.Combine(TestContext.CurrentContext.WorkDirectory, "vector");
+            plugin.Export(_adm, testFolder);
+
+            var expected = File.ReadAllText("expected/vector/adapt.json");
+            var current = File.ReadAllText("vector/adapt.json");
+            Assert.That(current, Is.EqualTo(expected));
+            Assert.That(File.Exists("vector/-49.parquet"), Is.True);
 
         }
 
@@ -167,7 +179,14 @@ namespace StandardPluginTests
             _adm.Catalog.Prescriptions = new List<Prescription> { rxPrescription };
 
             var plugin = new AgGateway.ADAPT.StandardPlugin.Plugin();
-            plugin.Export(_adm, TestContext.CurrentContext.WorkDirectory);
+            var testFolder = Path.Combine(TestContext.CurrentContext.WorkDirectory, "raster");
+            plugin.Export(_adm, testFolder);
+
+            var expected = File.ReadAllText("expected/raster/adapt.json");
+            var current = File.ReadAllText("raster/adapt.json");
+            Assert.That(current, Is.EqualTo(expected));
+
+            Assert.That(File.Exists("raster/RasterRx-15.tiff"), Is.True);
         }
 
         private RasterGridPrescription SetupRasterPrescription()

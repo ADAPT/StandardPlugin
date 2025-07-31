@@ -16,5 +16,16 @@
   <ItemGroup>
     <ProjectReference Include="..\StandardPlugin\StandardPlugin.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="expected/manual/adapt.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="expected/raster/adapt.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="expected/vector/adapt.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>

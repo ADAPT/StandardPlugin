@@ -6,7 +6,7 @@ The ADAPT Framework is a .Net plugin toolkit that allows data producers to provi
 The ADAPT Standard is a replacement that encourages data producers to keep proprietary files in-house and provide consumers with a readable format that requires no software dependencies.
 
 # Acknowledgements
-AgGateway acknowledges generous support from [NIFA](https://www.nifa.usda.gov/) (USDA's National Institute of Food and Agricluture) and [NAPDC](https://www.agdatacoop.org/) (National Agricultural Producers Data Cooperative).
+AgGateway acknowledges generous support from [NIFA](https://www.nifa.usda.gov/) (USDA's National Institute of Food and Agriculture) and [NAPDC](https://www.agdatacoop.org/) (National Agricultural Producers Data Cooperative).
 
 # Usage
 See the [StandardPluginHarness](/StandardPluginHarness) for a simple example.

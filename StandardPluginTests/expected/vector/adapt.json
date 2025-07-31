@@ -1,0 +1,99 @@
+﻿{
+  "catalog": {
+    "farms": [],
+    "fields": [
+      {
+        "id": {
+          "referenceId": "-42"
+        },
+        "name": "Test Field"
+      }
+    ],
+    "growers": [],
+    "products": [
+      {
+        "id": {
+          "referenceId": "-38"
+        },
+        "name": "Product 1",
+        "productFormCode": "SOLID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FERTILIZER_CHEMICAL"
+      },
+      {
+        "id": {
+          "referenceId": "-39"
+        },
+        "name": "Product 2",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FUNGICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-40"
+        },
+        "name": "Product 3",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "HERBICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-41"
+        },
+        "name": "Product 4",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "INSECTICIDE"
+      }
+    ]
+  },
+  "documents": {
+    "workOrders": [
+      {
+        "fieldId": "-42",
+        "id": {
+          "referenceId": "WorkOrder-42"
+        },
+        "name": "Test Field: Work Order",
+        "operations": [
+          {
+            "id": {
+              "referenceId": "-51"
+            },
+            "name": "_SowingAndPlanting",
+            "operationTypeCode": "APPLICATION_SOWING_AND_PLANTING_SEEDS",
+            "productIds": [
+              "-38",
+              "-41"
+            ],
+            "referenceLayerIds": [],
+            "spatialRecordsFile": "/Users/nelson/AgGateway/git/ADAPT/StandardPlugin/StandardPluginTests/bin/Debug/net8.0/vector/-49.parquet",
+            "variables": [
+              {
+                "definitionCode": "AppliedCountPerAreaActual",
+                "geoParquetColumnName": "AppliedCountPerAreaActual_Product 1",
+                "id": {
+                  "referenceId": "-43"
+                },
+                "name": "vrSeedRateSeedsActual",
+                "productId": "-38"
+              },
+              {
+                "definitionCode": "AppliedVolumePerAreaActual",
+                "geoParquetColumnName": "AppliedVolumePerAreaActual_Product 4",
+                "id": {
+                  "referenceId": "-46"
+                },
+                "name": "vrAppRateVolumeActual",
+                "productId": "-41"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "rootSchemaVersion": "2.0.0"
+}

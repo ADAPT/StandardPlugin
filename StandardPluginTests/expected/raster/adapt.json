@@ -1,0 +1,111 @@
+﻿{
+  "catalog": {
+    "farms": [],
+    "fields": [],
+    "growers": [],
+    "products": [
+      {
+        "id": {
+          "referenceId": "-11"
+        },
+        "name": "Product 1",
+        "productFormCode": "SOLID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FERTILIZER_CHEMICAL"
+      },
+      {
+        "id": {
+          "referenceId": "-12"
+        },
+        "name": "Product 2",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FUNGICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-13"
+        },
+        "name": "Product 3",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "HERBICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-14"
+        },
+        "name": "Product 4",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "INSECTICIDE"
+      }
+    ]
+  },
+  "documents": {
+    "workOrders": [
+      {
+        "fieldId": "0",
+        "id": {
+          "referenceId": "WorkOrder-15"
+        },
+        "name": "RasterRx: Work Order",
+        "operations": [
+          {
+            "id": {
+              "referenceId": "-15"
+            },
+            "name": "RasterRx_SowingAndPlanting",
+            "operationTypeCode": "APPLICATION_SOWING_AND_PLANTING_SEEDS",
+            "productIds": [
+              "-11",
+              "-12",
+              "-13",
+              "-14"
+            ],
+            "spatialRecordsFile": "RasterRx-15.tiff",
+            "variables": [
+              {
+                "definitionCode": "AppliedMassPerAreaActual",
+                "geoTIFFBandIndex": 1,
+                "id": {
+                  "referenceId": "-18"
+                },
+                "name": "vrAppRateMassActual",
+                "productId": "-11"
+              },
+              {
+                "definitionCode": "AppliedMassPerAreaActual",
+                "geoTIFFBandIndex": 2,
+                "id": {
+                  "referenceId": "-21"
+                },
+                "name": "vrAppRateMassActual",
+                "productId": "-12"
+              },
+              {
+                "definitionCode": "AppliedMassPerAreaActual",
+                "geoTIFFBandIndex": 3,
+                "id": {
+                  "referenceId": "-24"
+                },
+                "name": "vrAppRateMassActual",
+                "productId": "-13"
+              },
+              {
+                "definitionCode": "AppliedMassPerAreaActual",
+                "geoTIFFBandIndex": 4,
+                "id": {
+                  "referenceId": "-27"
+                },
+                "name": "vrAppRateMassActual",
+                "productId": "-14"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "rootSchemaVersion": "2.0.0"
+}
