@@ -262,7 +262,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
 
             //Some implementers may simply have created Prescriptions in the catalog without creating any document elements.
-                var orphanedPrescriptionIds = dataModel.Catalog.Prescriptions.Select(x => x.Id.ReferenceId).Except(nonOrphanedRxs);
+            var orphanedPrescriptionIds = dataModel.Catalog.Prescriptions.Select(x => x.Id.ReferenceId).Except(nonOrphanedRxs);
             foreach (int rxId in orphanedPrescriptionIds)
             {
                 var rx = dataModel.Catalog.Prescriptions.First(x => x.Id.ReferenceId == rxId);
@@ -523,7 +523,7 @@ namespace AgGateway.ADAPT.StandardPlugin
             ADAPTParquetWriter writer = new ADAPTParquetWriter(columnData);
             writer.Write(outputPath);
 
-            return outputPath;
+            return fileName;
         }
 
         private string ExportRaster(RasterGridPrescription srcRx, List<WorkOrderExportColumn> exportColumns, List<IError> errors)

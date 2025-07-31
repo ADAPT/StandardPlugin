@@ -1,8 +1,12 @@
+# Overview
 The ADAPT Standard Plugin is a transitional tool to assist the industry in migrating from the ADAPT Framework to the ADAPT Standard.  It converts the in-memory ADAPT Framework `ApplicationDataModel` into serialized data that conforms to the latest version of the  ADAPT Standard.
 
 The ADAPT Framework is a .Net plugin toolkit that allows data producers to provide software to data consumers to read proprietary files. 
 
 The ADAPT Standard is a replacement that encourages data producers to keep proprietary files in-house and provide consumers with a readable format that requires no software dependencies.
+
+# Acknowledgements
+AgGateway acknowledges generous support from [NIFA](https://www.nifa.usda.gov/) (USDA's National Institute of Food and Agriculture) and [NAPDC](https://www.agdatacoop.org/) (National Agricultural Producers Data Cooperative).
 
 # Usage
 See the [StandardPluginHarness](/StandardPluginHarness) for a simple example.

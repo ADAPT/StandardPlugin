@@ -1,0 +1,93 @@
+﻿{
+  "catalog": {
+    "farms": [],
+    "fields": [
+      {
+        "id": {
+          "referenceId": "-5"
+        },
+        "name": "Test Field"
+      }
+    ],
+    "growers": [],
+    "products": [
+      {
+        "id": {
+          "referenceId": "-1"
+        },
+        "name": "Product 1",
+        "productFormCode": "SOLID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FERTILIZER_CHEMICAL"
+      },
+      {
+        "id": {
+          "referenceId": "-2"
+        },
+        "name": "Product 2",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "FUNGICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-3"
+        },
+        "name": "Product 3",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "HERBICIDE"
+      },
+      {
+        "id": {
+          "referenceId": "-4"
+        },
+        "name": "Product 4",
+        "productFormCode": "LIQUID",
+        "productStatusCode": "ACTIVE",
+        "productTypeCode": "INSECTICIDE"
+      }
+    ]
+  },
+  "documents": {
+    "workOrders": [
+      {
+        "fieldId": "0",
+        "id": {
+          "referenceId": "WorkOrder-8"
+        },
+        "name": ": Work Order",
+        "operations": [
+          {
+            "id": {
+              "referenceId": "-8"
+            },
+            "name": "_Unknown",
+            "operationTypeCode": "UNKNOWN",
+            "productIds": [
+              "-1"
+            ],
+            "summaryValues": [
+              {
+                "valueText": "16.812767342916846",
+                "variableId": "-8-ProductRate-1"
+              }
+            ],
+            "variables": [
+              {
+                "definitionCode": "AppliedMassPerAreaActual",
+                "description": "_Product 1",
+                "id": {
+                  "referenceId": "-8-ProductRate-1"
+                },
+                "name": null,
+                "productId": "-1"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "rootSchemaVersion": "2.0.0"
+}
