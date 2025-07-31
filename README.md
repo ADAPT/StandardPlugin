@@ -9,7 +9,7 @@ The ADAPT Standard is a replacement that encourages data producers to keep propr
 AgGateway acknowledges generous support from [NIFA](https://www.nifa.usda.gov/) (USDA's National Institute of Food and Agriculture) and [NAPDC](https://www.agdatacoop.org/) (National Agricultural Producers Data Cooperative).
 
 # Usage
-See the [StandardPluginHarness](/StandardPluginHarness) for a simple example.
+See the [StandardPluginHarness](https://github.com/ADAPT/StandardPlugin/tree/develop/StandardPluginHarness) for a simple example.
 
 ## Required Input Properties
 The ADAPT Framework was largely undocumented.  As such, different plugin implementers used data elements in different ways.  To convert data, plugin users will need to specify properties based on the source plugin so that data can be interpreted correctly.  Below are known settings for various plugins.  Data originating in the ADAPT Framework ADM plugin will need to account for the original source of the data. 
