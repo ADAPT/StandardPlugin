@@ -46,7 +46,7 @@ namespace AgGateway.ADAPT.StandardPlugin
 
             using (var fs = File.Create(outputFile))
             {
-                using (var writer = new ParquetFileWriter(outputFile, dataFields.ToArray(), keyValueMetadata: geometadata))
+                using (var writer = new ParquetFileWriter(fs, dataFields.ToArray(), keyValueMetadata: geometadata))
                 {
                     int startIndex = 0;
                     int remainingRowGroups = ColumnData.Geometries.Count / RowGroupSize;
@@ -72,7 +72,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                             }
                             var geometries = ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize);
                             var geometryWriter = rg.NextColumn().LogicalWriter<byte[]>();
-                            geometryWriter.WriteBatch(ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize).ToArray());
+                            geometryWriter.WriteBatch(geometries.ToArray());
                         }
                         startIndex += RowGroupSize;
                         remainingRowGroups--;
