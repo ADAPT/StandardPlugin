@@ -64,9 +64,14 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         public static bool CanConvert(string srcUnitCode, string targetUnitCode)
         {
-            var targetUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(targetUnitCode);
-            var sourceUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(srcUnitCode);
-            return sourceUOM.Dimension == targetUOM.Dimension;
+            if (RepresentationUnitSystem.InternalUnitSystemManager.Instance.UnitOfMeasures[targetUnitCode] != null &&
+                RepresentationUnitSystem.InternalUnitSystemManager.Instance.UnitOfMeasures[srcUnitCode] != null)
+            {
+                var targetUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(targetUnitCode);
+                var sourceUOM = RepresentationUnitSystem.UnitSystemManager.GetUnitOfMeasure(srcUnitCode);
+                return sourceUOM.Dimension == targetUOM.Dimension;
+            }
+            return false;
         }
 
         public static bool CanConvertInto(this UnitOfMeasure srcUOM, string targetUnitCode)
