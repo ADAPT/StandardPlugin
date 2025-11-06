@@ -59,6 +59,13 @@ namespace AgGateway.ADAPT.StandardPlugin
             }
         }
 
+        private IEnumerable<OperationData> GetMappableOperations(LoggedData loggedData)
+        {
+            return loggedData.OperationData.Where(od => od.OperationType != OperationTypeEnum.DataCollection && //Data Collection always represents tractor data in production plugins and won't map to ADAPT Standard types
+                                                        od.OperationType != OperationTypeEnum.Transport &&
+                                                        od.GetSpatialRecords().Any());
+        }
+
         private IEnumerable<IError> Export(ApplicationDataModel.ADM.ApplicationDataModel model)
         {
             List<IError> errors = new List<IError>();
@@ -69,60 +76,57 @@ namespace AgGateway.ADAPT.StandardPlugin
                 foreach (var fieldLoggedData in fieldIdGroupBy)
                 {
                     //Group the operations with spatial data
-                    foreach (var operationData in fieldLoggedData.OperationData)
+                    foreach (var operationData in GetMappableOperations(fieldLoggedData))
                     {
-                        if (operationData.GetSpatialRecords().Any())
-                        {
-                            Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings, errors);
+                        Implement implement = new Implement(operationData, model.Catalog, _geometryPositition, _deviceDefinition, _commonExporters.TypeMappings, errors);
 
-                            //Output grouping
-                            OperationDefinition operationDefinition = new OperationDefinition(implement, operationData, fieldLoggedData);
-                            var matchingOperation = groupedOperations.FirstOrDefault(x => x.IsMatchingOperation(operationDefinition));
-                            if (matchingOperation != null)
+                        //Output grouping
+                        OperationDefinition operationDefinition = new OperationDefinition(implement, operationData, fieldLoggedData);
+                        var matchingOperation = groupedOperations.FirstOrDefault(x => x.IsMatchingOperation(operationDefinition));
+                        if (matchingOperation != null)
+                        {
+                            //This is the logical equivalent of another operation
+                            matchingOperation.SourceOperations.Add(new ConstituentSpatialOperation(operationData, implement));
+                            matchingOperation.SourceLoggedDatas.Add(fieldLoggedData);
+                        }
+                        else
+                        {
+                            //First one in this group
+                            //Add the columns for parquet
+                            errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
+
+                            if (operationDefinition.ColumnData.Columns.Any())
                             {
-                                //This is the logical equivalent of another operation
-                                matchingOperation.SourceOperations.Add(new ConstituentSpatialOperation(operationData, implement));
-                                matchingOperation.SourceLoggedDatas.Add(fieldLoggedData);
+                                groupedOperations.Add(operationDefinition);
                             }
                             else
                             {
-                                //First one in this group
-                                //Add the columns for parquet
-                                errors.AddRange(operationDefinition.ColumnData.AddOperationData(operationData, model.Catalog, implement, _commonExporters));
+                                //This operation did not match any variable to export
+                                continue;
+                            }
 
-                                if (operationDefinition.ColumnData.Columns.Any())
+                            //Add the variables for the output operation
+                            VariableElement timestamp = new VariableElement()
+                            {
+                                Name = "Timestamp",
+                                DefinitionCode = "Timestamp",
+                                Id = new Id() { ReferenceId = string.Concat(operationDefinition.Key(), "-timestamp") },
+                                GeoParquetColumnName = "Timestamp"
+                            };
+                            operationDefinition.VariablesByOutputName.Add("Timestamp", timestamp);
+                            foreach (var dataColumn in operationDefinition.ColumnData.Columns)
+                            {
+                                if (!operationDefinition.VariablesByOutputName.ContainsKey(dataColumn.TargetName))
                                 {
-                                    groupedOperations.Add(operationDefinition);
-                                }
-                                else
-                                {
-                                    //This operation did not match any variable to export
-                                    continue;
-                                }
-
-                                //Add the variables for the output operation
-                                VariableElement timestamp = new VariableElement()
-                                {
-                                    Name = "Timestamp",
-                                    DefinitionCode = "Timestamp",
-                                    Id = new Id() { ReferenceId = string.Concat(operationDefinition.Key(), "-timestamp") },
-                                    GeoParquetColumnName = "Timestamp"
-                                };
-                                operationDefinition.VariablesByOutputName.Add("Timestamp", timestamp);
-                                foreach (var dataColumn in operationDefinition.ColumnData.Columns)
-                                {
-                                    if (!operationDefinition.VariablesByOutputName.ContainsKey(dataColumn.TargetName))
+                                    VariableElement variable = new VariableElement()
                                     {
-                                        VariableElement variable = new VariableElement()
-                                        {
-                                            Name = dataColumn.SrcName,
-                                            DefinitionCode = dataColumn.TargetCode,
-                                            ProductId = dataColumn.ProductId,
-                                            Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
-                                            GeoParquetColumnName = dataColumn.TargetName
-                                        };
-                                        operationDefinition.VariablesByOutputName.Add(dataColumn.TargetName, variable);
-                                    }
+                                        Name = dataColumn.SrcName,
+                                        DefinitionCode = dataColumn.TargetCode,
+                                        ProductId = dataColumn.ProductId,
+                                        Id = _commonExporters.ExportID(dataColumn.SrcWorkingData.Id),
+                                        GeoParquetColumnName = dataColumn.TargetName
+                                    };
+                                    operationDefinition.VariablesByOutputName.Add(dataColumn.TargetName, variable);
                                 }
                             }
                         }
@@ -178,7 +182,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     }
                     else
                     {
-                         errors.Add(new Error
+                        errors.Add(new Error
                         {
                             Id = sourceSummary.Id.ReferenceId.ToString(CultureInfo.InvariantCulture),
                             Description = "Did not convert summary; could not map to an operation.",
@@ -197,7 +201,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                     foreach (var loggedData in fieldIdGroupBy.ToList())
                     {
                         var timeScopes = _commonExporters.ExportTimeScopes(loggedData.TimeScopes, out var seasonIds);
-                        if (timeScopes != null) 
+                        if (timeScopes != null)
                         {
                             timeScopeElements.AddRange(timeScopes);
                         }
