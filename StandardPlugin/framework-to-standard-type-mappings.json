@@ -132,6 +132,16 @@
         "factor": true
     },
     {
+        "source": "vrYieldMassForage",
+        "target": "YieldTotalWetMass",
+        "factor": true
+    },
+    {
+        "source": "vrYieldMassCane",
+        "target": "YieldTotalWetMass",
+        "factor": true
+    },
+    {
         "source": "vrYieldBalePerArea",
         "target": "YieldBaleCountPerArea",
         "factor": false
@@ -189,16 +199,6 @@
     {
         "source": "vrForageMassProductivity",
         "target": "YieldDryMassPerTime",
-        "factor": false
-    },
-    {
-        "source": "vrYieldMassForage",
-        "target": "YieldTotalWetMass",
-        "factor": false
-    },
-    {
-        "source": "vrYieldMassCane",
-        "target": "YieldTotalWetMass",
         "factor": false
     },
     {
