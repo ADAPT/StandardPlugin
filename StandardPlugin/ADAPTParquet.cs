@@ -88,6 +88,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             Geometries = new List<byte[]>();
         }
 
+        public void AddTimestamp(DateTime timestamp)
+        {
+            Timestamps.Add(timestamp);
+
+            if (!MinTimestamp.HasValue || timestamp < MinTimestamp.Value)
+            {
+                MinTimestamp = timestamp;
+            }
+
+            if (!MaxTimestamp.HasValue || timestamp > MaxTimestamp.Value)
+            {
+                MaxTimestamp = timestamp;
+            }
+        }
+
         public void AddVectorPrescription(VectorPrescription rx, List<WorkOrderExportColumn> exportColumns, Catalog catalog, CommonExporters commonExporters)
         {
             foreach (var exportColumn in exportColumns)
@@ -140,6 +155,10 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         public List<DateTime> Timestamps { get; set; }
+
+        public DateTime? MinTimestamp { get; set; }
+
+        public DateTime? MaxTimestamp { get; set; }
 
         public List<ADAPTDataColumn> Columns { get; set; }
 

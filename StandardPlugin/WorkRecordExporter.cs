@@ -329,7 +329,7 @@ namespace AgGateway.ADAPT.StandardPlugin
                 ProductIds = operationDefinition.ProductIds.Any() ? operationDefinition.ProductIds.Select(x => x.ToString(CultureInfo.InvariantCulture)).ToList() : null,
                 SpatialRecordsFile = outputFileName,
                 GuidanceAllocations = guidanceAllocations.Any() ? guidanceAllocations : null,
-                PartyRoles =  partyRoles.Any()? partyRoles : null,
+                PartyRoles = partyRoles.Any() ? partyRoles : null,
                 SummaryValues = ExportSummaryValues(operationDefinition, variables, errors)
             };
 
@@ -350,6 +350,17 @@ namespace AgGateway.ADAPT.StandardPlugin
                 }
                 ADAPTParquetWriter writer = new ADAPTParquetWriter(operationDefinition.ColumnData);
                 writer.Write(outputFile);
+
+                if (outputOperation.TimeScopes == null)
+                {
+                    outputOperation.TimeScopes = new();
+                }
+                outputOperation.TimeScopes.Add(new TimeScopeElement
+                {
+                    DateContextCode = "ACTUAL",
+                    Start = operationDefinition.ColumnData.MinTimestamp?.ToString("O", CultureInfo.InvariantCulture),
+                    End = operationDefinition.ColumnData.MaxTimestamp?.ToString("O", CultureInfo.InvariantCulture)
+                });
             }
             workRecord.Operations.Add(outputOperation);
         }
@@ -476,68 +487,68 @@ namespace AgGateway.ADAPT.StandardPlugin
             foreach (var record in operationData.GetSpatialRecords())
             {
                 foreach (var section in implement.Sections)
+                {
+                    double timeDelta = 0d;
+                    if (priorSpatialRecord != null)
                     {
-                        double timeDelta = 0d;
-                        if (priorSpatialRecord != null)
+                        timeDelta = (record.Timestamp - priorSpatialRecord.Timestamp).TotalSeconds;
+                    }
+                    if (section.IsEngaged(record) &&
+                                timeDelta < 5d &&
+                                section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
+                    {
+                        runningOutput.Geometries.Add(polygon.ToBinary());
+                        if (runningOutput.BoundingBox == null)
                         {
-                            timeDelta = (record.Timestamp - priorSpatialRecord.Timestamp).TotalSeconds;
+                            runningOutput.BoundingBox = polygon.EnvelopeInternal;
                         }
-                        if (section.IsEngaged(record) &&
-                                    timeDelta < 5d &&
-                                    section.TryGetCoveragePolygon(record, priorSpatialRecord, out NetTopologySuite.Geometries.Polygon polygon))
+                        else
                         {
-                            runningOutput.Geometries.Add(polygon.ToBinary());
-                            if (runningOutput.BoundingBox == null)
-                            {
-                                runningOutput.BoundingBox = polygon.EnvelopeInternal;
-                            }
-                            else
-                            {
-                                runningOutput.BoundingBox.ExpandToInclude(polygon.EnvelopeInternal);
-                            }
+                            runningOutput.BoundingBox.ExpandToInclude(polygon.EnvelopeInternal);
+                        }
 
-                            runningOutput.Timestamps.Add(record.Timestamp);
+                        runningOutput.AddTimestamp(record.Timestamp);
 
-                            foreach (var dataColumn in runningOutput.Columns)
+                        foreach (var dataColumn in runningOutput.Columns)
+                        {
+                            if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
                             {
-                                if (dataColumn.ProductId != null && section.ProductIndexWorkingData != null)
+                                if (section.FactoredDefinitionsBySourceCodeByProduct.ContainsKey(dataColumn.ProductId))
                                 {
-                                    if (section.FactoredDefinitionsBySourceCodeByProduct.ContainsKey(dataColumn.ProductId))
-                                    {
-                                        var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
-                                        NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                                        var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+                                    var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[dataColumn.ProductId][dataColumn.SrcName];
+                                    NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                    var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
 
-                                        NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
-                                        var productValueData = productValue?.Value?.Value;
-                                        if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
-                                        {
-                                            dataColumn.Values.Add(doubleVal);
-                                        }
-                                        else
-                                        {
-                                            dataColumn.Values.Add(0d); //We're not applying this product to this section
-                                        }
+                                    NumericRepresentationValue productValue = record.GetMeterValue(section.ProductIndexWorkingData) as NumericRepresentationValue;
+                                    var productValueData = productValue?.Value?.Value;
+                                    if (productValueData != null && dataColumn.ProductId == ((int)productValueData).ToString())
+                                    {
+                                        dataColumn.Values.Add(doubleVal);
                                     }
                                     else
                                     {
-                                        dataColumn.Values.Add(0d); //We've grouped operations together and this doesn't apply.
+                                        dataColumn.Values.Add(0d); //We're not applying this product to this section
                                     }
                                 }
                                 else
                                 {
-                                    var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[string.Empty][dataColumn.SrcName];
-                                    NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
-                                    var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
-                                    dataColumn.Values.Add(doubleVal);
+                                    dataColumn.Values.Add(0d); //We've grouped operations together and this doesn't apply.
                                 }
                             }
-                        }
-                        else
-                        {
-                            section.ClearLeadingEdge();
+                            else
+                            {
+                                var factoredDefinition = section.FactoredDefinitionsBySourceCodeByProduct[string.Empty][dataColumn.SrcName];
+                                NumericRepresentationValue value = record.GetMeterValue(factoredDefinition.WorkingData) as NumericRepresentationValue;
+                                var doubleVal = value.AsConvertedDouble(dataColumn.TargetUOMCode) * factoredDefinition.Factor;
+                                dataColumn.Values.Add(doubleVal);
+                            }
                         }
                     }
+                    else
+                    {
+                        section.ClearLeadingEdge();
+                    }
+                }
                 priorSpatialRecord = record;
             }
         }
