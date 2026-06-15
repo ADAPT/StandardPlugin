@@ -423,6 +423,10 @@ namespace AgGateway.ADAPT.StandardPlugin
 
         private VariableElement GetOrCreateVariableElement(List<VariableElement> variables, string srcVariableName, int? productId = null)
         {
+            if (variables == null)
+            {
+                return null;
+            }
             var variableElement = variables.FirstOrDefault(x => x.Name == srcVariableName && x.ProductId == productId?.ToString());
             if (variableElement == null)
             {
@@ -475,6 +479,10 @@ namespace AgGateway.ADAPT.StandardPlugin
                     VariableId = variableElement.Id.ReferenceId,
                     ValueText = loadQuantity?.ToString(CultureInfo.InvariantCulture)
                 };
+                if (operationElement.SummaryValues == null)
+                {
+                    operationElement.SummaryValues = new List<SummaryValueElement>();
+                }
                 operationElement.SummaryValues.Add(summary);
             }
 
