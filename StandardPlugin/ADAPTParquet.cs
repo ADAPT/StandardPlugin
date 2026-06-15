@@ -44,39 +44,36 @@ namespace AgGateway.ADAPT.StandardPlugin
             };
             var geometadata = GeoParquet.GeoMetadata.GetGeoMetadata(geoColumn);
 
-            using (var fs = File.Create(outputFile))
+            using (var writer = new ParquetFileWriter(outputFile, dataFields.ToArray(), Compression.Zstd, keyValueMetadata: geometadata))
             {
-                using (var writer = new ParquetFileWriter(fs, dataFields.ToArray(), keyValueMetadata: geometadata))
+                int startIndex = 0;
+                int remainingRowGroups = ColumnData.Geometries.Count / RowGroupSize;
+                if (ColumnData.Geometries.Count % RowGroupSize > 0)
                 {
-                    int startIndex = 0;
-                    int remainingRowGroups = ColumnData.Geometries.Count / RowGroupSize;
-                    if (ColumnData.Geometries.Count % RowGroupSize > 0)
+                    remainingRowGroups++;
+                }
+                while (remainingRowGroups > 0)
+                {
+                    using (RowGroupWriter rg = writer.AppendRowGroup())
                     {
-                        remainingRowGroups++;
-                    }
-                    while (remainingRowGroups > 0)
-                    {
-                        using (RowGroupWriter rg = writer.AppendRowGroup())
+                        if (ColumnData.Timestamps.Any())
                         {
-                            if (ColumnData.Timestamps.Any())
-                            {
-                                var timestampWriter = rg.NextColumn().LogicalWriter<string>();
-                                var timestamps = ColumnData.Timestamps.Skip(startIndex).Take(RowGroupSize);
-                                timestampWriter.WriteBatch(timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()); ;
-                            }
-                            foreach (var doubleColumn in ColumnData.Columns)
-                            {
-                                var doubleWriter = rg.NextColumn().LogicalWriter<double?>();
-                                var values = doubleColumn.Values.Skip(startIndex).Take(RowGroupSize);
-                                doubleWriter.WriteBatch(values.ToArray());
-                            }
-                            var geometries = ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize);
-                            var geometryWriter = rg.NextColumn().LogicalWriter<byte[]>();
-                            geometryWriter.WriteBatch(geometries.ToArray());
+                            var timestampWriter = rg.NextColumn().LogicalWriter<string>();
+                            var timestamps = ColumnData.Timestamps.Skip(startIndex).Take(RowGroupSize);
+                            timestampWriter.WriteBatch(timestamps.Select(t => t.ToString("O", CultureInfo.InvariantCulture)).ToArray()); ;
                         }
-                        startIndex += RowGroupSize;
-                        remainingRowGroups--;
+                        foreach (var doubleColumn in ColumnData.Columns)
+                        {
+                            var doubleWriter = rg.NextColumn().LogicalWriter<double?>();
+                            var values = doubleColumn.Values.Skip(startIndex).Take(RowGroupSize);
+                            doubleWriter.WriteBatch(values.ToArray());
+                        }
+                        var geometries = ColumnData.Geometries.Skip(startIndex).Take(RowGroupSize);
+                        var geometryWriter = rg.NextColumn().LogicalWriter<byte[]>();
+                        geometryWriter.WriteBatch(geometries.ToArray());
                     }
+                    startIndex += RowGroupSize;
+                    remainingRowGroups--;
                 }
             }
         }
@@ -89,6 +86,21 @@ namespace AgGateway.ADAPT.StandardPlugin
             Timestamps = new List<DateTime>();
             Columns = new List<ADAPTDataColumn>();
             Geometries = new List<byte[]>();
+        }
+
+        public void AddTimestamp(DateTime timestamp)
+        {
+            Timestamps.Add(timestamp);
+
+            if (!MinTimestamp.HasValue || timestamp < MinTimestamp.Value)
+            {
+                MinTimestamp = timestamp;
+            }
+
+            if (!MaxTimestamp.HasValue || timestamp > MaxTimestamp.Value)
+            {
+                MaxTimestamp = timestamp;
+            }
         }
 
         public void AddVectorPrescription(VectorPrescription rx, List<WorkOrderExportColumn> exportColumns, Catalog catalog, CommonExporters commonExporters)
@@ -143,6 +155,10 @@ namespace AgGateway.ADAPT.StandardPlugin
         }
 
         public List<DateTime> Timestamps { get; set; }
+
+        public DateTime? MinTimestamp { get; set; }
+
+        public DateTime? MaxTimestamp { get; set; }
 
         public List<ADAPTDataColumn> Columns { get; set; }
 
